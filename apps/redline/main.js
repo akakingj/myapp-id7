@@ -669,7 +669,8 @@ mgu.run({
             if (canPlay) G.button(cv, t, 1396, HY, 180, 34, playing ? 'Stop' : 'Play on HUD', () => { if (playing) hud.stopPlay(); else if (!(car.data().speed > 3)) hud.play(0, studio.profile); return render(); }, { key: 'studio_play', primary: !playing });
             // under the preview: what's wrong, or what the Comfort HUD is doing
             const status = missing ? 'The HUD needs cluster-render: install Cluster renderer from the MGU Store'
-                : !on ? 'Show on HUD is off (Settings)' : playing ? 'Playing on the HUD...' : hud && hud.status() === 'HUD: on' && !still ? 'Stop the car to play it on the HUD'
+                : !on ? 'Show on HUD is off (Settings)'
+                    : settings.get('hudTach') === false ? 'Rev counter off on the HUD: only the turn signals and directions show (Place)' : playing ? 'Playing on the HUD...' : hud && hud.status() === 'HUD: on' && !still ? 'Stop the car to play it on the HUD'
                     : comfort && cmode === 'same' ? modeName + ' uses the Sport HUD. Change anything here to give it its own.'
                         : comfort && cmode === 'own' ? 'Changes here only affect ' + modeName + ', its size and place too.' : '';
             cv.text(status, 40, 348, 15, missing || !on ? t.warn : t.dim, { font: 'bold' });
@@ -726,7 +727,8 @@ mgu.run({
             // the power bar takes no place in the row on the layouts that draw it along their gauge (2026-11-10 review)
             const over = studio.panel === 'readouts' && nOn - (o.hvBar && Hud.METER_STYLES.indexOf(o.style) >= 0 ? 1 : 0) > Hud.MAX_READOUTS;
             // PLACE: say when the size or position puts part of the tach off the windshield's window
-            const off = studio.panel === 'place' ? Hud.outsideGlass(Hud.placeOf(P), o.style) : {};
+            // (the turn signals too: under the tach, or at its place with the rev counter off)
+            const off = studio.panel === 'place' ? Hud.outsideAll(P, o.style) : {};
             const offText = Object.keys(off).map((k) => k + ' ' + off[k] + ' px').join(', ');
             const hint = over ? nOn + ' on: the first ' + Hud.MAX_READOUTS + ' that have a value show'
                 : offText ? 'Partly outside the windshield (' + offText + '), as measured on one car' : STUDIO_HINT[studio.panel];

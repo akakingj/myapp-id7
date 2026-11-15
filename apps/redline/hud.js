@@ -261,6 +261,16 @@ function outsideGlass(r, style) {
     return o;
 }
 
+/** outsideGlass for all Redline draws there: the tach when it shows, and the turn signals (px per side, the most of either). */
+function outsideAll(settings, style) {
+    const t = placeOf(settings), sg = HudSignals.signalsOf(settings), o = sg.tach ? outsideGlass(t, style) : {};
+    if (sg.turn || sg.lane) {
+        const b = outsideGlass(HudSignals.signalsPlace(t, sg.tach, SCENE).band);
+        Object.keys(b).forEach((k) => { o[k] = Math.max(o[k] || 0, b[k]); });
+    }
+    return o;
+}
+
 /** The gear's font family for the setting "hudGearFont" (auto / ubuntu / barlow) on a layout. */
 const M_STYLES = ['arc', 'ramp', 'dial'];
 function gearFontOf(choice, style) {
@@ -1392,4 +1402,4 @@ function start(ctx, src) {
 }
 
 // writeAtomic: kept here too (it moved to files.js in 2.0) for code that calls Hud.writeAtomic
-module.exports = { start, revOf, writeAtomic, navPlaceOf, blockOf, G20_WINDOW, HUD_WINDOW, BMW_SPEED, GLASS, sceneOf, useScene, scene: () => SCENE, optsFrom, PROFILE_KEYS, SETUPS, profileOf, comfortMode, setupMode, profileView, setComfortMode, setSetupMode, migrateProfiles, reactionMs, gearFontOf, M_STYLES, placeOf, outsideGlass, readoutsFor, rpmItem, electricalItems, electricalWants, MAX_READOUTS, METER_STYLES, driveModeOf, calmFor, calmOpts, demoAt, DEMO_MS, demoFrame, shiftCue, drawDown };
+module.exports = { start, revOf, writeAtomic, navPlaceOf, blockOf, G20_WINDOW, HUD_WINDOW, BMW_SPEED, GLASS, sceneOf, useScene, scene: () => SCENE, optsFrom, PROFILE_KEYS, SETUPS, profileOf, comfortMode, setupMode, profileView, setComfortMode, setSetupMode, migrateProfiles, reactionMs, gearFontOf, M_STYLES, placeOf, outsideGlass, outsideAll, readoutsFor, rpmItem, electricalItems, electricalWants, MAX_READOUTS, METER_STYLES, driveModeOf, calmFor, calmOpts, demoAt, DEMO_MS, demoFrame, shiftCue, drawDown };

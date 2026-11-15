@@ -51,6 +51,7 @@
   "Lane change": "측후방 경고",
   "Before 2.0.57": "2.0.57 이전",
   "Where the HUD of this setup sits on the glass; the turn signals go under the rev counter": "이 설정의 HUD가 유리에 놓이는 위치 · 방향지시등은 회전계 아래",
+  "Rev counter off on the HUD: only the turn signals and directions show (Place)": "HUD 회전계 꺼짐: 방향지시등과 길 안내만 표시 (위치 탭)",
   "min|min": "분",
   "PIN for Engine Map and Burbles": "엔진 맵·버블 PIN 잠금",
   "Engine Map and Burbles PIN": "엔진 맵·버블 PIN",

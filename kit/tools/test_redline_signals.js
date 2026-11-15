@@ -35,6 +35,10 @@ const ids = (r) => [r.x, r.y].join(',');
     ok(top.lcw.left.y === 76 && top.arrow.left.y === 86 && top.arrow.right.x === 530 && top.lcw.left.x === 200, 'the tach off: the same places at its top (y 76 / 86)');
     const W = Hud.G20_WINDOW, inW = (r) => r.x >= W.x && r.y >= W.y && r.x + r.w <= W.x + W.w && r.y + r.h <= W.y + W.h;
     ok(['left', 'right'].every((s) => inW(p.arrow[s]) && inW(p.lcw[s]) && inW(top.arrow[s]) && inW(top.lcw[s])), 'all inside a G20\'s seen part, either way');
+    // HUD looks > Place warns for the signals too: a low tach puts them under the seen part
+    ok(!Object.keys(Hud.outsideAll(st({}))).length && !Object.keys(Hud.outsideAll(st({ hudTach: false }))).length, 'Place: nothing outside at the defaults, tach on or off');
+    ok(Hud.outsideAll(st({ hudY: 120 })).bottom === 22 && !Hud.outsideGlass(Hud.placeOf(st({ hudY: 120 }))).bottom, 'Place: the tach low, the signals under it 22 px past the seen part (the tach itself inside)');
+    ok(!Hud.outsideAll(st({ hudY: 120, hudTurnSignals: false, hudLaneWarn: false })).bottom, '... not with them off');
     ok(ov(p.band, t) === 0, 'under the tach, not over it');
     // a small tach: the sides still well apart; moved: they follow
     const small = S.signalsPlace(Hud.placeOf(st({ hudSize: 40 })), true, scene);
@@ -85,7 +89,8 @@ const ids = (r) => [r.x, r.y].join(',');
     // watchCar: both interfaces, the handlers fed as the car sends
     const subs = {};
     const ctx = { signals: { watch: (iface, inst, handlers) => { subs[iface] = handlers; return Promise.resolve({ available: true }); } } };
-    const w = S.watchCar(ctx, { info() {}, debug() {}, warn() {} });
+    // (a log without debug: the value still read)
+    const w = S.watchCar(ctx, { info() {}, warn() {} });
     ok(subs[S.S_LIGHT] && subs[S.S_LIGHT].StatusFunctionsIndicators && subs[S.S_LIGHT].StatusFunctionsIndicators2 && subs[S.S_LCA] && subs[S.S_LCA].assistedDrivingViewLcaInput,
         'watches both light fields and the lane change broadcast');
     subs[S.S_LIGHT].StatusFunctionsIndicators2({ controlIndicateDirection: 4, activeFunctionIndicateDirection: 8 });
@@ -186,6 +191,20 @@ const ids = (r) => [r.x, r.y].join(',');
     ok(h.signals().arrow.left === true && !h.signals().arrow.right, 'Play on HUD: the left signal flashes from 1 s');
     h.stopPlay(); kmh = 50; await sleep(60);
     ok(!h.signals().arrow.left, 'stopped: dark again');
+    // BMW's content over the HUD (target parked): the signals step aside with the tach, back after
+    dir = 'left'; await sleep(60);
+    ok(h.signals().arrow.left !== null, 'flashing before');
+    cr.h.target('hud', 'parked', 'bmw'); await sleep(60);
+    ok(!h.signals().arrow.left && !h.signals().arrow.right, 'BMW\'s content over the HUD: the arrows off');
+    cr.h.target('hud', 'shown', ''); await sleep(400);
+    const seenBack = []; for (let i = 0; i < 30; i++) { seenBack.push(h.signals().arrow.left); await sleep(25); }
+    ok(seenBack.indexOf(true) >= 0, 'shown again: flashing');
+    // Comfort's own place (its own setup, 40 px lower): the signals there with its tach
+    v.hudComfortMode = 'own'; v.hudComfortSetup = { hudY: 40 }; mode = 'comfort'; await sleep(200);
+    ok(cr.layers[h.signals().refs.lcw.left] && cr.layers[h.signals().refs.arrow.left].y === 264, 'Comfort\'s own place: the signals under its tach (' + cr.layers[h.signals().refs.arrow.left].y + ')');
+    v.hudComfortMode = 'hide'; v.hudComfortSetup = {}; mode = 'sport'; await sleep(200);
+    ok(cr.layers[h.signals().refs.arrow.left].y === 224, 'back in Sport: back under Sport\'s tach');
+    dir = 'off'; await sleep(60);
     // the test pattern: the samples drawn at their places
     settings.set('hud', 'test'); await sleep(100);
     const tp = cr.frames[cr.frames.length - 1];
@@ -194,6 +213,10 @@ const ids = (r) => [r.x, r.y].join(',');
     // the driving mode's own place: they follow it; the HUD off: all gone
     settings.set('hud', 'off'); await sleep(80);
     ok(!h.signals().refs.arrow.left && !h.signals().arrow.left, 'HUD off: the signal layers dropped');
+    // on again: a new connection, the layers made again
+    settings.set('hud', 'on'); await sleep(150); dir = 'right'; await sleep(60);
+    ok(h.signals().refs.arrow.right && h.signals().arrow.right === true && cr.layers[h.signals().refs.arrow.right], 'HUD on again: the arrows made anew and flashing');
+    dir = 'off';
     h.stop();
     console.log((C.fails ? C.fails + ' of ' : '') + C.checks + ' Redline HUD signal checks' + (C.fails ? ' failed' : ' passed'));
     TH.rmTree(TMP);

@@ -57,6 +57,7 @@ Turn signals	방향지시등
 Lane change	측후방 경고
 Before 2.0.57	2.0.57 이전
 Where the HUD of this setup sits on the glass; the turn signals go under the rev counter	이 설정의 HUD가 유리에 놓이는 위치 · 방향지시등은 회전계 아래
+Rev counter off on the HUD: only the turn signals and directions show (Place)	HUD 회전계 꺼짐: 방향지시등과 길 안내만 표시 (위치 탭)
 # Warm-Up's minutes, drawn on their own (min alone is 최소, minimum)
 min|min	분
 # Live Adjustments 0.9.5's PIN (the original has no Korean for it yet)

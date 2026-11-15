@@ -309,7 +309,7 @@ At most four readouts fit the row; past that the last one gives way.
 | Setting | Values |
 |---|---|
 | Size | 40–130 %, scaled about the top centre |
-| Position left / right, up / down | px (left to −120, right to +280; up to the HUD's top, down to +280, so a small tach fits the glass's bottom right corner; +64 is where the tach sat before 2.0.57); moves the layer only. HUD looks → Place warns when the tach reaches outside the part of the glass you see |
+| Position left / right, up / down | px (left to −120, right to +280; up to the HUD's top, down to +280, so a small tach fits the glass's bottom right corner; +64 is where the tach sat before 2.0.57); moves the layer only. HUD looks → Place warns when the tach or the turn signals reach outside the part of the glass you see |
 | Rev counter, turn signals, lane change warning | each on or off (HUD looks → Place, *Show*); see [Turn signals](#turn-signals-and-the-lane-change-warning) |
 
 Since 2.0.57 the tach sits at the top of what a G20 shows (y 76..206 of the HUD's 800x480 at 100 %), the part seen

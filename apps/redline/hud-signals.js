@@ -146,12 +146,14 @@ function watchCar(ctx, log) {
         st.seen.light++;
         const c = one(v, 'controlIndicateDirection'), a = one(v, 'activeFunctionIndicateDirection');
         const dir = direction(c, a);
-        if (dir) { if (dir !== st.dir) log.debug('turn signals: ' + dir + ' (' + what + ' ' + c + ' / ' + a + ')'); st.dir = dir; }
+        if (!dir || dir === st.dir) return;
+        st.dir = dir;                    // (before the log line: a log that throws can't keep the value out)
+        try { log.debug('turn signals: ' + dir + ' (' + what + ' ' + c + ' / ' + a + ')'); } catch (e) { /* no debug log */ }
     };
     const onLca = (v) => {
         st.seen.lca++;
-        if (st.seen.lca <= 3) log.info('lane change warning raw: ' + JSON.stringify(v).slice(0, 400));
         st.lcw = decodeLca(v); st.lcwAt = Date.now();
+        if (st.seen.lca <= 3) log.info('lane change warning raw: ' + JSON.stringify(v).slice(0, 400));
     };
     const watch = (iface, handlers, what) => {
         if (!ctx.signals || !ctx.signals.watch) { st.sub[what] = 'no signals'; return; }
