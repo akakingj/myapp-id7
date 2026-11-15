@@ -32,7 +32,7 @@
  *   electrical.js  12 V and hybrid battery readouts for the HUD (car signals and read-only UDS)
  *   tyres.js     tyre pressures, targets and temperatures from the car's signals (Redline's own reading)
  *   hud-tyres.js the tyre widget: the car from above with its four tyres, in the directions' corner
- *   hud-signals.js the turn signal arrows and the lane change warning on the HUD (the car's own signals)
+ *   hud-signals.js the turn signal arrows on the HUD (the car's own signals)
  *   cluster_render_client.js  vendored unchanged from robertnisipeanu/idrive-apps (MPL-2.0)
  *
  * The limits, first that has one:
@@ -827,7 +827,6 @@ mgu.run({
                 switches(cv, t, R1, 'SHOW', [
                     ['Rev counter', sgn.tach, () => settings.set('hudTach', !sgn.tach)],
                     ['Turn signals', sgn.turn, () => settings.set('hudTurnSignals', !sgn.turn)],
-                    ['Lane change', sgn.lane, () => settings.set('hudLaneWarn', !sgn.lane)],
                 ], RX - 120);
                 cv.text('MOVE', 40, R2 + 27, 18, t.dim, { font: 'bold', spacing: 1 });
                 stepButtons(cv, t, 200, R2, 'hudX', [['Left', -1], ['Right', 1]], (v) => (v === 0 ? 'centre' : (v > 0 ? '+' : '') + v + ' px'));
@@ -1140,15 +1139,14 @@ mgu.run({
             nav = tracker;
         } catch (e) { log.warn('nav: directions not started: ' + e); }
         // head-up display through cluster-render (setting "hud"); the centre screen is unchanged
-        // the turn signals and the lane change warning for the HUD (hud-signals.js: the car's light module and driving
-        // assistant, read only; subscribed whatever the settings, so switching them on needs no restart)
+        // the turn signals for the HUD (hud-signals.js: the car's light module, read only; subscribed whatever the
+        // settings, so switching them on needs no restart)
         let carSignals = null;
         try { carSignals = HudSignals.watchCar(ctx, log); } catch (e) { log.warn('hud: turn signals not started: ' + e); }
         hud = Hud.start(ctx, {
             // the next turn and lanes while a route runs (null: none here)
             nav: nav,
             indicator: () => (carSignals ? carSignals.indicator() : 'off'),
-            laneChange: () => (carSignals ? carSignals.laneChange() : null),
             data: () => car.data(), shiftPoint, redline, maxRpm, gearbox, knock, fuel, intake, electrical, tyres, downshift,
             // the tach's peak marker (drops back after "Peak hold"), the last upshift's grade for 1.5 s,
             // boost once it has moved and is under 2 s old (none from the demo drive)

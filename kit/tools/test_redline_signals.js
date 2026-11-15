@@ -1,5 +1,5 @@
 'use strict';
-// Redline's turn signals and lane change warning on the HUD (hud-signals.js, 2.0.57): where they go (under the tach,
+// Redline's turn signal arrows on the HUD (hud-signals.js, 2.0.57; the lane change warning out in 2.0.62): where they go (under the tach,
 // at its place with the tach off), the car's values decoded, the layers against a stand-in cluster-render (flashing in
 // step, each switch on its own, gone while the HUD is hidden), the tach switched off (its layer see-through), the
 // directions kept clear of them. Node 8 compatible.
@@ -27,35 +27,36 @@ const ids = (r) => [r.x, r.y].join(',');
     const scene = Hud.scene(), t = Hud.placeOf(st({}));
     ok(JSON.stringify(t) === JSON.stringify({ x: 200, y: 104, w: 400, h: 130 }), 'the tach at the top of what this G20 shows, y 104 (' + JSON.stringify(t) + ')');
     const p = S.signalsPlace(t, true, scene);
-    // as the demo image: the signs at the tach's ends, the arrows inside them, under it
-    ok(ids(p.lcw.left) === '200,242' && ids(p.arrow.left) === '240,252' && ids(p.arrow.right) === '530,252' && ids(p.lcw.right) === '566,242',
-        'under the tach: left sign 200, arrow 240; right arrow 530, sign 566; at y 242 / 252 (' + [ids(p.lcw.left), ids(p.arrow.left), ids(p.arrow.right), ids(p.lcw.right)].join(' ') + ')');
-    ok(p.lcw.right.x + p.lcw.right.w === t.x + t.w && p.lcw.left.y === t.y + t.h + 8, 'flush with the tach\'s right end, 8 px under it');
+    // 40 px in from the tach's ends, 8 px under it
+    ok(ids(p.arrow.left) === '240,242' && ids(p.arrow.right) === '530,242', 'under the tach: arrows at 240 and 530, y 242 (' + [ids(p.arrow.left), ids(p.arrow.right)].join(' ') + ')');
+    ok(p.arrow.left.x === t.x + 40 && p.arrow.right.x + 30 === t.x + t.w - 40 && p.arrow.left.y === t.y + t.h + 8, '40 px in from each end, 8 px under it');
     const top = S.signalsPlace(t, false, scene);
-    ok(top.lcw.left.y === 104 && top.arrow.left.y === 114 && top.arrow.right.x === 530 && top.lcw.left.x === 200, 'the tach off: the same places at the top, no higher than y 104 (arrows at 86 lost their top on the car)');
-    ok(S.signalsPlace(Hud.placeOf(st({ hudY: 60 })), false, scene).lcw.left.y === 164, '... and lower with the tach\'s place moved lower');
+    ok(top.arrow.left.y === 114 && top.arrow.right.y === 114 && top.arrow.right.x === 530 && top.arrow.left.x === 240, 'the tach off: the same x at the top, no higher than y 114 (arrows at 86 lost their top on the car)');
+    ok(S.signalsPlace(Hud.placeOf(st({ hudY: 60 })), false, scene).arrow.left.y === 174, '... and lower with the tach\'s place moved lower');
     const W = Hud.G20_WINDOW, inW = (r) => r.x >= W.x && r.y >= W.y && r.x + r.w <= W.x + W.w && r.y + r.h <= W.y + W.h;
-    ok(['left', 'right'].every((s) => inW(p.arrow[s]) && inW(p.lcw[s]) && inW(top.arrow[s]) && inW(top.lcw[s])), 'all inside a G20\'s seen part, either way');
-    // HUD looks > Place warns for the signals too: a low tach puts them under the seen part
+    ok(['left', 'right'].every((s) => inW(p.arrow[s]) && inW(top.arrow[s])), 'both inside a G20\'s seen part, either way');
+    ok(!p.lcw && !S.drawLaneSign && !S.S_LCA && !spec.signals['de.bmw.dass.driverassistanceapplications.AssistedDrivingViewLateralCollisionAvoidance']
+        && !spec.settings.some((x) => x.key === 'hudLaneWarn'), 'no lane change warning (2.0.62): no signs, no service, no setting');
+    // HUD looks > Place warns for the arrows too: a low tach puts them under the seen part
     ok(!Object.keys(Hud.outsideAll(st({}))).length && !Object.keys(Hud.outsideAll(st({ hudTach: false }))).length, 'Place: nothing outside at the defaults, tach on or off');
-    ok(Hud.outsideAll(st({ hudY: 100 })).bottom === 30 && !Hud.outsideGlass(Hud.placeOf(st({ hudY: 100 }))).bottom, 'Place: the tach low, the signals under it 30 px past the seen part (the tach itself inside)');
-    ok(!Hud.outsideAll(st({ hudY: 100, hudTurnSignals: false, hudLaneWarn: false })).bottom, '... not with them off');
+    ok(Hud.outsideAll(st({ hudY: 100 })).bottom === 10 && !Hud.outsideGlass(Hud.placeOf(st({ hudY: 100 }))).bottom, 'Place: the tach low, the arrows under it 10 px past the seen part (the tach itself inside)');
+    ok(!Hud.outsideAll(st({ hudY: 100, hudTurnSignals: false })).bottom, '... not with them off');
     ok(ov(p.band, t) === 0, 'under the tach, not over it');
     // a small tach: the sides still well apart; moved: they follow
     const small = S.signalsPlace(Hud.placeOf(st({ hudSize: 40 })), true, scene);
     ok(small.arrow.right.x - (small.arrow.left.x + 30) >= 100, 'a 40 % tach: the arrows still ' + (small.arrow.right.x - small.arrow.left.x - 30) + ' px apart');
     const moved = S.signalsPlace(Hud.placeOf(st({ hudX: 60, hudY: 20 })), true, scene);
-    ok(moved.lcw.left.x === 260 && moved.lcw.left.y === 262, 'they move with the tach\'s position');
+    ok(moved.arrow.left.x === 300 && moved.arrow.left.y === 262, 'they move with the tach\'s position');
     // the tach at the scene's foot: above it rather than off the scene
     const low = Hud.placeOf(st({ hudY: 280 })), lp = S.signalsPlace(low, true, scene);
-    ok(lp.band.y + lp.band.h <= scene.h && ov(lp.band, low) === 0, 'a tach at the foot: the signals above it (' + lp.band.y + ')');
+    ok(lp.band.y + lp.band.h <= scene.h && ov(lp.band, low) === 0, 'a tach at the foot: the arrows above it (' + lp.band.y + ')');
     // iDrive 8's small HUD: inside it, either way
     Hud.useScene('map:874x749,hud:353x203');
     const S8 = Hud.scene(), in8 = (r) => r.x >= 0 && r.y >= 0 && r.x + r.w <= S8.w && r.y + r.h <= S8.h;
     let out = 0;
     [40, 70, 100].forEach((sz) => [-120, 0, 280].forEach((x) => [-120, 0, 220].forEach((y) => [true, false].forEach((on) => {
         const q = S.signalsPlace(Hud.placeOf(st({ hudSize: sz, hudX: x, hudY: y })), on, S8);
-        if (!['left', 'right'].every((s) => in8(q.arrow[s]) && in8(q.lcw[s]))) out++;
+        if (!['left', 'right'].every((s) => in8(q.arrow[s]))) out++;
     }))));
     ok(!out, 'iDrive 8: every Size / Position, the signals inside its HUD (' + out + ' out)');
     Hud.useScene('');
@@ -64,15 +65,15 @@ const ids = (r) => [r.x, r.y].join(',');
 
 // ---- the directions keep clear of them --------------------------------------------------------------------------------
 {
-    const on = st({}), off = st({ hudTurnSignals: false, hudLaneWarn: false }), only = st({ hudTach: false });
+    const on = st({}), off = st({ hudTurnSignals: false }), only = st({ hudTach: false });
     const n = Hud.navPlaceOf(on), b = Hud.blockOf(on);
-    ok(ov(n, b) === 0 && ov(n, Hud.BMW_SPEED) === 0 && b.y + b.h === 286 && n.y === 290 && n.y + n.h <= Hud.BMW_SPEED.y + Hud.BMW_SPEED.h, 'the directions clear of the tach and the signals under it, 10 px lower than their corner, above BMW speed\'s foot (' + JSON.stringify(n) + ')');
-    ok(JSON.stringify(Hud.blockOf(off)) === JSON.stringify(Hud.placeOf(off)), 'signals off: the tach alone is kept clear');
-    ok(Hud.blockOf(only).h === 44 && Hud.blockOf(only).y === 104, 'the tach off: only the signals at the top');
+    ok(ov(n, b) === 0 && ov(n, Hud.BMW_SPEED) === 0 && b.y + b.h === 266 && n.y === 280 && n.x + n.w === 672, 'the directions in their corner, clear of the tach and the arrows under it (' + JSON.stringify(n) + ')');
+    ok(JSON.stringify(Hud.blockOf(off)) === JSON.stringify(Hud.placeOf(off)), 'arrows off: the tach alone is kept clear');
+    ok(Hud.blockOf(only).h === 24 && Hud.blockOf(only).y === 114, 'the tach off: only the arrows at the top');
     let clash = 0;
     [60, 80, 100, 120].forEach((sz) => [-80, 0, 80].forEach((x) => [-40, 0, 40, 100].forEach((y) => {
         const s = st({ hudSize: sz, hudX: x, hudY: y }), r = Hud.navPlaceOf(s), p = S.signalsPlace(Hud.placeOf(s), true, Hud.scene());
-        if (['left', 'right'].some((side) => ov(r, p.arrow[side]) || ov(r, p.lcw[side]))) clash++;
+        if (['left', 'right'].some((side) => ov(r, p.arrow[side]))) clash++;
     })));
     ok(!clash, 'no size or position puts the directions over a signal (' + clash + ')');
 }
@@ -84,26 +85,19 @@ const ids = (r) => [r.x, r.y].join(',');
     ok(S.direction('DAUER_BLINKEN_RECHTS_EIN') === 'right' && S.direction('TIPP_BLINKEN_LINKS_EIN') === 'left', 'as the enum\'s names (a G05)');
     ok(S.direction(0, 9) === 'left' && S.direction(0, 'DAUERBLINKEN_RECHTS') === 'right' && S.direction(0, 6) === 'both' && S.direction(undefined, 0) === 'off' && S.direction(undefined, undefined) === null,
         'activeFunctionIndicateDirection when the control says off or nothing');
-    ok(JSON.stringify(S.decodeLca({ statusLaneChangeWarningLeft: 'NO_WARNING', statusLaneChangeWarningRight: { name: 'WARNING_LEVEL_1' } })) === JSON.stringify({ left: false, right: true }),
-        'the lane change warning per side (names)');
-    ok(JSON.stringify(S.decodeLca({ x: { statusLaneChangeWarningLeft: 2, statusLaneChangeWarningRight: 0 } })) === JSON.stringify({ left: true, right: false }), '... numbers, however wrapped');
-    // watchCar: both interfaces, the handlers fed as the car sends
+    // watchCar: the light module, the handlers fed as the car sends
     const subs = {};
     const ctx = { signals: { watch: (iface, inst, handlers) => { subs[iface] = handlers; return Promise.resolve({ available: true }); } } };
     // (a log without debug: the value still read)
     const w = S.watchCar(ctx, { info() {}, warn() {} });
-    ok(subs[S.S_LIGHT] && subs[S.S_LIGHT].StatusFunctionsIndicators && subs[S.S_LIGHT].StatusFunctionsIndicators2 && subs[S.S_LCA] && subs[S.S_LCA].assistedDrivingViewLcaInput,
-        'watches both light fields and the lane change broadcast');
+    ok(subs[S.S_LIGHT] && subs[S.S_LIGHT].StatusFunctionsIndicators && subs[S.S_LIGHT].StatusFunctionsIndicators2 && Object.keys(subs).length === 1,
+        'watches both light fields, nothing else');
     subs[S.S_LIGHT].StatusFunctionsIndicators2({ controlIndicateDirection: 4, activeFunctionIndicateDirection: 8 });
     ok(w.indicator() === 'right', 'a right signal read');
-    ok(w.laneChange() === null, 'no lane change data: null (nothing shown)');
-    subs[S.S_LCA].assistedDrivingViewLcaInput({ statusLaneChangeWarningLeft: 1 });
-    ok(w.laneChange() && w.laneChange().left === true && w.laneChange().right === false, 'a car beside on the left');
-    // app.json carries both, optional
-    const L = spec.signals[S.S_LIGHT], A = spec.signals[S.S_LCA];
+    // app.json carries it, optional
+    const L = spec.signals[S.S_LIGHT];
     ok(L && L._optional && L.StatusFunctionsIndicators === 's' && L.StatusFunctionsIndicators2 === 's', 'app.json: the light module\'s fields, optional');
-    ok(A && A._optional && A._broadcasts && A._broadcasts.indexOf('assistedDrivingViewLcaInput') >= 0, 'app.json: the lane change broadcast, optional');
-    ['hudTach', 'hudTurnSignals', 'hudLaneWarn'].forEach((k) => { const s = spec.settings.find((x) => x.key === k); ok(s && s.type === 'bool' && s.default === true, k + ': a switch, on by default'); });
+    ['hudTach', 'hudTurnSignals'].forEach((k) => { const s = spec.settings.find((x) => x.key === k); ok(s && s.type === 'bool' && s.default === true, k + ': a switch, on by default'); });
 }
 
 // ---- the pictures ----------------------------------------------------------------------------------------------------
@@ -111,45 +105,31 @@ const ids = (r) => [r.x, r.y].join(',');
     const a = new Canvas(S.ARROW.w, S.ARROW.h); S.drawArrow(a, 'left');
     const px = (cv, x, y) => Array.from(cv.d.slice((y * cv.w + x) * 4, (y * cv.w + x) * 4 + 4));
     ok(px(a, 3, 12)[1] > 150 && px(a, 3, 12)[3] > 200 && px(a, 28, 2)[3] === 0, 'a left arrow: green at its tip, see-through around');
-    const l = new Canvas(S.LCW.w, S.LCW.h); S.drawLaneSign(l, 'right');
-    const red = [], yel = [];
-    for (let y = 0; y < l.h; y++) for (let x = 0; x < l.w; x++) { const p = px(l, x, y); if (p[3] > 200 && p[0] > 200 && p[1] < 80) red.push(x); if (p[3] > 200 && p[0] > 200 && p[1] > 180) yel.push(x); }
-    const mean = (v) => v.reduce((s, x) => s + x, 0) / v.length;
-    ok(red.length > 40 && yel.length > 40 && mean(red) > mean(yel), 'the right sign: this car yellow, the other red behind it to the right');
 }
 
 (async () => {
-    // what reaches Settings > Logs (lines starting "hud: "): the subscription, the first values, each warning's change,
-    // and whether the car's service answered at all (a car without the assistant's lane change warning: not available)
+    // what reaches Settings > Logs (lines starting "hud: "): the subscription, the first changes, and whether the car's
+    // service answered at all
     {
         const subs2 = {}, got = [];
-        const ctx2 = { signals: { watch: (iface, inst, handlers) => { subs2[iface] = handlers; return Promise.resolve({ available: iface === S.S_LIGHT }); } } };
+        const ctx2 = { signals: { watch: (iface, inst, handlers) => { subs2[iface] = handlers; return Promise.resolve({ available: true }); } } };
         S.watchCar(ctx2, { info: (m) => got.push(m), warn() {} }, { reportMs: [40] });
         await sleep(10);
         subs2[S.S_LIGHT].StatusFunctionsIndicators({ controlIndicateDirection: 3 });
         await sleep(60);
         const LV = require(path.join(ROOT, 'apps', 'redline', 'logview.js'));
         const shown = got.filter((m) => LV.IMPORTANT.redline({ level: 'INFO', msg: m }));
-        ok(shown.length === got.length && got.length >= 5, 'every signal line shows in Settings > Logs (' + got.length + ')');
+        ok(shown.length === got.length && got.length === 3, 'every signal line shows in Settings > Logs (' + got.join(' | ') + ')');
         ok(got.indexOf('hud: turn signals: left (indicators 3 / undefined)') >= 0, 'a turn signal\'s change logged');
-        ok(got.indexOf('hud: lane change warning: service not available, 0 received') >= 0 && got.indexOf('hud: turn signals: service available, 1 received') >= 0,
-            'after a while: whether each service answered and how much came (' + got.filter((m) => /service/.test(m)).join(' | ') + ')');
-        const got2 = [];
-        const subs3 = {};
-        S.watchCar({ signals: { watch: (iface, inst, h) => { subs3[iface] = h; return Promise.resolve({ available: true }); } } }, { info: (m) => got2.push(m) }, { reportMs: [] });
-        await sleep(10);
-        [{ statusLaneChangeWarningRight: 'WARNING_LEVEL_1' }, { statusLaneChangeWarningRight: 'WARNING_LEVEL_1' }, { statusLaneChangeWarningRight: 'NO_WARNING' }, {}, {}]
-            .forEach((v) => subs3[S.S_LCA].assistedDrivingViewLcaInput(v));
-        ok(got2.filter((m) => /raw/.test(m)).length === 3 && got2.indexOf('hud: lane change warning: right') >= 0 && got2.filter((m) => m === 'hud: lane change warning: none').length === 1,
-            'the first three values raw, and each warning\'s change once (' + got2.filter((m) => !/raw/.test(m)).join(' | ') + ')');
+        ok(got.indexOf('hud: turn signals: service available, 1 received') >= 0, 'after a while: whether the service answered and how much came');
     }
     fs.mkdirSync(SHM);
     fs.writeFileSync(path.join(SHM, 'redline'), JSON.stringify({ held: false, at: Date.now() }) + '\n');
     const v = Object.assign({}, def, { hud: 'on', hudStyle: 'standard', hudFps: 30 }), fns = [];
     const settings = { get: (k) => v[k], set: (k, x) => { v[k] = x; fns.forEach((f) => f(k, x)); }, onChange: (f) => fns.push(f), item: () => null };
-    let dir = 'off', lcw = null, mode = 'sport', kmh = 50;
+    let dir = 'off', mode = 'sport', kmh = 50;
     const src = { data: () => ({ rpm: 2500, gear: 3, stage: 'D', speed: kmh, oil: 95, coolant: 92 }), shiftPoint: () => ({ rpm: 6200, cold: false }), redline: () => 6550,
-        maxRpm: () => 8000, driveMode: () => mode, indicator: () => dir, laneChange: () => lcw };
+        maxRpm: () => 8000, driveMode: () => mode, indicator: () => dir };
     const lines = [];
     const log = { info: (m) => lines.push(m), warn: (m) => lines.push(m), error: (m) => lines.push(m), debug() {} };
     const h = Hud.start({ settings: settings, log: log, dataDir: TMP }, src);
@@ -161,7 +141,7 @@ const ids = (r) => [r.x, r.y].join(',');
     await sleep(60);
     const s1 = h.signals();
     ok(s1.refs.arrow.left && s1.arrow.left === true, 'left signal: the left arrow lit within a tick');
-    ok(cr.layers[s1.refs.arrow.left].x === 240 && cr.layers[s1.refs.arrow.left].y === 252 && cr.layers[s1.refs.arrow.left].z > cr.layers[tachRef].z, 'at 240,252, above the tach');
+    ok(cr.layers[s1.refs.arrow.left].x === 240 && cr.layers[s1.refs.arrow.left].y === 242 && cr.layers[s1.refs.arrow.left].z > cr.layers[tachRef].z, 'at 240,242, above the tach');
     ok(!s1.arrow.right, 'the right one dark');
     // flashing: lit 335 ms, dark 303 ms (sampled through two periods)
     const seen = [];
@@ -177,21 +157,14 @@ const ids = (r) => [r.x, r.y].join(',');
     dir = 'both'; await sleep(40);
     ok(h.signals().arrow.left && h.signals().arrow.right, 'hazards: both lit');
     dir = 'off'; await sleep(60);
-    // the lane change warning on the right
-    lcw = { left: false, right: true }; await sleep(60);
-    const s2 = h.signals();
-    ok(s2.lcw.right === true && !s2.lcw.left && cr.layers[s2.refs.lcw.right].x === 566 && cr.layers[s2.refs.lcw.right].y === 242, 'a car on the right: its sign at 566,242');
-    lcw = null; await sleep(60);
-    ok(!h.signals().lcw.right, 'no more data: the sign goes');
-    // each switch on its own
-    settings.set('hudTurnSignals', false); dir = 'right'; lcw = { left: true, right: false }; await sleep(80);
-    ok(!h.signals().arrow.right && h.signals().lcw.left === true, 'turn signals off: no arrows, the lane change warning still');
-    settings.set('hudTurnSignals', true); settings.set('hudLaneWarn', false); await sleep(80);
-    ok(!h.signals().lcw.left && (h.signals().arrow.right !== null), 'lane change off: no sign, the arrows still');
-    settings.set('hudLaneWarn', true); await sleep(60);
+    // the switch
+    settings.set('hudTurnSignals', false); dir = 'right'; await sleep(80);
+    ok(!h.signals().arrow.right && !h.signals().arrow.left, 'turn signals off: no arrows');
+    settings.set('hudTurnSignals', true); await sleep(80);
+    ok(h.signals().arrow.right !== null, 'on again: the right arrow flashing');
     // hidden by the driving mode (Comfort on Don't show): the signals go with the tach
     mode = 'comfort'; await sleep(120);
-    ok(!cr.layers[tachRef] && !h.signals().arrow.right && !h.signals().lcw.left, 'Comfort hidden: the tach and the signals gone');
+    ok(!cr.layers[tachRef] && !h.signals().arrow.right, 'Comfort hidden: the tach and the arrows gone');
     mode = 'sport'; await sleep(150);
     // the tach switched off: its layer see-through, the signals at its top
     settings.set('hudTach', false); await sleep(150);
@@ -203,15 +176,15 @@ const ids = (r) => [r.x, r.y].join(',');
     const fr = cr.frames.length; await sleep(120);
     ok(cr.frames.filter((f) => f.ref === t2).length === cr.frames.filter((f, i) => i < fr && f.ref === t2).length, '... and nothing sent after');
     const s3 = h.signals();
-    ok(cr.layers[s3.refs.lcw.left].y === 104 && cr.layers[s3.refs.arrow.right].y === 114, 'the signals moved to the top (' + cr.layers[s3.refs.lcw.left].y + ')');
+    ok(cr.layers[s3.refs.arrow.right].y === 114, 'the arrows moved to the top (' + cr.layers[s3.refs.arrow.right].y + ')');
     ok(/HUD: /.test(h.status()), 'status still a HUD line (' + h.status() + ')');
     settings.set('hudTach', true); await sleep(150);
     const back = cr.frames.filter((f) => f.ref === t2).pop();
     let lit = 0;
     for (let i = 3; i < back.px.length; i += 4) if (back.px[i]) lit++;
-    ok(lit > 1000 && cr.layers[h.signals().refs.lcw.left].y === 242, 'the tach back: drawn again, the signals under it');
+    ok(lit > 1000 && cr.layers[h.signals().refs.arrow.right].y === 242, 'the tach back: drawn again, the arrows under it');
     // "Play on HUD": the left signal from 1 s of the loop (the car's own signals not used meanwhile)
-    dir = 'off'; lcw = null;
+    dir = 'off';
     kmh = 0; h.play(); await sleep(1150);
     ok(h.signals().arrow.left === true && !h.signals().arrow.right, 'Play on HUD: the left signal flashes from 1 s');
     h.stopPlay(); kmh = 50; await sleep(60);
@@ -226,15 +199,15 @@ const ids = (r) => [r.x, r.y].join(',');
     ok(seenBack.indexOf(true) >= 0, 'shown again: flashing');
     // Comfort's own place (its own setup, 40 px lower): the signals there with its tach
     v.hudComfortMode = 'own'; v.hudComfortSetup = { hudY: 40 }; mode = 'comfort'; await sleep(200);
-    ok(cr.layers[h.signals().refs.lcw.left] && cr.layers[h.signals().refs.arrow.left].y === 292, 'Comfort\'s own place: the signals under its tach (' + cr.layers[h.signals().refs.arrow.left].y + ')');
+    ok(cr.layers[h.signals().refs.arrow.left].y === 282, 'Comfort\'s own place: the signals under its tach (' + cr.layers[h.signals().refs.arrow.left].y + ')');
     v.hudComfortMode = 'hide'; v.hudComfortSetup = {}; mode = 'sport'; await sleep(200);
-    ok(cr.layers[h.signals().refs.arrow.left].y === 252, 'back in Sport: back under Sport\'s tach');
+    ok(cr.layers[h.signals().refs.arrow.left].y === 242, 'back in Sport: back under Sport\'s tach');
     dir = 'off'; await sleep(60);
     // the test pattern: the samples drawn at their places
     settings.set('hud', 'test'); await sleep(100);
     const tp = cr.frames[cr.frames.length - 1];
     const tpx = (x, y) => tp.px.slice((y * 800 + x) * 4, (y * 800 + x) * 4 + 4);
-    ok(tpx(243, 264)[1] > 150 && tpx(243, 264)[3] > 200, 'the test pattern shows the left arrow at its place');
+    ok(tpx(243, 254)[1] > 150 && tpx(243, 254)[3] > 200, 'the test pattern shows the left arrow at its place');
     // the driving mode's own place: they follow it; the HUD off: all gone
     settings.set('hud', 'off'); await sleep(80);
     ok(!h.signals().refs.arrow.left && !h.signals().arrow.left, 'HUD off: the signal layers dropped');

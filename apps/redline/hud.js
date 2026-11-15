@@ -240,7 +240,7 @@ function navPlaceOf(settings) {
  */
 function blockOf(settings) {
     const t = placeOf(settings), sg = HudSignals.signalsOf(settings);
-    const b = sg.turn || sg.lane ? HudSignals.signalsPlace(t, sg.tach, SCENE).band : null;
+    const b = sg.turn ? HudSignals.signalsPlace(t, sg.tach, SCENE).band : null;
     if (!b) return sg.tach ? t : { x: t.x, y: t.y, w: 0, h: 0 };
     if (!sg.tach) return b;
     const x0 = Math.min(t.x, b.x), y0 = Math.min(t.y, b.y), x1 = Math.max(t.x + t.w, b.x + b.w), y1 = Math.max(t.y + t.h, b.y + b.h);
@@ -268,7 +268,7 @@ function outsideGlass(r, style) {
 /** outsideGlass for all Redline draws there: the tach when it shows, and the turn signals (px per side, the most of either). */
 function outsideAll(settings, style) {
     const t = placeOf(settings), sg = HudSignals.signalsOf(settings), o = sg.tach ? outsideGlass(t, style) : {};
-    if (sg.turn || sg.lane) {
+    if (sg.turn) {
         const b = outsideGlass(HudSignals.signalsPlace(t, sg.tach, SCENE).band);
         Object.keys(b).forEach((k) => { o[k] = Math.max(o[k] || 0, b[k]); });
     }
@@ -852,7 +852,7 @@ function start(ctx, src) {
     };
 
     /*
-     * The turn signal arrows and the lane change warning (hud-signals.js): their own small layers, under the tach or in its
+     * The turn signal arrows (hud-signals.js): their own small layers, under the tach or in its
      * place, while Redline's HUD shows (not hidden by the driving mode, given way, parked or off) and their settings are on.
      * Every TICK_MS (the flashes keep step with the cluster's), whatever the HUD's frame rate.
      */
@@ -860,11 +860,11 @@ function start(ctx, src) {
     let sigTimer = null;
     const signalTick = safe('signals', () => {
         const sg = HudSignals.signalsOf(settings), playing = Date.now() < demoUntil;
-        const show = !!cr && cr.ready && shown === 'tach' && !!layer && !paused() && (sg.turn || sg.lane);
+        const show = !!cr && cr.ready && shown === 'tach' && !!layer && !paused() && sg.turn;
         if (!show) { signals.update(null); return; }
         const demo = playing ? HudSignals.demoSignals(Date.now() - demoStart) : null;
-        signals.update({ show: true, turn: sg.turn, lane: sg.lane, place: HudSignals.signalsPlace(rect(), sg.tach, SCENE),
-            dir: demo ? demo.dir : src.indicator ? src.indicator() : 'off', lcw: demo ? demo.lcw : src.laneChange ? src.laneChange() : null });
+        signals.update({ show: true, turn: sg.turn, place: HudSignals.signalsPlace(rect(), sg.tach, SCENE),
+            dir: demo ? demo.dir : src.indicator ? src.indicator() : 'off' });
     });
 
     const connect = safe('connect', () => {
@@ -940,8 +940,8 @@ function start(ctx, src) {
         if (!sg.tach) cv.strokeRoundRect(r.x, r.y, r.w, r.h, 6, 1, withAlpha(YELLOW, 0.4));
         else if (r.w === IW && r.h === IH) { const t = new Canvas(IW, IH); drawHud(t, sample()); cv.blit(t, r.x, r.y); }
         else Draw.drawLayer(Draw.scaled(cv, r.w / IW, r.x, r.y), sample());
-        // the turn signals and lane change signs at their places (both sides)
-        if (sg.turn || sg.lane) HudSignals.drawSamples(cv, HudSignals.signalsPlace(r, sg.tach, SCENE), sg);
+        // the turn signal arrows at their places (both sides)
+        if (sg.turn) HudSignals.drawSamples(cv, HudSignals.signalsPlace(r, sg.tach, SCENE), sg);
         // where the directions go (setting "Directions"): a sample turn at 100 %, its frame at any size; the tyre
         // widget's sample there when the directions are off and the widget isn't (on a car that sends tyres)
         const tw = HudTyres.widgetOf(settings), tyresOn = tw.show !== 'off' && settings.get('hudTyresSeen') === true;
@@ -1329,7 +1329,7 @@ function start(ctx, src) {
         if (m === 'test') showTestPattern(); else showTach();
     });
 
-    const HUD_KEYS = ['hud', 'hudSize', 'hudX', 'hudY', 'hudNavX', 'hudNavY', 'hudNav', 'hudTach', 'hudTurnSignals', 'hudLaneWarn'];
+    const HUD_KEYS = ['hud', 'hudSize', 'hudX', 'hudY', 'hudNavX', 'hudNavY', 'hudNav', 'hudTach', 'hudTurnSignals'];
     settings.onChange(safe('setting', (key) => {
         if (key === 'hudFps' && timer) { clearInterval(timer); timer = setInterval(tick, Math.round(1000 / fps())); log.info('hud: ' + fps() + ' fps'); return; }
         if (HUD_KEYS.indexOf(key) < 0 && shown !== 'test') { first = true; return; }
@@ -1401,7 +1401,7 @@ function start(ctx, src) {
         askStatus: () => { if (!cr || !cr.ready) return false; try { cr.status(); return true; } catch (e) { return false; } },
         /** cluster-render's last status reply { t, text }, or null. */
         crStatus: () => crStatus,
-        /** The turn signal and lane change layers: { arrow: { left, right }, lcw: { left, right }, refs } (lit: true / false / null). */
+        /** The turn signal layers: { arrow: { left, right }, refs } (lit: true / false / null). */
         signals: () => signals.state(), _signalTick: signalTick };
 }
 
