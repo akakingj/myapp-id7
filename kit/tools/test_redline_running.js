@@ -69,7 +69,7 @@ const log = { info() {}, warn() {}, error() {} };
     ok(h.frame().opts.style === 'arc', 'Sport: the Arc');
     drive = 'comfort'; await sleep(200);
     ok(h.frame().opts.style === 'arc' && cr.of('image').length === 1, 'Comfort, same as Sport: the Arc too');
-    Hud.profileView(settings, 'comfort').set('hudStyle', 'standard'); await sleep(200);
+    Hud.setComfortMode(settings, 'own'); Hud.profileView(settings, 'comfort').set('hudStyle', 'standard'); await sleep(200);
     ok(h.frame().opts.style === 'standard' && cr.of('image').length === 1, 'Comfort, its own: Standard');
     drive = 'sport'; await sleep(200);
     ok(h.frame().opts.style === 'arc' && cr.of('image').length === 1, 'back in Sport: the Arc');

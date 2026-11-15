@@ -208,7 +208,13 @@ ok(c.every((q) => !q.shift && !q.limiter), 'no rpm: nothing lit');
     ok(Hud.calmFor('hybrid', Hud.setupMode(phev, Hud.profileOf('hybrid', phev))) === 'all' && Hud.calmFor('hybrid', Hud.setupMode(pet, Hud.profileOf('hybrid', pet))) === 'hide',
         'by default a hybrid shows Redline in its Hybrid mode (Same as Sport); before it is known, hidden as Comfort');
     ok(Hud.optsFrom(phev, 'hybrid').style === 'arc', 'Hybrid, same as Sport: Sport\'s layout');
+    // Same as Sport: a change on the Hybrid tab is the one HUD's (Sport's), and it stays Same as Sport (this fork)
+    Hud.profileView(phev, 'hybrid').set('hudStyle', 'pill');
+    ok(phev.v.hudStyle === 'pill' && Hud.setupMode(phev, 'hybrid') === 'same' && !(phev.v.hudHybridSetup && Object.keys(phev.v.hudHybridSetup).length),
+        'Hybrid Same as Sport: a change on its tab changes Sport\'s, and it stays Same as Sport');
+    Hud.profileView(phev, 'sport').set('hudStyle', 'arc');
     // its own setup: starts as Sport's, changed apart from Sport and Comfort
+    Hud.setSetupMode(phev, 'hybrid', 'own');
     Hud.profileView(phev, 'hybrid').set('hudStyle', 'ramp');
     ok(phev.v.hudHybridMode === 'own' && phev.v.hudHybridSetup.hudStyle === 'ramp' && phev.v.hudStyle === 'arc' && Object.keys(phev.v.hudComfortSetup).length === 0,
         'a change on the Hybrid tab gives Hybrid its own setup, Sport and Comfort untouched');
@@ -232,9 +238,16 @@ ok(Hud.calmFor('comfort', 'hide') === 'hide' && Hud.calmFor('eco', 'hide') === '
     let st = store({ hudStyle: 'arc', hudShowTorque: true });
     let sp = Hud.profileView(st, 'sport'), cf = Hud.profileView(st, 'comfort');
     ok(Hud.optsFrom(cf).style === 'arc' && Hud.optsFrom(st, 'comfort').style === 'arc' && Hud.comfortMode(st) === 'same', 'profiles: Comfort follows Sport by default');
-    // a Comfort edit gives it its own copy (Sport's values), and changes only Comfort
+    // (this fork) Same as Sport: a change on Comfort's tab is the one HUD's - Sport's too - and Comfort stays Same as Sport
+    // (2026-11-15: the page opens on Comfort's tab when parked, and Left to right went to Comfort alone)
+    cf.set('hudLightStyle', 'bar');
+    ok(Hud.comfortMode(st) === 'same' && Hud.optsFrom(sp).gt3 === false && Hud.optsFrom(cf).gt3 === false && st.get('hudLightStyle') === 'bar' && !Object.keys(st.get('hudComfortSetup') || {}).length,
+        'profiles: Same as Sport, a change on Comfort\'s tab changes both and stays Same as Sport');
+    // its own: a copy of Sport's values, then changed apart
+    Hud.setComfortMode(st, 'own');
     cf.set('hudStyle', 'dial');
-    ok(Hud.comfortMode(st) === 'own' && Hud.optsFrom(cf).style === 'dial' && Hud.optsFrom(sp).style === 'arc', 'profiles: a Comfort edit makes it its own; Sport keeps its layout');
+    ok(Hud.comfortMode(st) === 'own' && Hud.optsFrom(cf).style === 'dial' && Hud.optsFrom(sp).style === 'arc', 'profiles: its own, a Comfort edit changes only Comfort; Sport keeps its layout');
+    ok(Hud.optsFrom(cf).gt3 === false && Hud.optsFrom(cf).lights === true, 'profiles: its own starts with Sport\'s values (Left to right kept)');
     ok(Hud.optsFrom(cf).torque === true, 'profiles: Comfort own starts as a copy of Sport (torque readout kept)');
     sp.set('hudShowTorque', false);
     ok(Hud.optsFrom(cf).torque === true && Hud.optsFrom(sp).torque === false, 'profiles: after that, Sport changes stay in Sport');

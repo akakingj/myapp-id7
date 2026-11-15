@@ -292,9 +292,12 @@ function comfortMode(settings) { return setupMode(settings, 'comfort'); }
 /** Sport's values of the profile keys (a copy: Comfort's own starts from it). */
 function profileSnapshot(settings) { const o = {}; PROFILE_KEYS.forEach((k) => { o[k] = settings.get(k); }); return o; }
 /**
- * One profile as settings: get(k) reads it (Comfort's own values over Sport's), set(k, v) writes it. A change to
- * Comfort while it follows Sport (or is hidden) gives it its own setup first, a copy of Sport's: so on the HUD
- * looks page nothing needs unlocking before it can be changed.
+ * One profile as settings: get(k) reads it (Comfort's own values over Sport's), set(k, v) writes it. A change on
+ * Comfort's (or Hybrid's) tab while it is Same as Sport changes the one HUD both use (Sport's values), and it stays
+ * Same as Sport; while it is hidden, its own setup (a copy of Sport's at first) and it stays hidden; while it is its
+ * own, only its own. (This fork, 2026-11-15: the HUD looks page opens on the tab of the mode the car is in, Comfort
+ * when parked, and a change there gave Comfort its own setup: Sport kept the old value, as if reset, and Same as
+ * Sport turned into Its own by itself.)
  */
 function profileView(settings, which) {
     const S = SETUPS[which], comfort = !!S;
@@ -308,11 +311,10 @@ function profileView(settings, which) {
             return settings.get(k);
         },
         set(k, v) {
-            if (!comfort || PROFILE_KEYS.indexOf(k) < 0) return settings.set(k, v);
+            if (!comfort || PROFILE_KEYS.indexOf(k) < 0 || setupMode(settings, which) === 'same') return settings.set(k, v);
             const st = Object.assign(profileSnapshot(settings), own() ? store() : {});
             st[k] = v;
             settings.set(S.setup, st);
-            if (!own()) settings.set(S.mode, 'own');
             return undefined;
         },
         item: (k) => (settings.item ? settings.item(k) : null),

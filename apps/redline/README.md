@@ -197,12 +197,14 @@ as Live Data shows it) picks which one shows.
   plug-in hybrid's Hybrid, Electric and battery modes until the car is known to be a hybrid (then they have their own,
   below).
 - **Comfort / Eco Pro** is one of three (*In Comfort / Eco Pro*, in Settings and on HUD looks):
-  - *Same HUD as Sport*: one HUD for every mode.
+  - *Same HUD as Sport*: one HUD for every mode. A change on HUD looks, with either tab picked, changes that
+    one HUD, and it stays *Same HUD as Sport* (this fork; HUD looks opens on the tab of the mode the car is in,
+    Comfort when parked, and a change there made Comfort its own and left Sport as it was).
   - *Its own HUD*: a setup of its own: layout, colours, readouts, alerts, everything on HUD looks.
-    It starts as a copy of Sport's. On HUD looks, with **COMFORT / ECO PRO** picked, changing
-    anything makes Comfort its own, so nothing needs switching on first.
+    It starts as a copy of Sport's; then a change with **COMFORT / ECO PRO** picked is Comfort's alone.
   - *Don't show* (the default): Redline steps aside (BMW's own HUD shows) in Comfort and Eco Pro; it comes back as
-    soon as the mode is Sport. Comfort's own setup, if it has one, is kept for later.
+    soon as the mode is Sport. Comfort's own setup, if it has one, is kept for later; a change on its tab goes there
+    and it stays hidden.
 - **Hybrid / Electric** (only on a car known to be a plug-in hybrid): its Hybrid, Electric and battery modes, the
   same three choices (*In Hybrid / Electric*), but *Same HUD as Sport* by default: on a hybrid these are the everyday
   modes, where the power bar matters most. Its own tab on HUD looks.
