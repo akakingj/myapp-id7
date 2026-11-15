@@ -140,33 +140,52 @@ const S_LCA = 'de.bmw.dass.driverassistanceapplications.AssistedDrivingViewLater
  * Watch the car's turn signals and lane change warning (ctx.signals). Returns { indicator() ('off' | 'left' | 'right' |
  * 'both'), laneChange() ({ left, right }, null once nothing has come for 3 s), status() }.
  */
-function watchCar(ctx, log) {
-    const st = { dir: 'off', lcw: null, lcwAt: 0, seen: { light: 0, lca: 0 }, sub: {} };
+function watchCar(ctx, log, opts) {
+    const st = { dir: 'off', lcw: null, lcwAt: 0, seen: { light: 0, lca: 0 }, sub: {}, res: {}, logged: { dir: 0 }, lastWarn: '' };
+    const info = (m) => { try { log.info(m); } catch (e) { /* no log */ } };
     const onLight = (what) => (v) => {
         st.seen.light++;
         const c = one(v, 'controlIndicateDirection'), a = one(v, 'activeFunctionIndicateDirection');
         const dir = direction(c, a);
         if (!dir || dir === st.dir) return;
         st.dir = dir;                    // (before the log line: a log that throws can't keep the value out)
-        try { log.debug('turn signals: ' + dir + ' (' + what + ' ' + c + ' / ' + a + ')'); } catch (e) { /* no debug log */ }
+        // the first few changes in Settings > Logs (lines starting "hud: "), so a drive shows the signals arrive
+        if (st.logged.dir < 6) { st.logged.dir++; info('hud: turn signals: ' + dir + ' (' + what + ' ' + c + ' / ' + a + ')'); }
     };
     const onLca = (v) => {
         st.seen.lca++;
         st.lcw = decodeLca(v); st.lcwAt = Date.now();
-        if (st.seen.lca <= 3) log.info('lane change warning raw: ' + JSON.stringify(v).slice(0, 400));
+        // what the car sends (the first three, in Settings > Logs) and each time a side's warning comes or goes
+        if (st.seen.lca <= 3) info('hud: lane change warning raw: ' + JSON.stringify(v).slice(0, 400));
+        const w = (st.lcw.left ? 'left' : '') + (st.lcw.left && st.lcw.right ? ' + ' : '') + (st.lcw.right ? 'right' : '');
+        if (w !== st.lastWarn) { st.lastWarn = w; info('hud: lane change warning: ' + (w || 'none')); }
     };
-    const watch = (iface, handlers, what) => {
+    /* After a while, whether the car's service answered at all and how much came: "not available" is a car without
+     * the assistant's lane change warning (or a head unit without that service); available with nothing received, a
+     * car that sends it only to its own displays. */
+    const report = (what, key) => () => {
+        const r = st.res[what];
+        info('hud: ' + what + ': service ' + (r && r.available ? 'available' : 'not available') + ', ' + st.seen[key] + ' received');
+    };
+    const later = (f, ms) => { const tm = setTimeout(f, ms); if (tm && tm.unref) tm.unref(); };
+    const watch = (iface, handlers, what, key) => {
         if (!ctx.signals || !ctx.signals.watch) { st.sub[what] = 'no signals'; return; }
         Promise.resolve(ctx.signals.watch(iface, '1', handlers, log))
-            .then((s) => { st.sub[what] = s && s.error ? 'error: ' + s.error : 'subscribed'; log.info('hud: ' + what + ' ' + st.sub[what]); })
-            .catch((e) => { st.sub[what] = 'error: ' + e; });
+            .then((s) => {
+                st.res[what] = s || {};
+                st.sub[what] = s && s.error ? 'error: ' + s.error : 'subscribed';
+                info('hud: ' + what + ' ' + st.sub[what]);
+                ((opts && opts.reportMs) || [20000, 180000]).forEach((ms) => later(report(what, key), ms));
+            })
+            .catch((e) => { st.sub[what] = 'error: ' + e; info('hud: ' + what + ' error: ' + e); });
     };
-    watch(S_LIGHT, { StatusFunctionsIndicators: onLight('indicators'), StatusFunctionsIndicators2: onLight('indicators 2') }, 'turn signals');
-    watch(S_LCA, { assistedDrivingViewLcaInput: onLca }, 'lane change warning');
+    watch(S_LIGHT, { StatusFunctionsIndicators: onLight('indicators'), StatusFunctionsIndicators2: onLight('indicators 2') }, 'turn signals', 'light');
+    watch(S_LCA, { assistedDrivingViewLcaInput: onLca }, 'lane change warning', 'lca');
     return {
         indicator: () => st.dir,
         laneChange: () => (st.lcw && Date.now() - st.lcwAt < 3000 ? st.lcw : null),
-        status: () => ({ turn: st.sub['turn signals'] || 'waiting', lane: st.sub['lane change warning'] || 'waiting', seen: Object.assign({}, st.seen) }),
+        status: () => ({ turn: st.sub['turn signals'] || 'waiting', lane: st.sub['lane change warning'] || 'waiting', seen: Object.assign({}, st.seen),
+            available: { turn: !!(st.res['turn signals'] || {}).available, lane: !!(st.res['lane change warning'] || {}).available } }),
     };
 }
 

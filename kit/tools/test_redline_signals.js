@@ -118,6 +118,30 @@ const ids = (r) => [r.x, r.y].join(',');
 }
 
 (async () => {
+    // what reaches Settings > Logs (lines starting "hud: "): the subscription, the first values, each warning's change,
+    // and whether the car's service answered at all (a car without the assistant's lane change warning: not available)
+    {
+        const subs2 = {}, got = [];
+        const ctx2 = { signals: { watch: (iface, inst, handlers) => { subs2[iface] = handlers; return Promise.resolve({ available: iface === S.S_LIGHT }); } } };
+        S.watchCar(ctx2, { info: (m) => got.push(m), warn() {} }, { reportMs: [40] });
+        await sleep(10);
+        subs2[S.S_LIGHT].StatusFunctionsIndicators({ controlIndicateDirection: 3 });
+        await sleep(60);
+        const LV = require(path.join(ROOT, 'apps', 'redline', 'logview.js'));
+        const shown = got.filter((m) => LV.IMPORTANT.redline({ level: 'INFO', msg: m }));
+        ok(shown.length === got.length && got.length >= 5, 'every signal line shows in Settings > Logs (' + got.length + ')');
+        ok(got.indexOf('hud: turn signals: left (indicators 3 / undefined)') >= 0, 'a turn signal\'s change logged');
+        ok(got.indexOf('hud: lane change warning: service not available, 0 received') >= 0 && got.indexOf('hud: turn signals: service available, 1 received') >= 0,
+            'after a while: whether each service answered and how much came (' + got.filter((m) => /service/.test(m)).join(' | ') + ')');
+        const got2 = [];
+        const subs3 = {};
+        S.watchCar({ signals: { watch: (iface, inst, h) => { subs3[iface] = h; return Promise.resolve({ available: true }); } } }, { info: (m) => got2.push(m) }, { reportMs: [] });
+        await sleep(10);
+        [{ statusLaneChangeWarningRight: 'WARNING_LEVEL_1' }, { statusLaneChangeWarningRight: 'WARNING_LEVEL_1' }, { statusLaneChangeWarningRight: 'NO_WARNING' }, {}, {}]
+            .forEach((v) => subs3[S.S_LCA].assistedDrivingViewLcaInput(v));
+        ok(got2.filter((m) => /raw/.test(m)).length === 3 && got2.indexOf('hud: lane change warning: right') >= 0 && got2.filter((m) => m === 'hud: lane change warning: none').length === 1,
+            'the first three values raw, and each warning\'s change once (' + got2.filter((m) => !/raw/.test(m)).join(' | ') + ')');
+    }
     fs.mkdirSync(SHM);
     fs.writeFileSync(path.join(SHM, 'redline'), JSON.stringify({ held: false, at: Date.now() }) + '\n');
     const v = Object.assign({}, def, { hud: 'on', hudStyle: 'standard', hudFps: 30 }), fns = [];

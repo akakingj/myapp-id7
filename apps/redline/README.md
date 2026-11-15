@@ -342,6 +342,11 @@ StatusFunctionsIndicators2) and the assistant's lane change broadcast (`assisted
   signals and directions show and Cluster Info's own arrows give way, as they do to the tach.
 - **Each on its own:** *Rev counter*, *Turn signals*, *Lane change* (Settings → HUD: shown with *All HUD options
   here*, or HUD looks → Place). *Play on HUD* flashes the left signal, then the right with a car beside.
+- **Nothing showing?** Settings → Logs: `hud: lane change warning subscribed`, then 20 s and 3 min later
+  `hud: lane change warning: service available / not available, N received`. *Not available*: the car (or its head
+  unit) has no lane change warning service, e.g. no blind spot warning in the mirrors. *Available, 0 received*: the
+  car doesn't send it to the head unit. The first three values come as `hud: lane change warning raw: ...`, and each
+  warning as `hud: lane change warning: left / right / none`. The turn signals the same way (`hud: turn signals: left`).
 | Frame rate | 10 / 20 / 30 fps (20); see [Performance](#performance) |
 
 ### Directions (experimental)
