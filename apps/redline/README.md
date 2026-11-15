@@ -309,7 +309,39 @@ At most four readouts fit the row; past that the last one gives way.
 | Setting | Values |
 |---|---|
 | Size | 40–130 %, scaled about the top centre |
-| Position left / right, up / down | px (left to −120, right to +280; up to −120, so Minimal's lights can sit over BMW's own rev gauge, down to +220, so a small tach fits the glass's bottom right corner); moves the layer only. HUD looks → Place warns when the tach reaches outside the part of the glass you see (as measured on one car by [bimmer-lab](https://github.com/bimmer-lab/apps), `shared/visible.js`, MIT) |
+| Position left / right, up / down | px (left to −120, right to +280; up to the HUD's top, down to +280, so a small tach fits the glass's bottom right corner; +64 is where the tach sat before 2.0.57); moves the layer only. HUD looks → Place warns when the tach reaches outside the part of the glass you see |
+| Rev counter, turn signals, lane change warning | each on or off (HUD looks → Place, *Show*); see [Turn signals](#turn-signals-and-the-lane-change-warning) |
+
+Since 2.0.57 the tach sits at the top of what a G20 shows (y 76..206 of the HUD's 800x480 at 100 %), the part seen
+being the one its owner's own HUD app measured on the car ([akakingj/apps](https://github.com/akakingj/apps)
+`cluster_redline`: x 124..676, y 72..221 seen well, and under it down to the directions' corner); before, the
+tach sat 64 px lower, in a G21's window as [bimmer-lab](https://github.com/bimmer-lab/apps) measured it
+(`shared/visible.js`, MIT).
+
+### Turn signals and the lane change warning
+
+Redline draws the car's turn signals on the HUD (2.0.57, as Cluster Info does): a small green arrow each side,
+flashing in step with the cluster's own (335 ms lit of 638), and outside each arrow a sign while the car's
+driving assistant says a car is beside or coming up behind on that side (this car yellow, the other's bonnet red;
+cars without the assistant send nothing, so nothing shows). Read only: `de.bmw.body.Light` (StatusFunctionsIndicators,
+StatusFunctionsIndicators2) and the assistant's lane change broadcast (`assistedDrivingViewLcaInput`).
+
+```
+[ tach ...................................... ]        rev counter on
+[car] [<]                                [>] [car]
+
+[car] [<]                                [>] [car]        rev counter off: at its place, the top
+```
+
+- **Where:** under the tach, the left sign at its left end with its arrow beside it, the right arrow and sign
+  ending at its right end; they move with the tach's *Size* and *Position*. With the rev counter switched off
+  (HUD looks → Place → *Show*), at the tach's own place, so they stay at the top of the glass. The directions keep
+  clear of them as of the tach.
+- **When:** while Redline's HUD shows: not while it is hidden in Comfort / Eco Pro, gives way to BMW's content, or
+  the car is off. With the rev counter off the HUD stays Redline's (a see-through layer holds it), so the turn
+  signals and directions show and Cluster Info's own arrows give way, as they do to the tach.
+- **Each on its own:** *Rev counter*, *Turn signals*, *Lane change* (Settings → HUD: shown with *All HUD options
+  here*, or HUD looks → Place). *Play on HUD* flashes the left signal, then the right with a car beside.
 | Frame rate | 10 / 20 / 30 fps (20); see [Performance](#performance) |
 
 ### Directions (experimental)
@@ -766,6 +798,7 @@ Useful lines:
 | `nav.js` | Directions, the data: decodes the route events, `conclusiveDart` and the lanes into the next turn; freshness (3 s) and giving way to BMW's card |
 | `navlog.js` | The navigation probe: subscribes to the guidance sources, asks the event list, writes `redline-nav.log`, hands every value to `nav.js` |
 | `hud-nav.js` | Directions, the picture (200x76, bottom right corner): thick white arrows, distance, street or lanes |
+| `hud-signals.js` | The turn signal arrows and the lane change signs on the HUD: the car's values, their places, their layers |
 | `limiter.js` | Learned rev limit |
 | `shiftmap.js` | Learned torque curve, gear ratios, per-gear shift points |
 | `files.js` | `writeAtomic`: the learned files written whole or not at all (temp file, then rename) |

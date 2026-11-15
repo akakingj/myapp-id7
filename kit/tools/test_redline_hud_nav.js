@@ -362,13 +362,15 @@ ok(lit(draw(C.SAMPLES.left, 'amber'), 0, N.NW).white === 0 && lit(draw(C.SAMPLES
     const T = cr.layers[cr.images()[0]], NL = cr.layers[cr.images()[1]];
     ok(NL && ov(T, NL) === 0 && ov(NL, Hud.BMW_SPEED) === 0, 'a big, low tach reaching the corner: the directions move clear of it (' + [NL && NL.x, NL && NL.y].join(',') + ')');
     settings.set('hudSize', 100); settings.set('hudY', 0); settings.set('hudX', 0); await sleep(100);
+    // (since 2.0.57 the tach sits at the top of a G20's glass, y 76, the turn signals under it: the grid covers the tach's
+    // top from 36 to 166 without the signals, and to 116 with them, which reach 44 + 8 px further down)
     let clash = 0, n = 0, farOut = 0;
-    [70, 80, 90, 100, 110, 120, 130].forEach((sz) => { for (let x = -120; x <= 120; x += 20) for (let y = -40; y <= 60; y += 10) {
-        const vv = { hudSize: sz, hudX: x, hudY: y }, st = { get: (k) => vv[k] }, t = Hud.placeOf(st), r = Hud.navPlaceOf(st), G = Hud.GLASS;
+    [false, true].forEach((sig) => [70, 80, 90, 100, 110, 120, 130].forEach((sz) => { for (let x = -120; x <= 120; x += 20) for (let y = -40; y <= (sig ? 40 : 90); y += 10) {
+        const vv = { hudSize: sz, hudX: x, hudY: y, hudTurnSignals: sig, hudLaneWarn: sig }, st = { get: (k) => vv[k] }, r = Hud.navPlaceOf(st), G = Hud.GLASS;
         n++;
-        if (ov(r, t) || ov(r, Hud.BMW_SPEED)) clash++;
+        if (ov(r, Hud.placeOf(st)) || ov(r, Hud.blockOf(st)) || ov(r, Hud.BMW_SPEED)) clash++;
         if (sz <= 100 && Math.max(G.x - r.x, 0) + Math.max(r.x + r.w - G.x - G.w, 0) + Math.max(G.y - r.y, 0) + Math.max(r.y + r.h - G.y - G.h, 0) > 20) farOut++;
-    } });
+    } }));
     ok(clash === 0, 'every tach size and position the settings allow (' + n + '): the directions cover nothing (' + clash + ' clash)');
     ok(farOut === 0, 'up to 100 %: never more than 20 px past the glass (' + farOut + ')');
 

@@ -41,6 +41,7 @@ const HudNav = require('./hud-nav');
 const TyresMod = require('./tyres');
 const Fuel = require('./fuel');
 const HudTyres = require('./hud-tyres');
+const HudSignals = require('./hud-signals');
 const { HudClaim } = require('./kit/hud_claim');
 // files written whole or not at all (the learned reaction lead)
 const { writeAtomic } = require('./files');
@@ -154,12 +155,12 @@ function reactionMs(flash, rpm) {
 
 /** Where the tach image shows in the HUD's scene (SCENE), from the size and position settings. */
 function placeOf(settings) {
-    // (smaller, further right and further down since 2.0.27: a small tach in the glass's bottom right corner)
+    // (at the top of what a G20 shows since 2.0.57, the turn signals under it)
     // 100 % is the scene's own size for the tach (iDrive 8's small HUD: as wide as it), never more than all of it
     const k = Math.min(clamp(numOf(settings, 'hudSize', 100), 40, 140) / 100 * SCENE.fit, SCENE.w / IW, SCENE.h / IH);
     const w = Math.round(IW * k), h = Math.round(IH * k);
     const x = Math.round((SCENE.w - IW) / 2) + Math.round((IW - w) / 2) + clamp(numOf(settings, 'hudX', 0), -120, 280);
-    const y = SCENE.baseY + clamp(numOf(settings, 'hudY', 0), -120, 220);
+    const y = SCENE.baseY + clamp(numOf(settings, 'hudY', 0), -120, 280);
     return { x: clamp(x, 0, SCENE.w - w), y: clamp(y, 0, SCENE.h - h), w: w, h: h };
 }
 
@@ -175,14 +176,19 @@ const BMW_SPEED = { x: 116, y: 320, w: 236, h: 48 };
 // the glass the driver sees whole (the test pattern's 120 px frame on the G21)
 const GLASS = { x: 120, y: 120, w: 560, h: 240 };
 /** The part of the HUD's 800x480 scene seen through the windshield, measured from car photos by bimmer-lab
- * (github.com/bimmer-lab/apps shared/visible.js, MIT, 2026-11-05; it moves with the driver's eye height). */
+ * (github.com/bimmer-lab/apps shared/visible.js, MIT, 2026-11-05; it moves with the driver's eye height): a G21's. */
 const HUD_WINDOW = { x: 120, y: 100, w: 485, h: 278 };
+/** A G20's, as its owner's own HUD app measured it on the car (github.com/akakingj/apps cluster_redline, 2026-11-15):
+ * its 600x180 window at x 100..700, y 50..230, the part seen well that window less 12 % at the top, 5 % at the foot and
+ * 4 % each side (x 124..676, y 72..221), and under it down to the directions' corner and BMW's speed (y 356). The tach
+ * sits at its top (baseY 76: y 76..206 at 100 %), the turn signals under it (hud-signals.js), since 2.0.57. */
+const G20_WINDOW = { x: 124, y: 72, w: 552, h: 284 };
 /*
  * The HUD's scene: iDrive 7's 800x480, of which only part is seen (above), or the size cluster-render names
  * in its hello (iDrive 8: "hud:353x203", all of it shown, above the HUD's own speed bar: no BMW speed in it).
  * baseY: the tach's top at 100 % and Position 0; fit: its size at 100 %.
  */
-const ID7_SCENE = { w: 800, h: 480, fit: 1, baseY: 140, window: HUD_WINDOW, glass: GLASS, speed: BMW_SPEED, navRight: NAV_RIGHT, navBottom: NAV_BOTTOM };
+const ID7_SCENE = { w: 800, h: 480, fit: 1, baseY: 76, window: G20_WINDOW, glass: GLASS, speed: BMW_SPEED, navRight: NAV_RIGHT, navBottom: NAV_BOTTOM };
 let SCENE = ID7_SCENE;
 function sceneOf(targets) {
     const m = /(?:^|,)\s*hud:(\d+)x(\d+)/.exec(String(targets || ''));
@@ -201,12 +207,13 @@ function useScene(targets) {
 const overlapOf = (a, b) => Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
 /**
  * Where the directions go: the glass's bottom right corner ("hudNavX" / "hudNavY" move it), but never over or
- * under the tach (its rev bar, gear, readouts, grade and arrows are all inside placeOf's rectangle) or BMW's speed.
+ * under the tach (its rev bar, gear, readouts, grade and arrows are all inside placeOf's rectangle), the turn signals
+ * (blockOf) or BMW's speed.
  * When the tach's Size / Position reach the corner, the next place that's clear is taken: under the tach, right
  * of it, left of it, above it; on the glass first. With nowhere clear, the place that covers least.
  */
 function navPlaceOf(settings) {
-    const w = HudNav.NW, h = HudNav.NH, t = placeOf(settings);
+    const w = HudNav.NW, h = HudNav.NH, t = blockOf(settings);
     const dx = clamp(Number(settings.get('hudNavX')) || 0, -400, 100), dy = clamp(Number(settings.get('hudNavY')) || 0, -200, 100);
     const at = (x, y) => ({ x: clamp(Math.round(x), 0, SCENE.w - w), y: clamp(Math.round(y), 0, SCENE.h - h), w: w, h: h });
     const corner = at(SCENE.navRight - w + dx, SCENE.navBottom - h + dy);
@@ -222,6 +229,18 @@ function navPlaceOf(settings) {
     let best = tries[0];
     tries.forEach((r) => { if (cost(r) < cost(best)) best = r; });
     return best;
+}
+/**
+ * What Redline draws in the tach's part of the scene: the tach (when it shows) and the turn signals under it or in its
+ * place (hud-signals.js) together, the box the directions keep clear of. Neither: an empty box at the tach's place.
+ */
+function blockOf(settings) {
+    const t = placeOf(settings), sg = HudSignals.signalsOf(settings);
+    const b = sg.turn || sg.lane ? HudSignals.signalsPlace(t, sg.tach, SCENE).band : null;
+    if (!b) return sg.tach ? t : { x: t.x, y: t.y, w: 0, h: 0 };
+    if (!sg.tach) return b;
+    const x0 = Math.min(t.x, b.x), y0 = Math.min(t.y, b.y), x1 = Math.max(t.x + t.w, b.x + b.w), y1 = Math.max(t.y + t.h, b.y + b.h);
+    return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
 }
 /** "hudNav": off / route (while a route runs, the default) / near (under 1 km, and lanes). */
 function navModeOf(settings) { const m = settings.get('hudNav'); return m === 'off' || m === 'near' ? m : 'route'; }
@@ -818,6 +837,22 @@ function start(ctx, src) {
         const t = navPrev; navPrev = navCur; navCur = t;
     };
 
+    /*
+     * The turn signal arrows and the lane change warning (hud-signals.js): their own small layers, under the tach or in its
+     * place, while Redline's HUD shows (not hidden by the driving mode, given way, parked or off) and their settings are on.
+     * Every TICK_MS (the flashes keep step with the cluster's), whatever the HUD's frame rate.
+     */
+    const signals = HudSignals.createSignals(() => (cr && cr.ready ? cr : null), log);
+    let sigTimer = null;
+    const signalTick = safe('signals', () => {
+        const sg = HudSignals.signalsOf(settings), playing = Date.now() < demoUntil;
+        const show = !!cr && cr.ready && shown === 'tach' && !!layer && !paused() && (sg.turn || sg.lane);
+        if (!show) { signals.update(null); return; }
+        const demo = playing ? HudSignals.demoSignals(Date.now() - demoStart) : null;
+        signals.update({ show: true, turn: sg.turn, lane: sg.lane, place: HudSignals.signalsPlace(rect(), sg.tach, SCENE),
+            dir: demo ? demo.dir : src.indicator ? src.indicator() : 'off', lcw: demo ? demo.lcw : src.laneChange ? src.laneChange() : null });
+    });
+
     const connect = safe('connect', () => {
         if (cr) return;
         if (!ClusterRender) { log.warn('hud: cluster_render_client.js is missing from the app'); return; }
@@ -853,6 +888,7 @@ function start(ctx, src) {
             if (navLayer && ref === navLayer) navFailed('refused');
         }));
         cr.connect();
+        if (!sigTimer) sigTimer = setInterval(signalTick, HudSignals.TICK_MS);
         log.info('hud: connecting to cluster-render');
     });
 
@@ -870,6 +906,8 @@ function start(ctx, src) {
 
     const disconnect = safe('disconnect', () => {
         dropLayer();
+        if (sigTimer) { clearInterval(sigTimer); sigTimer = null; }
+        signals.drop();
         if (cr) { cr.removeAllListeners(); cr.close(); cr = null; log.info('hud: off'); }
         lastTarget = ''; target = null;
     });
@@ -884,8 +922,12 @@ function start(ctx, src) {
         const r = rect();
         // where the size and position settings put the tach: drawn there at that size, blended over the pattern
         // (a scaled copy of the 400x130 picture would lose its see-through and dim parts: drawImage is opaque)
-        if (r.w === IW && r.h === IH) { const t = new Canvas(IW, IH); drawHud(t, sample()); cv.blit(t, r.x, r.y); }
+        const sg = HudSignals.signalsOf(settings);
+        if (!sg.tach) cv.strokeRoundRect(r.x, r.y, r.w, r.h, 6, 1, withAlpha(YELLOW, 0.4));
+        else if (r.w === IW && r.h === IH) { const t = new Canvas(IW, IH); drawHud(t, sample()); cv.blit(t, r.x, r.y); }
         else Draw.drawLayer(Draw.scaled(cv, r.w / IW, r.x, r.y), sample());
+        // the turn signals and lane change signs at their places (both sides)
+        if (sg.turn || sg.lane) HudSignals.drawSamples(cv, HudSignals.signalsPlace(r, sg.tach, SCENE), sg);
         // where the directions go (setting "Directions"): a sample turn at 100 %, its frame at any size; the tyre
         // widget's sample there when the directions are off and the widget isn't (on a car that sends tyres)
         const tw = HudTyres.widgetOf(settings), tyresOn = tw.show !== 'off' && settings.get('hudTyresSeen') === true;
@@ -1148,6 +1190,14 @@ function start(ctx, src) {
         // a fault in the directions drops them, never the tach's frame
         // (the tyre widget in the same corner when the directions have nothing to show)
         if (shown === 'tach') { try { drawNavLayer(nv.show, nv.show ? null : tyreView(Date.now() < demoUntil)); } catch (e) { log.warn('hud: directions: ' + (e && e.stack || e)); dropNav(); } }
+        // the tach switched off (setting hudTach): its layer stays, see-through, so the HUD stays Redline's for the turn
+        // signals and the directions (and a Comfort hide, a switch-off, BMW's content still take it as before); nothing
+        // read from the car for the readouts
+        if (!HudSignals.signalsOf(settings).tach) {
+            stopReads();
+            if (first) { cur.clear(); if (cr.pixels(layer, null, asBuffer(cur.d))) { first = false; lastKey = 'blank'; } }
+            return;
+        }
         // the gearbox unit is asked only while its readout is on
         // (with the options it draws with: "lights only" in Comfort / Eco Pro has no gearbox readout)
         const oNow = optsNow();
@@ -1265,11 +1315,12 @@ function start(ctx, src) {
         if (m === 'test') showTestPattern(); else showTach();
     });
 
-    const HUD_KEYS = ['hud', 'hudSize', 'hudX', 'hudY', 'hudNavX', 'hudNavY', 'hudNav'];
+    const HUD_KEYS = ['hud', 'hudSize', 'hudX', 'hudY', 'hudNavX', 'hudNavY', 'hudNav', 'hudTach', 'hudTurnSignals', 'hudLaneWarn'];
     settings.onChange(safe('setting', (key) => {
         if (key === 'hudFps' && timer) { clearInterval(timer); timer = setInterval(tick, Math.round(1000 / fps())); log.info('hud: ' + fps() + ' fps'); return; }
         if (HUD_KEYS.indexOf(key) < 0 && shown !== 'test') { first = true; return; }
         if (shown === 'test' && key !== 'hud') shown = '';         // redraw the pattern with the tach moved
+        if (key === 'hudTach') { first = true; lastKey = ''; }      // the tach drawn again, or the see-through frame sent
         apply();
     }));
     apply();
@@ -1335,8 +1386,10 @@ function start(ctx, src) {
         /** Ask cluster-render for its status (the reply lands in crStatus); false when it isn't connected. */
         askStatus: () => { if (!cr || !cr.ready) return false; try { cr.status(); return true; } catch (e) { return false; } },
         /** cluster-render's last status reply { t, text }, or null. */
-        crStatus: () => crStatus };
+        crStatus: () => crStatus,
+        /** The turn signal and lane change layers: { arrow: { left, right }, lcw: { left, right }, refs } (lit: true / false / null). */
+        signals: () => signals.state(), _signalTick: signalTick };
 }
 
 // writeAtomic: kept here too (it moved to files.js in 2.0) for code that calls Hud.writeAtomic
-module.exports = { start, revOf, writeAtomic, navPlaceOf, BMW_SPEED, GLASS, sceneOf, useScene, scene: () => SCENE, optsFrom, PROFILE_KEYS, SETUPS, profileOf, comfortMode, setupMode, profileView, setComfortMode, setSetupMode, migrateProfiles, reactionMs, gearFontOf, M_STYLES, placeOf, outsideGlass, readoutsFor, rpmItem, electricalItems, electricalWants, MAX_READOUTS, METER_STYLES, driveModeOf, calmFor, calmOpts, demoAt, DEMO_MS, demoFrame, shiftCue, drawDown };
+module.exports = { start, revOf, writeAtomic, navPlaceOf, blockOf, G20_WINDOW, HUD_WINDOW, BMW_SPEED, GLASS, sceneOf, useScene, scene: () => SCENE, optsFrom, PROFILE_KEYS, SETUPS, profileOf, comfortMode, setupMode, profileView, setComfortMode, setSetupMode, migrateProfiles, reactionMs, gearFontOf, M_STYLES, placeOf, outsideGlass, readoutsFor, rpmItem, electricalItems, electricalWants, MAX_READOUTS, METER_STYLES, driveModeOf, calmFor, calmOpts, demoAt, DEMO_MS, demoFrame, shiftCue, drawDown };

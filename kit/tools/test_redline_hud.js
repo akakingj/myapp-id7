@@ -526,14 +526,14 @@ for (let t = 0; t < Hud.DEMO_MS * 3; t += 37) {
     }
     // placement and the windshield's window
     const at = (o) => Hud.placeOf(settingsOf(o));
-    ok(JSON.stringify(at({})) === JSON.stringify({ x: 200, y: 140, w: 400, h: 130 }) && Object.keys(Hud.outsideGlass(at({}))).length === 0, 'place: default fully on the glass');
-    ok(Hud.outsideGlass(at({ hudSize: 140 })).right === 75 && Hud.outsideGlass(at({ hudY: -60 })).top === 20, 'place: off the glass, per side');
-    // 2.0.27: smaller, further right and further down (a small tach in the glass's bottom right corner)
-    ok(JSON.stringify(at({ hudSize: 40, hudX: 280, hudY: 220 })) === JSON.stringify({ x: 600, y: 360, w: 160, h: 52 }) && at({ hudSize: 30, hudX: 400, hudY: 400 }).w === 160 && at({ hudSize: 30, hudX: 400, hudY: 400 }).x === 600,
-        'place: down to 40 %, right to +280, down to +220 (and no further)');
-    // Minimal's dots can go up over BMW's own ramp (2026-11-10, an X3 M40i): Up reaches -120, and the empty top of its
-    // picture isn't counted as off the glass
-    ok(at({ hudY: -120 }).y === 20 && Hud.outsideGlass(at({ hudY: -60 }), 'minimal').top === 11 && Hud.outsideGlass(at({ hudY: -40 }), 'minimal').top === undefined, 'place: Minimal up to -120, only its empty top (above the D / S / M letter) not counted off the glass');
+    // 2.0.57: at the top of what a G20 shows (its owner's own HUD app's measure: x 124..676, y 72..356)
+    ok(JSON.stringify(at({})) === JSON.stringify({ x: 200, y: 76, w: 400, h: 130 }) && Object.keys(Hud.outsideGlass(at({}))).length === 0, 'place: default fully on the glass, at its top');
+    ok(Hud.outsideGlass(at({ hudSize: 140 })).right === 4 && Hud.outsideGlass(at({ hudSize: 140 })).left === 4 && Hud.outsideGlass(at({ hudY: -60 })).top === 56, 'place: off the glass, per side');
+    ok(JSON.stringify(at({ hudSize: 40, hudX: 280, hudY: 280 })) === JSON.stringify({ x: 600, y: 356, w: 160, h: 52 }) && at({ hudSize: 30, hudX: 400, hudY: 400 }).w === 160 && at({ hudSize: 30, hudX: 400, hudY: 400 }).y === 356,
+        'place: down to 40 %, right to +280, down to +280 (and no further)');
+    // up to the scene's top (-76); Minimal's empty top (above the D / S / M letter) isn't counted off the glass
+    ok(at({ hudY: -80 }).y === 0 && Hud.outsideGlass(at({ hudY: -20 }), 'minimal').top === 7 && Hud.outsideGlass(at({ hudY: -10 }), 'minimal').top === undefined && Hud.outsideGlass(at({ hudY: -10 })).top === 6,
+        'place: up to the top, only Minimal\'s empty top not counted off the glass');
     // reaction time: a slow climb takes the lead as asked; a fast one only the 800 rpm it really had
     ok(Hud.reactionMs({ rate: 1000, target: 6000, lead: 300 }, 6000) === 300, 'reaction: on time at 1000 rpm/s');
     ok(Hud.reactionMs({ rate: 4000, target: 6000, lead: 300 }, 6000) === 200 && Hud.reactionMs({ rate: 4000, target: 6000, lead: 300 }, 6200) === 250, 'reaction: capped lead on a fast climb');
