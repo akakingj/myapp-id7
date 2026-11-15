@@ -338,7 +338,7 @@ ok(lit(draw(C.SAMPLES.left, 'amber'), 0, N.NW).white === 0 && lit(draw(C.SAMPLES
     ok(imgs.length === 2, 'a turn: a second image layer (' + imgs.length + ')');
     const tach = cr.layers[imgs[0]], nl = cr.layers[imgs[1]] || {};
     // the glass's bottom right corner (x 120..680, y 120..360 seen), clear of the tach and of BMW's speed at the bottom left
-    ok(nl.iw === N.NW && nl.ih === N.NH && nl.w === 200 && nl.h === 76 && nl.target === 'hud' && nl.x + nl.w === 672 && nl.y + nl.h === 356, 'the directions in the bottom right corner (' + [nl.x, nl.y, nl.w, nl.h].join(',') + ')');
+    ok(nl.iw === N.NW && nl.ih === N.NH && nl.w === 200 && nl.h === 76 && nl.target === 'hud' && nl.x + nl.w === 672 && nl.y + nl.h === 366, 'the directions in the bottom right corner, 10 px under it clear of the turn signals (2.0.61), above BMW speed\'s foot (' + [nl.x, nl.y, nl.w, nl.h].join(',') + ')');
     ok(nl.y >= tach.y + tach.h && nl.x >= 400, 'below the tach, in the right half');
     const navFrames = () => cr.frames.filter((f) => f.ref === imgs[1]);
     ok(navFrames().length === 1 && !navFrames()[0].rects, 'sent whole once');
@@ -362,10 +362,10 @@ ok(lit(draw(C.SAMPLES.left, 'amber'), 0, N.NW).white === 0 && lit(draw(C.SAMPLES
     const T = cr.layers[cr.images()[0]], NL = cr.layers[cr.images()[1]];
     ok(NL && ov(T, NL) === 0 && ov(NL, Hud.BMW_SPEED) === 0, 'a big, low tach reaching the corner: the directions move clear of it (' + [NL && NL.x, NL && NL.y].join(',') + ')');
     settings.set('hudSize', 100); settings.set('hudY', 0); settings.set('hudX', 0); await sleep(100);
-    // (since 2.0.57 the tach sits at the top of a G20's glass, y 76, the turn signals under it: the grid covers the tach's
-    // top from 36 to 166 without the signals, and to 116 with them, which reach 44 + 8 px further down)
+    // (since 2.0.61 the tach sits at the top of what this G20 shows, y 104, the turn signals under it: the grid covers the
+    // tach's top from 34 to 164 without the signals, and to 114 with them, which reach 44 + 8 px further down)
     let clash = 0, n = 0, farOut = 0;
-    [false, true].forEach((sig) => [70, 80, 90, 100, 110, 120, 130].forEach((sz) => { for (let x = -120; x <= 120; x += 20) for (let y = -40; y <= (sig ? 40 : 90); y += 10) {
+    [false, true].forEach((sig) => [70, 80, 90, 100, 110, 120, 130].forEach((sz) => { for (let x = -120; x <= 120; x += 20) for (let y = -70; y <= (sig ? 10 : 60); y += 10) {
         const vv = { hudSize: sz, hudX: x, hudY: y, hudTurnSignals: sig, hudLaneWarn: sig }, st = { get: (k) => vv[k] }, r = Hud.navPlaceOf(st), G = Hud.GLASS;
         n++;
         if (ov(r, Hud.placeOf(st)) || ov(r, Hud.blockOf(st)) || ov(r, Hud.BMW_SPEED)) clash++;

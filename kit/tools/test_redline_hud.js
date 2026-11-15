@@ -526,13 +526,13 @@ for (let t = 0; t < Hud.DEMO_MS * 3; t += 37) {
     }
     // placement and the windshield's window
     const at = (o) => Hud.placeOf(settingsOf(o));
-    // 2.0.57: at the top of what a G20 shows (its owner's own HUD app's measure: x 124..676, y 72..356)
-    ok(JSON.stringify(at({})) === JSON.stringify({ x: 200, y: 76, w: 400, h: 130 }) && Object.keys(Hud.outsideGlass(at({}))).length === 0, 'place: default fully on the glass, at its top');
+    // 2.0.61: at the top of what this G20 shows (x 124..676 as its owner's own HUD app measured, y 100..356 as the car showed)
+    ok(JSON.stringify(at({})) === JSON.stringify({ x: 200, y: 104, w: 400, h: 130 }) && Object.keys(Hud.outsideGlass(at({}))).length === 0, 'place: default fully on the glass, at its top');
     ok(Hud.outsideGlass(at({ hudSize: 140 })).right === 4 && Hud.outsideGlass(at({ hudSize: 140 })).left === 4 && Hud.outsideGlass(at({ hudY: -60 })).top === 56, 'place: off the glass, per side');
-    ok(JSON.stringify(at({ hudSize: 40, hudX: 280, hudY: 280 })) === JSON.stringify({ x: 600, y: 356, w: 160, h: 52 }) && at({ hudSize: 30, hudX: 400, hudY: 400 }).w === 160 && at({ hudSize: 30, hudX: 400, hudY: 400 }).y === 356,
+    ok(JSON.stringify(at({ hudSize: 40, hudX: 280, hudY: 280 })) === JSON.stringify({ x: 600, y: 384, w: 160, h: 52 }) && at({ hudSize: 30, hudX: 400, hudY: 400 }).w === 160 && at({ hudSize: 30, hudX: 400, hudY: 400 }).y === 384,
         'place: down to 40 %, right to +280, down to +280 (and no further)');
-    // up to the scene's top (-76); Minimal's empty top (above the D / S / M letter) isn't counted off the glass
-    ok(at({ hudY: -80 }).y === 0 && Hud.outsideGlass(at({ hudY: -20 }), 'minimal').top === 7 && Hud.outsideGlass(at({ hudY: -10 }), 'minimal').top === undefined && Hud.outsideGlass(at({ hudY: -10 })).top === 6,
+    // up to the scene's top (-104); Minimal's empty top (above the D / S / M letter) isn't counted off the glass
+    ok(at({ hudY: -120 }).y === 0 && Hud.outsideGlass(at({ hudY: -20 }), 'minimal').top === 7 && Hud.outsideGlass(at({ hudY: -10 }), 'minimal').top === undefined && Hud.outsideGlass(at({ hudY: -10 })).top === 6,
         'place: up to the top, only Minimal\'s empty top not counted off the glass');
     // reaction time: a slow climb takes the lead as asked; a fast one only the 800 rpm it really had
     ok(Hud.reactionMs({ rate: 1000, target: 6000, lead: 300 }, 6000) === 300, 'reaction: on time at 1000 rpm/s');

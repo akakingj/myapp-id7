@@ -178,20 +178,21 @@ const GLASS = { x: 120, y: 120, w: 560, h: 240 };
 /** The part of the HUD's 800x480 scene seen through the windshield, measured from car photos by bimmer-lab
  * (github.com/bimmer-lab/apps shared/visible.js, MIT, 2026-11-05; it moves with the driver's eye height): a G21's. */
 const HUD_WINDOW = { x: 120, y: 100, w: 485, h: 278 };
-/** A G20's, as its owner's own HUD app measured it on the car (github.com/akakingj/apps cluster_redline, 2026-11-15):
- * its 600x180 window at x 100..700, y 50..230, the part seen well that window less 12 % at the top, 5 % at the foot and
- * 4 % each side (x 124..676, y 72..221), and under it down to the directions' corner and BMW's speed (y 356). The tach
- * sits at its top (baseY 76: y 76..206 at 100 %), the turn signals under it (hud-signals.js), since 2.0.57. */
-const G20_WINDOW = { x: 124, y: 72, w: 552, h: 284 };
-/** The turn signals' top place with the tach off (hud-signals.js): Cluster Info's arrows at y 86 lost their top on the
- * owner's G20 (2026-11-15), so 104: bimmer-lab's G21 seen top (100) plus 4, Cluster Info's place too (1.6.22). */
+/** A G20's: x 124..676 as a G20 owner's own HUD app measured it on the car (github.com/akakingj/apps cluster_redline,
+ * 2026-11-15, seen well 4 % in from each side), y 100..356 as this car showed it: at the friend's top (y 72) the tach's
+ * shift lights and D / S / M letter and Cluster Info's arrows at y 86 were cut off, so the top is bimmer-lab's G21 one
+ * (100), and the foot the directions' corner. The tach sits at its top (baseY 104: y 104..234 at 100 %, its drawing
+ * from 106), the turn signals under it (hud-signals.js), since 2.0.61 (2.0.57..2.0.60: y 76). */
+const G20_WINDOW = { x: 124, y: 100, w: 552, h: 256 };
+/** The turn signals' top place with the tach off (hud-signals.js): no higher than the tach's default top, where
+ * Cluster Info's sit too (1.6.22: at y 86 their tops were cut off on the car). */
 const SIGNALS_TOP = 104;
 /*
  * The HUD's scene: iDrive 7's 800x480, of which only part is seen (above), or the size cluster-render names
  * in its hello (iDrive 8: "hud:353x203", all of it shown, above the HUD's own speed bar: no BMW speed in it).
  * baseY: the tach's top at 100 % and Position 0; fit: its size at 100 %.
  */
-const ID7_SCENE = { w: 800, h: 480, fit: 1, baseY: 76, sigTop: SIGNALS_TOP, window: G20_WINDOW, glass: GLASS, speed: BMW_SPEED, navRight: NAV_RIGHT, navBottom: NAV_BOTTOM };
+const ID7_SCENE = { w: 800, h: 480, fit: 1, baseY: 104, sigTop: SIGNALS_TOP, window: G20_WINDOW, glass: GLASS, speed: BMW_SPEED, navRight: NAV_RIGHT, navBottom: NAV_BOTTOM };
 let SCENE = ID7_SCENE;
 function sceneOf(targets) {
     const m = /(?:^|,)\s*hud:(\d+)x(\d+)/.exec(String(targets || ''));

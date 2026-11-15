@@ -309,14 +309,16 @@ At most four readouts fit the row; past that the last one gives way.
 | Setting | Values |
 |---|---|
 | Size | 40–130 %, scaled about the top centre |
-| Position left / right, up / down | px (left to −120, right to +280; up to the HUD's top, down to +280, so a small tach fits the glass's bottom right corner; +64 is where the tach sat before 2.0.57); moves the layer only. HUD looks → Place warns when the tach or the turn signals reach outside the part of the glass you see |
+| Position left / right, up / down | px (left to −120, right to +280; up to the HUD's top, down to +240, so a small tach fits the glass's bottom right corner; +36 is where the tach sat before 2.0.57); moves the layer only. HUD looks → Place warns when the tach or the turn signals reach outside the part of the glass you see |
 | Rev counter, turn signals, lane change warning | each on or off (HUD looks → Place, *Show*); see [Turn signals](#turn-signals-and-the-lane-change-warning) |
 
-Since 2.0.57 the tach sits at the top of what a G20 shows (y 76..206 of the HUD's 800x480 at 100 %), the part seen
-being the one its owner's own HUD app measured on the car ([akakingj/apps](https://github.com/akakingj/apps)
-`cluster_redline`: x 124..676, y 72..221 seen well, and under it down to the directions' corner); before, the
-tach sat 64 px lower, in a G21's window as [bimmer-lab](https://github.com/bimmer-lab/apps) measured it
-(`shared/visible.js`, MIT).
+Since 2.0.61 the tach sits at the top of what a G20 shows (y 104..234 of the HUD's 800x480 at 100 %): x 124..676
+as a G20 owner's own HUD app measured it ([akakingj/apps](https://github.com/akakingj/apps) `cluster_redline`),
+y from 100 as the car showed it. 2.0.57 to 2.0.60 put it at y 76, the friend's top (y 72): on this car its shift
+lights and D / S / M letter (the top 25 px) were then cut off, as were Cluster Info's arrows at y 86. Before 2.0.57
+it sat at y 140, in a G21's window as [bimmer-lab](https://github.com/bimmer-lab/apps) measured it
+(`shared/visible.js`, MIT). The directions sit 10 px under their corner (to y 366, above BMW speed's foot) while the
+turn signals are under the tach.
 
 ### Turn signals and the lane change warning
 

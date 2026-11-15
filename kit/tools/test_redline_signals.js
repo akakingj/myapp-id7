@@ -25,27 +25,27 @@ const ids = (r) => [r.x, r.y].join(',');
 // ---- where they go --------------------------------------------------------------------------------------------------
 {
     const scene = Hud.scene(), t = Hud.placeOf(st({}));
-    ok(JSON.stringify(t) === JSON.stringify({ x: 200, y: 76, w: 400, h: 130 }), 'the tach at the top of a G20\'s glass (' + JSON.stringify(t) + ')');
+    ok(JSON.stringify(t) === JSON.stringify({ x: 200, y: 104, w: 400, h: 130 }), 'the tach at the top of what this G20 shows, y 104 (' + JSON.stringify(t) + ')');
     const p = S.signalsPlace(t, true, scene);
     // as the demo image: the signs at the tach's ends, the arrows inside them, under it
-    ok(ids(p.lcw.left) === '200,214' && ids(p.arrow.left) === '240,224' && ids(p.arrow.right) === '530,224' && ids(p.lcw.right) === '566,214',
-        'under the tach: left sign 200, arrow 240; right arrow 530, sign 566; at y 214 / 224 (' + [ids(p.lcw.left), ids(p.arrow.left), ids(p.arrow.right), ids(p.lcw.right)].join(' ') + ')');
+    ok(ids(p.lcw.left) === '200,242' && ids(p.arrow.left) === '240,252' && ids(p.arrow.right) === '530,252' && ids(p.lcw.right) === '566,242',
+        'under the tach: left sign 200, arrow 240; right arrow 530, sign 566; at y 242 / 252 (' + [ids(p.lcw.left), ids(p.arrow.left), ids(p.arrow.right), ids(p.lcw.right)].join(' ') + ')');
     ok(p.lcw.right.x + p.lcw.right.w === t.x + t.w && p.lcw.left.y === t.y + t.h + 8, 'flush with the tach\'s right end, 8 px under it');
     const top = S.signalsPlace(t, false, scene);
     ok(top.lcw.left.y === 104 && top.arrow.left.y === 114 && top.arrow.right.x === 530 && top.lcw.left.x === 200, 'the tach off: the same places at the top, no higher than y 104 (arrows at 86 lost their top on the car)');
-    ok(S.signalsPlace(Hud.placeOf(st({ hudY: 60 })), false, scene).lcw.left.y === 136, '... and lower with the tach\'s place moved lower');
+    ok(S.signalsPlace(Hud.placeOf(st({ hudY: 60 })), false, scene).lcw.left.y === 164, '... and lower with the tach\'s place moved lower');
     const W = Hud.G20_WINDOW, inW = (r) => r.x >= W.x && r.y >= W.y && r.x + r.w <= W.x + W.w && r.y + r.h <= W.y + W.h;
     ok(['left', 'right'].every((s) => inW(p.arrow[s]) && inW(p.lcw[s]) && inW(top.arrow[s]) && inW(top.lcw[s])), 'all inside a G20\'s seen part, either way');
     // HUD looks > Place warns for the signals too: a low tach puts them under the seen part
     ok(!Object.keys(Hud.outsideAll(st({}))).length && !Object.keys(Hud.outsideAll(st({ hudTach: false }))).length, 'Place: nothing outside at the defaults, tach on or off');
-    ok(Hud.outsideAll(st({ hudY: 120 })).bottom === 22 && !Hud.outsideGlass(Hud.placeOf(st({ hudY: 120 }))).bottom, 'Place: the tach low, the signals under it 22 px past the seen part (the tach itself inside)');
-    ok(!Hud.outsideAll(st({ hudY: 120, hudTurnSignals: false, hudLaneWarn: false })).bottom, '... not with them off');
+    ok(Hud.outsideAll(st({ hudY: 100 })).bottom === 30 && !Hud.outsideGlass(Hud.placeOf(st({ hudY: 100 }))).bottom, 'Place: the tach low, the signals under it 30 px past the seen part (the tach itself inside)');
+    ok(!Hud.outsideAll(st({ hudY: 100, hudTurnSignals: false, hudLaneWarn: false })).bottom, '... not with them off');
     ok(ov(p.band, t) === 0, 'under the tach, not over it');
     // a small tach: the sides still well apart; moved: they follow
     const small = S.signalsPlace(Hud.placeOf(st({ hudSize: 40 })), true, scene);
     ok(small.arrow.right.x - (small.arrow.left.x + 30) >= 100, 'a 40 % tach: the arrows still ' + (small.arrow.right.x - small.arrow.left.x - 30) + ' px apart');
     const moved = S.signalsPlace(Hud.placeOf(st({ hudX: 60, hudY: 20 })), true, scene);
-    ok(moved.lcw.left.x === 260 && moved.lcw.left.y === 234, 'they move with the tach\'s position');
+    ok(moved.lcw.left.x === 260 && moved.lcw.left.y === 262, 'they move with the tach\'s position');
     // the tach at the scene's foot: above it rather than off the scene
     const low = Hud.placeOf(st({ hudY: 280 })), lp = S.signalsPlace(low, true, scene);
     ok(lp.band.y + lp.band.h <= scene.h && ov(lp.band, low) === 0, 'a tach at the foot: the signals above it (' + lp.band.y + ')');
@@ -66,7 +66,7 @@ const ids = (r) => [r.x, r.y].join(',');
 {
     const on = st({}), off = st({ hudTurnSignals: false, hudLaneWarn: false }), only = st({ hudTach: false });
     const n = Hud.navPlaceOf(on), b = Hud.blockOf(on);
-    ok(ov(n, b) === 0 && ov(n, Hud.BMW_SPEED) === 0 && b.y + b.h === 258, 'the directions clear of the tach and the signals under it (' + JSON.stringify(n) + ')');
+    ok(ov(n, b) === 0 && ov(n, Hud.BMW_SPEED) === 0 && b.y + b.h === 286 && n.y === 290 && n.y + n.h <= Hud.BMW_SPEED.y + Hud.BMW_SPEED.h, 'the directions clear of the tach and the signals under it, 10 px lower than their corner, above BMW speed\'s foot (' + JSON.stringify(n) + ')');
     ok(JSON.stringify(Hud.blockOf(off)) === JSON.stringify(Hud.placeOf(off)), 'signals off: the tach alone is kept clear');
     ok(Hud.blockOf(only).h === 44 && Hud.blockOf(only).y === 104, 'the tach off: only the signals at the top');
     let clash = 0;
@@ -161,7 +161,7 @@ const ids = (r) => [r.x, r.y].join(',');
     await sleep(60);
     const s1 = h.signals();
     ok(s1.refs.arrow.left && s1.arrow.left === true, 'left signal: the left arrow lit within a tick');
-    ok(cr.layers[s1.refs.arrow.left].x === 240 && cr.layers[s1.refs.arrow.left].y === 224 && cr.layers[s1.refs.arrow.left].z > cr.layers[tachRef].z, 'at 240,224, above the tach');
+    ok(cr.layers[s1.refs.arrow.left].x === 240 && cr.layers[s1.refs.arrow.left].y === 252 && cr.layers[s1.refs.arrow.left].z > cr.layers[tachRef].z, 'at 240,252, above the tach');
     ok(!s1.arrow.right, 'the right one dark');
     // flashing: lit 335 ms, dark 303 ms (sampled through two periods)
     const seen = [];
@@ -180,7 +180,7 @@ const ids = (r) => [r.x, r.y].join(',');
     // the lane change warning on the right
     lcw = { left: false, right: true }; await sleep(60);
     const s2 = h.signals();
-    ok(s2.lcw.right === true && !s2.lcw.left && cr.layers[s2.refs.lcw.right].x === 566 && cr.layers[s2.refs.lcw.right].y === 214, 'a car on the right: its sign at 566,214');
+    ok(s2.lcw.right === true && !s2.lcw.left && cr.layers[s2.refs.lcw.right].x === 566 && cr.layers[s2.refs.lcw.right].y === 242, 'a car on the right: its sign at 566,242');
     lcw = null; await sleep(60);
     ok(!h.signals().lcw.right, 'no more data: the sign goes');
     // each switch on its own
@@ -209,7 +209,7 @@ const ids = (r) => [r.x, r.y].join(',');
     const back = cr.frames.filter((f) => f.ref === t2).pop();
     let lit = 0;
     for (let i = 3; i < back.px.length; i += 4) if (back.px[i]) lit++;
-    ok(lit > 1000 && cr.layers[h.signals().refs.lcw.left].y === 214, 'the tach back: drawn again, the signals under it');
+    ok(lit > 1000 && cr.layers[h.signals().refs.lcw.left].y === 242, 'the tach back: drawn again, the signals under it');
     // "Play on HUD": the left signal from 1 s of the loop (the car's own signals not used meanwhile)
     dir = 'off'; lcw = null;
     kmh = 0; h.play(); await sleep(1150);
@@ -226,15 +226,15 @@ const ids = (r) => [r.x, r.y].join(',');
     ok(seenBack.indexOf(true) >= 0, 'shown again: flashing');
     // Comfort's own place (its own setup, 40 px lower): the signals there with its tach
     v.hudComfortMode = 'own'; v.hudComfortSetup = { hudY: 40 }; mode = 'comfort'; await sleep(200);
-    ok(cr.layers[h.signals().refs.lcw.left] && cr.layers[h.signals().refs.arrow.left].y === 264, 'Comfort\'s own place: the signals under its tach (' + cr.layers[h.signals().refs.arrow.left].y + ')');
+    ok(cr.layers[h.signals().refs.lcw.left] && cr.layers[h.signals().refs.arrow.left].y === 292, 'Comfort\'s own place: the signals under its tach (' + cr.layers[h.signals().refs.arrow.left].y + ')');
     v.hudComfortMode = 'hide'; v.hudComfortSetup = {}; mode = 'sport'; await sleep(200);
-    ok(cr.layers[h.signals().refs.arrow.left].y === 224, 'back in Sport: back under Sport\'s tach');
+    ok(cr.layers[h.signals().refs.arrow.left].y === 252, 'back in Sport: back under Sport\'s tach');
     dir = 'off'; await sleep(60);
     // the test pattern: the samples drawn at their places
     settings.set('hud', 'test'); await sleep(100);
     const tp = cr.frames[cr.frames.length - 1];
     const tpx = (x, y) => tp.px.slice((y * 800 + x) * 4, (y * 800 + x) * 4 + 4);
-    ok(tpx(243, 236)[1] > 150 && tpx(243, 236)[3] > 200, 'the test pattern shows the left arrow at its place');
+    ok(tpx(243, 264)[1] > 150 && tpx(243, 264)[3] > 200, 'the test pattern shows the left arrow at its place');
     // the driving mode's own place: they follow it; the HUD off: all gone
     settings.set('hud', 'off'); await sleep(80);
     ok(!h.signals().refs.arrow.left && !h.signals().arrow.left, 'HUD off: the signal layers dropped');
