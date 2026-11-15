@@ -32,7 +32,8 @@ const ids = (r) => [r.x, r.y].join(',');
         'under the tach: left sign 200, arrow 240; right arrow 530, sign 566; at y 214 / 224 (' + [ids(p.lcw.left), ids(p.arrow.left), ids(p.arrow.right), ids(p.lcw.right)].join(' ') + ')');
     ok(p.lcw.right.x + p.lcw.right.w === t.x + t.w && p.lcw.left.y === t.y + t.h + 8, 'flush with the tach\'s right end, 8 px under it');
     const top = S.signalsPlace(t, false, scene);
-    ok(top.lcw.left.y === 76 && top.arrow.left.y === 86 && top.arrow.right.x === 530 && top.lcw.left.x === 200, 'the tach off: the same places at its top (y 76 / 86)');
+    ok(top.lcw.left.y === 104 && top.arrow.left.y === 114 && top.arrow.right.x === 530 && top.lcw.left.x === 200, 'the tach off: the same places at the top, no higher than y 104 (arrows at 86 lost their top on the car)');
+    ok(S.signalsPlace(Hud.placeOf(st({ hudY: 60 })), false, scene).lcw.left.y === 136, '... and lower with the tach\'s place moved lower');
     const W = Hud.G20_WINDOW, inW = (r) => r.x >= W.x && r.y >= W.y && r.x + r.w <= W.x + W.w && r.y + r.h <= W.y + W.h;
     ok(['left', 'right'].every((s) => inW(p.arrow[s]) && inW(p.lcw[s]) && inW(top.arrow[s]) && inW(top.lcw[s])), 'all inside a G20\'s seen part, either way');
     // HUD looks > Place warns for the signals too: a low tach puts them under the seen part
@@ -67,7 +68,7 @@ const ids = (r) => [r.x, r.y].join(',');
     const n = Hud.navPlaceOf(on), b = Hud.blockOf(on);
     ok(ov(n, b) === 0 && ov(n, Hud.BMW_SPEED) === 0 && b.y + b.h === 258, 'the directions clear of the tach and the signals under it (' + JSON.stringify(n) + ')');
     ok(JSON.stringify(Hud.blockOf(off)) === JSON.stringify(Hud.placeOf(off)), 'signals off: the tach alone is kept clear');
-    ok(Hud.blockOf(only).h === 44 && Hud.blockOf(only).y === 76, 'the tach off: only the signals at the top');
+    ok(Hud.blockOf(only).h === 44 && Hud.blockOf(only).y === 104, 'the tach off: only the signals at the top');
     let clash = 0;
     [60, 80, 100, 120].forEach((sz) => [-80, 0, 80].forEach((x) => [-40, 0, 40, 100].forEach((y) => {
         const s = st({ hudSize: sz, hudX: x, hudY: y }), r = Hud.navPlaceOf(s), p = S.signalsPlace(Hud.placeOf(s), true, Hud.scene());
@@ -202,7 +203,7 @@ const ids = (r) => [r.x, r.y].join(',');
     const fr = cr.frames.length; await sleep(120);
     ok(cr.frames.filter((f) => f.ref === t2).length === cr.frames.filter((f, i) => i < fr && f.ref === t2).length, '... and nothing sent after');
     const s3 = h.signals();
-    ok(cr.layers[s3.refs.lcw.left].y === 76 && cr.layers[s3.refs.arrow.right].y === 86, 'the signals moved to the top (' + cr.layers[s3.refs.lcw.left].y + ')');
+    ok(cr.layers[s3.refs.lcw.left].y === 104 && cr.layers[s3.refs.arrow.right].y === 114, 'the signals moved to the top (' + cr.layers[s3.refs.lcw.left].y + ')');
     ok(/HUD: /.test(h.status()), 'status still a HUD line (' + h.status() + ')');
     settings.set('hudTach', true); await sleep(150);
     const back = cr.frames.filter((f) => f.ref === t2).pop();

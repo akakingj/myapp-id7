@@ -7,7 +7,8 @@
  *
  * Where (signalsPlace): under the tach when it shows, the left sign at the tach's left edge with its arrow beside it, the
  * right arrow and sign ending at its right edge; at the tach's own place when the tach itself is switched off (setting
- * hudTach), so they stay at the top of what the HUD shows. They move with the tach's Size and Position.
+ * hudTach), so they stay at the top of what the HUD shows (not above y 104 there, scene.sigTop: the top of a G20's
+ * glass at 86 was cut off on the car). They move with the tach's Size and Position.
  *
  * Four small image layers, each drawn once: flashing switches only their opacity (a few bytes, no pixels).
  * Settings: hudTurnSignals, hudLaneWarn (each on its own), hudTach (the tach itself).
@@ -40,7 +41,9 @@ function signalsOf(settings) {
 function signalsPlace(t, tachOn, scene) {
     const span = Math.min(Math.max(t.w, MIN_SPAN), scene.w);
     const x0 = clamp(Math.round(t.x + t.w / 2 - span / 2), 0, Math.max(0, scene.w - span));
-    let y = t.y;
+    // (with the tach off, never above scene.sigTop: on the owner's G20 Cluster Info's arrows at y 86 lost their top,
+    // 2026-11-15, so the signals' own top place is 104, bimmer-lab's G21 seen top plus 4)
+    let y = Math.max(t.y, scene.sigTop || 0);
     if (tachOn) {
         y = t.y + t.h + BELOW_GAP;
         if (y + LCW.h > scene.h) { const up = t.y - BELOW_GAP - LCW.h; y = up >= 0 ? up : scene.h - LCW.h; }

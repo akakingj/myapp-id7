@@ -183,12 +183,15 @@ const HUD_WINDOW = { x: 120, y: 100, w: 485, h: 278 };
  * 4 % each side (x 124..676, y 72..221), and under it down to the directions' corner and BMW's speed (y 356). The tach
  * sits at its top (baseY 76: y 76..206 at 100 %), the turn signals under it (hud-signals.js), since 2.0.57. */
 const G20_WINDOW = { x: 124, y: 72, w: 552, h: 284 };
+/** The turn signals' top place with the tach off (hud-signals.js): Cluster Info's arrows at y 86 lost their top on the
+ * owner's G20 (2026-11-15), so 104: bimmer-lab's G21 seen top (100) plus 4, Cluster Info's place too (1.6.22). */
+const SIGNALS_TOP = 104;
 /*
  * The HUD's scene: iDrive 7's 800x480, of which only part is seen (above), or the size cluster-render names
  * in its hello (iDrive 8: "hud:353x203", all of it shown, above the HUD's own speed bar: no BMW speed in it).
  * baseY: the tach's top at 100 % and Position 0; fit: its size at 100 %.
  */
-const ID7_SCENE = { w: 800, h: 480, fit: 1, baseY: 76, window: G20_WINDOW, glass: GLASS, speed: BMW_SPEED, navRight: NAV_RIGHT, navBottom: NAV_BOTTOM };
+const ID7_SCENE = { w: 800, h: 480, fit: 1, baseY: 76, sigTop: SIGNALS_TOP, window: G20_WINDOW, glass: GLASS, speed: BMW_SPEED, navRight: NAV_RIGHT, navBottom: NAV_BOTTOM };
 let SCENE = ID7_SCENE;
 function sceneOf(targets) {
     const m = /(?:^|,)\s*hud:(\d+)x(\d+)/.exec(String(targets || ''));

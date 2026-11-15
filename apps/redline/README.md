@@ -335,7 +335,8 @@ StatusFunctionsIndicators2) and the assistant's lane change broadcast (`assisted
 
 - **Where:** under the tach, the left sign at its left end with its arrow beside it, the right arrow and sign
   ending at its right end; they move with the tach's *Size* and *Position*. With the rev counter switched off
-  (HUD looks → Place → *Show*), at the tach's own place, so they stay at the top of the glass. The directions keep
+  (HUD looks → Place → *Show*), at the tach's own place, so they stay at the top of the glass, but no higher than y 104 (arrows at y 86 lost
+  their top on a G20, 2026-11-15; Cluster Info's sit there too). The directions keep
   clear of them as of the tach.
 - **When:** while Redline's HUD shows: not while it is hidden in Comfort / Eco Pro, gives way to BMW's content, or
   the car is off. With the rev counter off the HUD stays Redline's (a see-through layer holds it), so the turn
