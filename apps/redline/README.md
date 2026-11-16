@@ -310,7 +310,7 @@ At most four readouts fit the row; past that the last one gives way.
 |---|---|
 | Size | 40–130 %, scaled about the top centre |
 | Position left / right, up / down | px (left to −120, right to +280; up to the HUD's top, down to +240, so a small tach fits the glass's bottom right corner; +36 is where the tach sat before 2.0.57); moves the layer only. HUD looks → Place warns when the tach or the turn signals reach outside the part of the glass you see |
-| Rev counter, turn signals | each on or off (HUD looks → Place, *Show*); see [Turn signals](#turn-signals) |
+| Rev counter, turn signals, lane change warning | each on or off (HUD looks → Place, *Show*); see [Turn signals](#turn-signals-and-the-lane-change-warning) |
 | Frame rate | 10 / 20 / 30 fps (20); see [Performance](#performance) |
 
 Since 2.0.61 the tach sits at the top of what a G20 shows (y 104..234 of the HUD's 800x480 at 100 %): x 124..676
@@ -318,35 +318,42 @@ as a G20 owner's own HUD app measured it ([akakingj/apps](https://github.com/aka
 y from 100 as the car showed it. 2.0.57 to 2.0.60 put it at y 76, the friend's top (y 72): on this car its shift
 lights and D / S / M letter (the top 25 px) were then cut off, as were Cluster Info's arrows at y 86. Before 2.0.57
 it sat at y 140, in a G21's window as [bimmer-lab](https://github.com/bimmer-lab/apps) measured it
-(`shared/visible.js`, MIT).
+(`shared/visible.js`, MIT). The directions sit 10 px under their corner (to y 366, above BMW speed's foot) while the
+turn signals are under the tach.
 
-### Turn signals
+### Turn signals and the lane change warning
 
 Redline draws the car's turn signals on the HUD (2.0.57, as Cluster Info does): a small green arrow each side,
-flashing in step with the cluster's own (335 ms lit of 638). Read only: `de.bmw.body.Light`
-(StatusFunctionsIndicators, StatusFunctionsIndicators2).
+flashing in step with the cluster's own (335 ms lit of 638), and outside each arrow a sign while a car is beside or
+coming up behind on that side (this car yellow, the other's bonnet red), steady, the turn signal or not. Read only: the
+turn signals from `de.bmw.body.Light` (StatusFunctionsIndicators, StatusFunctionsIndicators2); the lane change warning
+(2.0.64) from the door mirror lamps, read from the body controller (BDC, 0x40) as `22 D3 47` every 300 ms while the
+sign can show (blindspot.js, through the kit's read-only link: the same identifier written would switch the lamps, so
+nothing but that read is ever sent); the sign goes 3 s after the last answer. As mlurker's HUD signals
+(mlurker/bmw-idrive7-apps, found on a G05), written anew. (2.0.57-2.0.61 read the driving assistant's lane change
+broadcast, which a G20's and a G21's head unit don't have.)
 
 ```
 [ tach ...................................... ]        rev counter on
-     [<]                                [>]
+[car] [<]                                [>] [car]
 
-     [<]                                [>]             rev counter off: at its place, the top
+[car] [<]                                [>] [car]        rev counter off: at its place, the top
 ```
 
-- **Where:** under the tach, 40 px in from each of its ends; they move with the tach's *Size* and *Position*. With
-  the rev counter switched off (HUD looks → Place → *Show*), at the tach's own place, so they stay at the top of the
-  glass, but no higher than y 114 (arrows at y 86 lost their top on a G20, 2026-11-15; Cluster Info's sit there too).
-  The directions keep clear of them as of the tach.
+- **Where:** under the tach, the left sign at its left end with its arrow beside it, the right arrow and sign
+  ending at its right end; they move with the tach's *Size* and *Position*. With the rev counter switched off
+  (HUD looks → Place → *Show*), at the tach's own place, so they stay at the top of the glass, but no higher than y 104 (arrows at y 86 lost
+  their top on a G20, 2026-11-15; Cluster Info's sit there too). The directions keep
+  clear of them as of the tach.
 - **When:** while Redline's HUD shows: not while it is hidden in Comfort / Eco Pro, gives way to BMW's content, or
   the car is off. With the rev counter off the HUD stays Redline's (a see-through layer holds it), so the turn
   signals and directions show and Cluster Info's own arrows give way, as they do to the tach.
-- **Each on its own:** *Rev counter*, *Turn signals* (Settings → HUD: shown with *All HUD options here*, or HUD looks →
-  Place). *Play on HUD* flashes the left signal, then the right.
-- **Nothing showing?** Settings → Logs: `hud: turn signals subscribed`, then 20 s and 3 min later `hud: turn signals:
-  service available / not available, N received`, and the first changes as `hud: turn signals: left`.
-- **No lane change warning (2.0.62):** 2.0.57 to 2.0.61 also drew a sign outside each arrow from the driving
-  assistant's lane change service. On a G20 and a G21 the head unit reported that service *not available*, so it
-  was taken out.
+- **Each on its own:** *Rev counter*, *Turn signals*, *Lane change* (Settings → HUD: shown with *All HUD options
+  here*, or HUD looks → Place). *Play on HUD* flashes the left signal, then the right with a car beside.
+- **Nothing showing?** Settings → Logs: `hud: mirror lamps: left steady, right off` each time the lamps change (a car
+  beside while driving: steady or flashing), or `hud: lane change warning: the BDC refused 22 D347: 7f 22 31` once when
+  the car's BDC has no such identifier. The turn signals the same way (`hud: turn signals: left`). Cluster Info shows
+  the same sign and gives way while Redline's HUD shows: only one of them reads the BDC.
 
 ### Directions (experimental)
 

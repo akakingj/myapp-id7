@@ -45,6 +45,7 @@
   "Rev counter on the HUD (off: only the turn signals and directions)": "HUD 회전계 (끄면 방향지시등·길 안내만)",
   "Turn signals on the HUD": "HUD 방향지시등",
   "Lane change warning on the HUD (cars with the driving assistant)": "HUD 측후방 경고 (주행 보조 장착 차량)",
+  "Lane change warning on the HUD": "HUD 측후방 경고",
   "HUD: shown": "HUD: 표시 항목",
   "Rev counter": "회전계",
   "Turn signals": "방향지시등",
