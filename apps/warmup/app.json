@@ -2,7 +2,7 @@
   "id": "warmup",
   "title": "Warm-Up",
   "description": "Oil and coolant warm-up calculator (time to ready), safe rev limit, turbo cool-down and a cold start counter",
-  "version": "1.9.1",
+  "version": "1.10.0",
   "vendor": "custom",
   "loggingId": "OA9A",
   "iconGlyph": "temp",
@@ -230,7 +230,7 @@
       ]
     },
     {
-      "key": "theme", "when": {"skin": "classic"},
+      "key": "theme", "profile": "theme", "when": {"skin": "classic"},
       "label": "Colour theme",
       "type": "choice",
       "default": "m_tricolour",
@@ -254,12 +254,12 @@
       ]
     },
     {"key": "skin", "label": "Skin", "type": "choice", "default": "classic", "options": [["classic", "Classic"], ["idrive7", "iDrive 7"]], "profile": "skin"},
-    {"key": "layout", "label": "Screen layout", "type": "choice", "default": "full",
+    {"key": "layout", "profile": "layout", "label": "Screen layout", "type": "choice", "default": "full",
      "options": [["full", "Full screen"], ["standard", "Standard"]]},
-    {"key": "renderer", "label": "Renderer", "type": "choice", "default": "auto",
+    {"key": "renderer", "profile": "renderer", "label": "Renderer", "type": "choice", "default": "auto",
      "options": [["auto", "GPU 60 fps (default)"], ["software", "Software"]]},
     {
-      "key": "demo",
+      "key": "demo", "profile": "demo",
       "label": "Demo data",
       "type": "choice",
       "default": "auto",

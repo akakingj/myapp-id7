@@ -12,7 +12,9 @@
  * Uninstalled (or everything back on "Each app"), every app has its own settings again: from the next start of the
  * head unit, or at once with "Each app".
  * It runs from the platform's start (app.json "autostart"): the profile is there for the other apps without opening it.
- * Page: the groups with each value and the apps that follow it; in the header, whether anything is set for them.
+ * Page, two tabs: Car (the engine, warm-up and too hot, the units) and Display and clock (the skin, colour theme,
+ * screen layout, renderer and demo data; the AK clusters' clock, fuel tank and electric range): the groups with each
+ * value and the apps that follow it; in the header, whether anything is set for them.
  * Each row is a place for the iDrive controller and a tap: pressed, its values' list (kit/sheet.js) over the page.
  */
 const mgu = require('./kit/mgu');
@@ -72,18 +74,24 @@ mgu.run({
             const v = settings.get(s.key), on = P.isSet(v);
             // the whole row: the controller's place (in order down the columns) and a tap
             cv.target(x - 12, y - 2, w + 24, Math.min(50, pitch - 4), () => edit(s), 'row_' + s.key, 8);
-            cv.text(s.label, x, y + 20, 21, t.text);
-            cv.text(settings.display(s.key), x + w, y + 20, 23, on ? (t.sel || t.accent) : t.dim, { align: 'right', font: 'bold' });
+            // (the name smaller where it would reach the value: the value always whole)
+            const val = settings.display(s.key), vw = cv.textWidth(val, 23, { font: 'bold' }), room = w - vw - 16;
+            const ls = cv.textWidth(s.label, 21) <= room ? 21 : Math.max(15, Math.floor(21 * room / Math.max(1, cv.textWidth(s.label, 21))));
+            cv.text(s.label, x, y + 20, ls, t.text);
+            cv.text(val, x + w, y + 20, 23, on ? (t.sel || t.accent) : t.dim, { align: 'right', font: 'bold' });
             const who = (P.FOLLOW[s.key] || []).join(', ');
             if (who) cv.text(who, x, y + 42, 15, on ? t.dim : withAlpha(t.dim, 0.55));
             cv.fillRect(x, y + 51, w, 1, withAlpha(t.tick || t.dim, 0.25));
         }
 
+        let page = 0;
+        const TABS = ['Car', 'Display and clock'];
         function render() {
             const t = ctx.theme();
             const cv = ctx.canvas(W, H).clear(t.bg);
             const gap = 16, pw = Math.floor((W - gap * 4) / 3), top = G.TOP + 4, bottom = G.pageBottom(cv) - 8;
-            const group = (g) => items.filter((s) => s.group === g);
+            // (a row offered only with another value, "when": the colour theme with the classic skin)
+            const group = (g) => items.filter((s) => s.group === g && (!settings.shown || settings.shown(s)));
             const column = (i, panels) => {
                 // each panel's rows 56 apart, 52 where two share a column; the last panel down to the page's bottom
                 // (a lone panel of more than 7 rows: closer, so they fit down to the page's bottom)
@@ -98,20 +106,27 @@ mgu.run({
                     y = p.y + p.h + gap;
                 });
             };
-            column(0, [['Engine', 'Engine']]);
-            // warm-up and too hot in one panel: seven rows as the other columns (with the gearbox oil's warm-up, two panels
-            // of four and three no longer fit the page)
-            column(1, [[['Warm-up', 'Too hot'], 'Warm-up and too hot']]);
-            // (the skin: the look of the apps, after their units)
-            column(2, [[['Units', 'Display'], 'Units and display']]);
+            if (page === 0) {
+                column(0, [['Engine', 'Engine']]);
+                // warm-up and too hot in one panel: seven rows as the other columns (with the gearbox oil's warm-up, two panels
+                // of four and three no longer fit the page)
+                column(1, [[['Warm-up', 'Too hot'], 'Warm-up and too hot']]);
+                column(2, [['Units', 'Units']]);
+            } else {
+                // the screens' look (every app), then the AK clusters' clock and their fuel and battery figures
+                column(0, [['Display', 'Display']]);
+                column(1, [['Clock', 'Clock']]);
+                column(2, [['Fuel and battery', 'Fuel and battery']]);
+            }
             // whether the other apps have it, in the header (each text translated whole)
             const n = Object.keys(P.valuesOf(settings)).length;
             const badge = state.error ? { text: 'Not written for the apps', color: 'crit' }
                 : n ? { text: 'Set for the apps', color: t.sel || t.accent } : { text: 'Nothing set: each app as it is', color: t.dim };
-            G.frame(cv, t, ['Car profile'], 0, [badge]);
+            G.frame(cv, t, TABS, page, [badge]);
             return ui.image('MAIN_GFX', cv);
         }
 
+        if (ctx.onTab) ctx.onTab((i) => { page = i === 1 ? 1 : 0; return render(); });
         settings.onChange(() => render());
         ctx.loop('MAIN', 2, render);
         render().then(() => ctx.log.info('first frame done')).catch((e) => ctx.log.warn('first render: ' + e));

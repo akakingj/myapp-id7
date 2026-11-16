@@ -14,7 +14,8 @@ const fs = require('fs');
 
 // what the profile sets, in Settings order; FOLLOW: the apps that follow each (their app.json "profile")
 const KEYS = ['engine', 'redline', 'shiftBefore', 'rpmScale', 'coldLimit', 'lightMode', 'lightStart', 'coldGuard', 'warmOil',
-    'warmCoolant', 'warmGearbox', 'hotOil', 'hotCoolant', 'hotGearbox', 'speedUnit', 'distUnit', 'tempUnit', 'pressUnit', 'fuelUnit', 'torqueUnit', 'powerUnit', 'skin'];
+    'warmCoolant', 'warmGearbox', 'hotOil', 'hotCoolant', 'hotGearbox', 'speedUnit', 'distUnit', 'tempUnit', 'pressUnit', 'fuelUnit', 'torqueUnit', 'powerUnit',
+    'skin', 'theme', 'layout', 'renderer', 'demo', 'clock', 'timeZone', 'tankLitres', 'eFull'];
 const FOLLOW = {
     // (Plug-in hybrid: the AK clusters' Vehicle; the other apps take a plug-in hybrid as their own setting says: Auto, petrol)
     engine: ['M Vitals', 'Redline', 'Warm-Up', 'Virtual Dyno', 'AK Cluster', 'AK Cluster Centre'],
@@ -41,6 +42,16 @@ const FOLLOW = {
     powerUnit: ['M Vitals', 'Redline HUD', 'Virtual Dyno', 'AK Cluster'],
     // the look of every app with a Skin setting (kit/runtime/themes.js SKINS): these apps and the AK Cluster apps
     skin: ['All apps, AK Cluster too'],
+    // the screens: colours (with the classic skin), full screen or standard, the renderer, demo data
+    theme: ['All apps with a colour theme, AK Cluster Info too'],
+    layout: ['All apps with a screen layout, AK Cluster Info too'],
+    renderer: ['All apps with a renderer setting, AK Cluster Info too'],
+    demo: ['All apps with demo data, AK Cluster too'],
+    // the AK clusters' clock, and their fuel and battery figures
+    clock: ['AK Cluster', 'AK Cluster Centre'],
+    timeZone: ['AK Cluster', 'AK Cluster Centre'],
+    tankLitres: ['AK Cluster', 'AK Cluster Centre'],
+    eFull: ['AK Cluster', 'AK Cluster Centre'],
 };
 // ('AK Cluster': the cluster apps of akakingj/idrive7-cluster-info, Layouts / Centre / Info, which read this file too)
 

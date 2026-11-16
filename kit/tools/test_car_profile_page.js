@@ -35,7 +35,7 @@ const check = (name, fn) => fn().then(() => { n++; console.log('ok   ' + name); 
 (async () => {
     require(MAIN);
     const settings = new Settings(SPEC.settings);
-    let frame = null, last = null, sheet = null, opened = null;
+    let frame = null, last = null, sheet = null, opened = null, tab = null;
     const log = { info() {}, warn(m) { throw new Error('warned: ' + m); }, error(m) { throw new Error('error: ' + m); } };
     settings.onChange = settings.onChange || (() => {});
     const ctx = {
@@ -44,21 +44,34 @@ const check = (name, fn) => fn().then(() => { n++; console.log('ok   ' + name); 
         theme: () => themes.theme('m_tricolour'), loop: (name, fps, fn) => { frame = fn; },
         canvas: (w, h) => (last = new Recorder(w, h)),
         sheet: (sh) => { sheet = sh; return true; },
+        onTab: (fn) => { tab = fn; },
     };
     ctx.background = await app.background(ctx);
     await app.start(ctx);
     await frame();
     const targets = () => last.targets.filter((q) => /^row_/.test(q.key));
 
-    await check('a place on the page for every setting, none overlapping', async () => {
-        const t = targets();
-        assert.deepStrictEqual(t.map((q) => q.key.slice(4)).sort(), SPEC.settings.map((s) => s.key).sort());
-        t.forEach((a) => t.forEach((b) => {
-            if (a === b) return;
-            const apart = a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y;
-            assert(apart, a.key + ' over ' + b.key);
-        }));
-        t.forEach((q) => assert(q.y >= 46 && q.y + q.h <= 520, q.key + ' on the page'));
+    await check('a place on one of the two tabs for every setting, none overlapping', async () => {
+        const all = [];
+        for (const i of [1, 0]) {
+            await tab(i);
+            const t = targets();
+            t.forEach((a) => t.forEach((b) => {
+                if (a === b) return;
+                const apart = a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y;
+                assert(apart, a.key + ' over ' + b.key);
+            }));
+            t.forEach((q) => assert(q.y >= 46 && q.y + q.h <= 520, q.key + ' on the page'));
+            all.push(...t);
+        }
+        assert.deepStrictEqual(all.map((q) => q.key.slice(4)).sort(), SPEC.settings.map((s) => s.key).sort());
+    });
+    await check('the colour theme only with the classic skin (or each app\'s)', async () => {
+        await tab(1);
+        assert(targets().some((q) => q.key === 'row_theme'));
+        settings.set('skin', 'idrive7'); await frame();
+        assert(!targets().some((q) => q.key === 'row_theme'), 'hidden with iDrive 7');
+        settings.set('skin', 'app'); await tab(0);
     });
     await check('pressed: its values, on the one set; the knob and a press set the next and close', async () => {
         targets().find((q) => q.key === 'row_redline').run();

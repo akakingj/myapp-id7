@@ -2,7 +2,7 @@
   "id": "zf8hp",
   "title": "Transmission Config",
   "description": "Transmission Config, experimental ZF 8HP monitor: live data, clutch fill adaptations, shift maps and temperature history",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "vendor": "custom",
   "loggingId": "OAA2",
   "iconGlyph": "8HP",
@@ -136,7 +136,7 @@
       "aliases": {"C": "c", "F": "f"}
     },
     {
-      "key": "theme", "when": {"skin": "classic"},
+      "key": "theme", "profile": "theme", "when": {"skin": "classic"},
       "label": "Colour theme",
       "type": "choice",
       "default": "m_tricolour",
@@ -161,7 +161,7 @@
     },
     {"key": "skin", "label": "Skin", "type": "choice", "default": "classic", "options": [["classic", "Classic"], ["idrive7", "iDrive 7"]], "profile": "skin"},
     {
-      "key": "layout",
+      "key": "layout", "profile": "layout",
       "label": "Screen layout",
       "type": "choice",
       "default": "full",
@@ -177,7 +177,7 @@
       ]
     },
     {
-      "key": "renderer",
+      "key": "renderer", "profile": "renderer",
       "label": "Renderer",
       "type": "choice",
       "default": "auto",
@@ -193,7 +193,7 @@
       ]
     },
     {
-      "key": "demo",
+      "key": "demo", "profile": "demo",
       "label": "Demo data",
       "type": "choice",
       "default": "auto",

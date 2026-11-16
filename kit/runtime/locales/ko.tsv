@@ -8,6 +8,31 @@ Display	화면
 Saved	저장된 값
 Units and display	단위와 화면
 All apps, AK Cluster too	모든 앱 (AK Cluster 포함)
+12-hour	12시간제
+24-hour	24시간제
+Alaska	알래스카
+All apps with a colour theme, AK Cluster Info too	색상 테마가 있는 모든 앱 (AK Cluster Info 포함)
+All apps with a renderer setting, AK Cluster Info too	렌더러 설정이 있는 모든 앱 (AK Cluster Info 포함)
+All apps with a screen layout, AK Cluster Info too	화면 배치 설정이 있는 모든 앱 (AK Cluster Info 포함)
+All apps with demo data, AK Cluster too	데모 데이터가 있는 모든 앱 (AK Cluster 포함)
+Arizona (no DST)	애리조나 (서머타임 없음)
+Atlantic	대서양
+Central Europe	중부 유럽
+Clock	시계
+Display and clock	화면과 시계
+Eastern Europe	동유럽
+Electric range when full (until the car's own is found)	완충 시 전기 주행 거리 (차량 값을 찾기 전까지)
+Fuel and battery	연료와 배터리
+Electric range when full	완충 시 전기 주행 거리
+Fuel tank size	연료 탱크 크기
+Hawaii	하와이
+Korea / Japan (UTC+9)	한국 / 일본 (UTC+9)
+Time zone (the clock)	시간대 (시계)
+UK / Ireland / Portugal	영국 / 아일랜드 / 포르투갈
+US Central	미국 중부
+US Eastern	미국 동부
+US Mountain	미국 산악
+US Pacific	미국 태평양
 Each app	각 앱 설정
 Rev bar from	회전수 바 시작
 Set here: the apps listed follow it	여기서 설정: 표시된 앱들이 따름
