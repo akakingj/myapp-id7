@@ -70,6 +70,7 @@ The standard identification and OBD-II values (`std.js`) are public standards an
 | Trip computer | on | counts every drive in the background |
 | Currency | EUR | of the fuel price |
 | Pressure unit | bar | bar, psi or kPa (the Car profile's when it sets it): boost, charge, oil, fuel and tyre pressures on every page and gauge; a unit page's own catalog values stay as the unit gives them |
+| Temperature unit | Celsius | every temperature, its gauge scale included, in °C or °F (the Car profile's when it sets it) |
 | Show sources and unverified values | off | the identifier or signal each value comes from, car signals whose scaling isn't known yet (raw numbers), the units' refusals |
 
 ## Build and test

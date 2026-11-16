@@ -19,8 +19,8 @@ One place for the car's engine values and units. Set them here once and the othe
 | Gearbox is too hot at | M Vitals (*Gearbox temp warning*), Redline HUD, Warm-Up (*GEARBOX HOT*), AK Cluster |
 | Speed unit | M Vitals, Redline, Drag Timer, Brake Test, G-Force, AK Cluster |
 | Distance unit | Brake Test (km -> metres, miles -> feet), eDrive |
-| Temperature unit | M Vitals, Redline HUD, Warm-Up, eDrive, Transmission Config, AK Cluster |
-| Pressure unit | M Vitals, Redline HUD (boost and tyres), AK Cluster |
+| Temperature unit | M Vitals, Redline HUD, Warm-Up, eDrive, Transmission Config, Live Data, AK Cluster |
+| Pressure unit | M Vitals, Redline HUD (boost and tyres), Live Data, AK Cluster |
 | Fuel use unit | Redline HUD |
 | Torque unit, Power unit | M Vitals, Redline HUD, Virtual Dyno, AK Cluster |
 
