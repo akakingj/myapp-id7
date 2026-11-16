@@ -80,7 +80,8 @@ mgu.run({
             cv.text(s.label, x, y + 20, ls, t.text);
             cv.text(val, x + w, y + 20, 23, on ? (t.sel || t.accent) : t.dim, { align: 'right', font: 'bold' });
             const who = (P.FOLLOW[s.key] || []).join(', ');
-            if (who) cv.text(who, x, y + 42, 15, on ? t.dim : withAlpha(t.dim, 0.55));
+            // (the apps that follow it: smaller where the list would run past the panel, 11 at least)
+            if (who) cv.text(who, x, y + 42, Math.max(11, Math.min(15, Math.floor(15 * w / Math.max(1, cv.textWidth(who, 15))))), on ? t.dim : withAlpha(t.dim, 0.55));
             cv.fillRect(x, y + 51, w, 1, withAlpha(t.tick || t.dim, 0.25));
         }
 
