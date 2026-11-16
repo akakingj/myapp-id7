@@ -39,8 +39,8 @@ const FOLLOW = {
     fuelUnit: ['Redline HUD'],
     torqueUnit: ['M Vitals', 'Redline HUD', 'Virtual Dyno', 'AK Cluster'],
     powerUnit: ['M Vitals', 'Redline HUD', 'Virtual Dyno', 'AK Cluster'],
-    // the look of every app with a colour theme (kit/runtime/themes.js SKINS)
-    skin: ['Every app with a colour theme'],
+    // the look of every app with a Skin setting (kit/runtime/themes.js SKINS): these apps and the AK Cluster apps
+    skin: ['All apps, AK Cluster too'],
 };
 // ('AK Cluster': the cluster apps of akakingj/idrive7-cluster-info, Layouts / Centre / Info, which read this file too)
 
