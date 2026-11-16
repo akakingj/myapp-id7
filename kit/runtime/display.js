@@ -127,7 +127,7 @@ class Display {
         settings.onChange((k) => {
             if (k === 'layout' || k === 'renderer') this.closeSheet();
             if (k === 'layout') { this._place(); this.lastWords = null; }
-            if (k === 'theme') this.bgShown = null;
+            if (k === 'theme' || k === 'skin') { this.bgShown = null; this.lastWords = null; }
             if (k === 'renderer') this._mode();
         });
         this._mode();
@@ -838,10 +838,10 @@ class Display {
         // as wide as the app's widest, so none of that title shows beside it
         if (!this.sheet) this.headMax = Math.max(this.headMax || 0, end);
         const sx = this.headEnd = Math.min(HMI.status.x - pl.x, Math.ceil(Math.max(end, this.headMax || 0)));
-        if (sx > end) { c.fillRect(end, 0, sx - end, FULL.headH - 2, HMI.headBg); c.fillRect(end, FULL.headH - 2, sx - end, 2, G.withAlpha('#ffffff', 0.22)); }
+        if (sx > end) { c.fillRect(end, 0, sx - end, FULL.headH - 2, HMI.headBg); G.headEdge(c, t, end, FULL.headH, sx - end); }
         // the tab the controller is on (the kit holds it: Display._ccu)
         const ft = this.focusTab != null && (!this.sheet || this.sheetHead) && (c.tabRects || []).find((q) => q.i === this.focusTab);
-        if (ft) c.strokeRoundRect(ft.x + 4, ft.y + 10, ft.w - 8, ft.h - 20, 10, 2, t.sel || t.accent);
+        if (ft) c.strokeRoundRect(ft.x + 4, ft.y + 10, ft.w - 8, ft.h - 20, t.skin ? 3 : 10, 2, t.sel || t.accent);
         // the page button (or row) the controller is on, and one just pressed
         const k = pl.scale, onPage = (key) => !this.sheet && key && (this.pageTargets || []).find((q) => 'tgt:' + q.key === key);
         const pt = onPage(this.focusKey), pp = Date.now() - this.pressedT < 300 && onPage(this.pressed);
@@ -854,7 +854,7 @@ class Display {
         if (pt) c.strokeRoundRect(pt.x * k + pl.ox - 5, pt.y * k + pl.oy - 5, pt.w * k + 10, pt.h * k + 10, (pt.r != null ? pt.r : pt.h / 2) * k + 5, 3, t.sel || t.accent);
         // the strip's bottom edge continues under the see-through part
         c.fillRect(sx, 0, W - sx, FULL.headH, HMI.headBg);
-        c.fillRect(sx, FULL.headH - 2, W - sx, 2, G.withAlpha('#ffffff', 0.22));
+        G.headEdge(c, t, sx, FULL.headH, W - sx);
         // slim bar: each label over its HMI button
         const by = H - this.barH();
         const btns = this.buttons().map((b) => ({ id: b.id, label: b.label, x: b.x - this.barOff - pl.x, w: b.w }));

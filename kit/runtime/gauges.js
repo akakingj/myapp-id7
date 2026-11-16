@@ -29,6 +29,11 @@
  *   value is inside them; tintOnly: true only marks the zone on the gauge rim. g.color = base
  *   colour (theme key or #hex). value === null/undefined renders as "--" (no data).
  *
+ * Skins: t.skin === 'idrive7' (themes.js SKINS) draws as the head unit's own screens: no cards (a fine
+ * divider and the title), silver slanted rails with a red marker at the value, dials in silver, flat tabs
+ * and buttons with the orange focus gradient, regular-weight text in normal case. Without it (the classic
+ * skin) everything draws as before.
+ *
  * Smooth motion: dials, bars and the g-meter glide to new values (critically damped spring,
  * evaluated every frame) instead of jumping at the rate the car sends data. Digital numbers
  * show the real value. g.smooth = false turns it off; a number sets the response (default 16:
@@ -114,6 +119,40 @@ function zoneColor(t, g, v, base) {
 }
 const col = (t, c, dflt) => (c ? t[c] || c : dflt);
 
+/* ---------------- skin (themes.js SKINS) ---------------- */
+const SK = (t) => !!(t && t.skin === 'idrive7');
+/** A label's text: upper case in the classic skin, as written (localized) in the iDrive 7 skin. */
+const capt = (t, s) => (SK(t) ? localizeLabel(String(s)) : upperText(s));
+/** A label's font: bold (classic), regular (iDrive 7). */
+const lfont = (t) => (SK(t) ? 'label' : 'bold');
+/** A value's font at size px: f (default num) in the classic skin; regular in the iDrive 7 skin, light when big. */
+const vfont = (t, size, f) => (SK(t) ? (size > 48 ? 'light' : 'label') : f || 'num');
+/** iDrive 7 focus (a row, a tab, a button): the orange gradient, a thin orange edge at its top and bottom (edge px). */
+function focusFill(cv, t, x, y, w, h, edge, a) {
+    const S = t.sel || t.accent;
+    cv.gradientRect(x, y, w, h, [[0, t.focusTop ? withAlpha(t.focusTop, a == null ? 1 : a) : withAlpha(S, 0.45)],
+        [1, t.focusBottom ? withAlpha(t.focusBottom, a == null ? 1 : a) : withAlpha(S, 0.2)]]);
+    const e = edge == null ? 2 : edge;
+    if (e) { cv.fillRect(x, y, w, e, S); cv.fillRect(x, y + h - e, w, e, S); }
+}
+/**
+ * iDrive 7 rail fill: a slanted slab (x0..x1 on its bottom edge, the top shifted right by sl) in bands of silver,
+ * lightest at the top (t.silver); tint: a colour mixed in (a zone's, or the colour the gauge asks for).
+ */
+function silverSlab(cv, t, x0, x1, y, h, sl, tint) {
+    if (x1 - x0 <= 0 || h <= 0) return;
+    const sv = t.silver || ['#f6f6f8', '#c9c8cd', '#8d8c92'], fr = [0, 0.38, 0.72, 1];
+    sv.forEach((c0, i) => {
+        const c = tint ? mix(c0, tint, 0.62) : c0, f0 = fr[i], f1 = fr[i + 1];
+        cv.quad([[x0 + sl * (1 - f0), y + h * f0], [x1 + sl * (1 - f0), y + h * f0], [x1 + sl * (1 - f1), y + h * f1], [x0 + sl * (1 - f1), y + h * f1]], c);
+    });
+}
+/** The header's bottom edge across x..x+w, ending at `bottom`: a bevelled silver line (iDrive 7) or a faint white one. */
+function headEdge(cv, t, x, bottom, w) {
+    if (SK(t)) { cv.fillRect(x, bottom - 3, w, 1, '#e9e9ec'); cv.fillRect(x, bottom - 2, w, 2, '#8c8b90'); return; }
+    cv.fillRect(x, bottom - 2, w, 2, withAlpha('#ffffff', 0.22));
+}
+
 /* ---------------- panel ---------------- */
 /** Widget chrome in the OEM (G20 / MGU7) style; cached as a layer. Returns the rect drawn: { x, y, w, h }. */
 function panel(cv, t, x, y, w, h, title) { return box(cv, t, x, y, w, stretch(cv, y, h), title); }
@@ -141,6 +180,12 @@ const MARGIN = 22;
  */
 function toMargin(room, m) { return room + m - MARGIN; }
 function drawPanel(cv, t, x, y, w, h, title) {
+    if (SK(t)) {
+        // iDrive 7: no card, the values on the black; a fine divider along the top and the title in regular weight
+        cv.fillRect(x, y, w, 1, withAlpha('#ffffff', 0.16));
+        if (title) cv.text(String(title), x + 18, y + 40, 26, t.dim, { font: 'label' });
+        return;
+    }
     // flat light grey overlay; top: a short bold bar in the theme's stripe colours (M tricolour:
     // light blue, dark blue, red; the last part with an angled end), then a thin white line;
     // large white title in normal case
@@ -187,7 +232,7 @@ function radialStatic(cv, t, cx, cy, r, g, min, max, thick) {
         }
     }
     if (g.unit) cv.text(g.unit, cx, cy + Math.round(r * 0.62) * 0.32 + 36, 28, t.dim, { align: 'center', font: 'label' });
-    if (g.label) cv.text(upperText(g.label), cx, cy + r * 0.82, 26, t.text, { align: 'center', font: 'bold', spacing: 1.5 });
+    if (g.label) cv.text(capt(t, g.label), cx, cy + r * 0.82, 26, t.text, { align: 'center', font: lfont(t), spacing: SK(t) ? 0 : 1.5 });
 }
 function radialLive(cv, t, cx, cy, r, g, min, max, thick, v, sv, f) {
     const a0 = -135, a1 = 135;
@@ -202,15 +247,21 @@ function radialLive(cv, t, cx, cy, r, g, min, max, thick, v, sv, f) {
         cv.arc(cx, cy, r - thick, r, a0, ae, c, hot ? { round: true, ramp: hot, rampFrom: a0, rampTo: limA }
             : inZone || !t.ramp ? { round: true } : { round: true, ramp: t.ramp, rampFrom: a0, rampTo: a1 });
         const a = ae * Math.PI / 180, rm = r - thick / 2;
-        cv.circle(cx + Math.sin(a) * rm, cy - Math.cos(a) * rm, thick * 0.5 + 4, withAlpha(t.text, 0.25));
-        cv.circle(cx + Math.sin(a) * rm, cy - Math.cos(a) * rm, thick * 0.5 + 1, t.text);
+        if (SK(t)) {
+            // iDrive 7: a red marker across the arc at the value
+            const ri = r - thick - 7, ro = r + 7;
+            cv.line(cx + Math.sin(a) * ri, cy - Math.cos(a) * ri, cx + Math.sin(a) * ro, cy - Math.cos(a) * ro, 5, t.marker || t.crit);
+        } else {
+            cv.circle(cx + Math.sin(a) * rm, cy - Math.cos(a) * rm, thick * 0.5 + 4, withAlpha(t.text, 0.25));
+            cv.circle(cx + Math.sin(a) * rm, cy - Math.cos(a) * rm, thick * 0.5 + 1, t.text);
+        }
     }
     if (isNum(g.peak) && g.peak > min) {
         const pa = (a0 + clamp((g.peak - min) / (max - min), 0, 1) * 270) * Math.PI / 180;
         cv.line(cx + Math.sin(pa) * (r - thick), cy - Math.cos(pa) * (r - thick), cx + Math.sin(pa) * (r + 10), cy - Math.cos(pa) * (r + 10), 3, t.accent2);
     }
     const big = Math.round(r * 0.62);
-    cv.text(fmt(v, g.decimals), cx, cy + big * 0.32, big, isNum(v) ? t.text : t.dim, { align: 'center', font: 'num' });
+    cv.text(fmt(v, g.decimals), cx, cy + big * 0.32, big, isNum(v) ? t.text : t.dim, { align: 'center', font: vfont(t, big) });
     if (isNum(g.peak) && g.showPeak !== false) cv.text('PEAK ' + fmt(g.peak, g.decimals), cx, cy + r * 0.82 + 32, 22, t.accent2, { align: 'center', font: 'label', spacing: 1 });
 }
 
@@ -239,7 +290,7 @@ function needle(cv, t, cx, cy, r, g) {
                     isNum(g.redFrom) && val >= g.redFrom ? t.crit : t.text, { align: 'center', font: 'bold' });
             }
         }
-        if (g.label) c.text(upperText(g.label), x, y + r * 0.42, 20, t.dim, { align: 'center', font: 'bold', spacing: 2 });
+        if (g.label) c.text(capt(t, g.label), x, y + r * 0.42, 20, t.dim, { align: 'center', font: lfont(t), spacing: SK(t) ? 0 : 2 });
     }, cv.textScale), Math.round(cx) - S, Math.round(cy) - S);
     const f = isNum(sv) ? clamp((sv - min) / (max - min), 0, 1.02) : 0;
     const a = (A0 + f * SPAN) * Math.PI / 180, sx = Math.sin(a), cy_ = -Math.cos(a);
@@ -247,7 +298,7 @@ function needle(cv, t, cx, cy, r, g) {
     cv.line(cx - sx * r * 0.12, cy - cy_ * r * 0.12, cx + sx * (r - 10), cy + cy_ * (r - 10), 9, withAlpha(nc, 0.25));
     cv.line(cx - sx * r * 0.12, cy - cy_ * r * 0.12, cx + sx * (r - 10), cy + cy_ * (r - 10), 5, nc);
     cv.circle(cx, cy, r * 0.09, t.track); cv.circle(cx, cy, r * 0.05, nc);
-    cv.text(fmt(v, g.decimals), cx, cy + r * 0.72, Math.round(r * 0.26), isNum(v) ? t.text : t.dim, { align: 'center', font: 'num' });
+    cv.text(fmt(v, g.decimals), cx, cy + r * 0.72, Math.round(r * 0.26), isNum(v) ? t.text : t.dim, { align: 'center', font: vfont(t, Math.round(r * 0.26)) });
     if (g.unit) cv.text(g.unit, cx, cy + r * 0.72 + 26, 20, t.dim, { align: 'center' });
 }
 
@@ -259,9 +310,9 @@ function ring(cv, t, cx, cy, r, g) {
     cv.arc(cx, cy, r - th, r, 0, 360, t.track);
     if (isNum(sv)) { const f = clamp((sv - min) / (max - min), 0, 1); if (f > 0.003) cv.arc(cx, cy, r - th, r, 0, f * 360, c, { round: true }); }
     const big = g.size || Math.round(r * 0.55);
-    const tw = cv.text(g.text != null ? g.text : fmt(v, g.decimals), cx, cy + big * 0.34, big, isNum(v) || g.text != null ? t.text : t.dim, { align: 'center', font: 'num' });
+    const tw = cv.text(g.text != null ? g.text : fmt(v, g.decimals), cx, cy + big * 0.34, big, isNum(v) || g.text != null ? t.text : t.dim, { align: 'center', font: vfont(t, big) });
     if (g.unit) cv.text(g.unit, cx + tw / 2 + 4, cy + big * 0.34, 22, t.dim);
-    if (g.label) cv.text(upperText(g.label), cx, cy + r + 30, 18, t.dim, { align: 'center', font: 'bold', spacing: 2 });
+    if (g.label) cv.text(capt(t, g.label), cx, cy + r + 30, SK(t) ? 22 : 18, t.dim, { align: 'center', font: lfont(t), spacing: SK(t) ? 0 : 2 });
 }
 
 /* ---------------- bars ---------------- */
@@ -300,6 +351,7 @@ function rampSlab(cv, x0, x1, y, h, sl, stops, spanX, spanW) {
  * (left out where the label and the value leave no room for it).
  */
 function bar(cv, t, x, y, w, h, g) {
+    if (SK(t)) return railBar(cv, t, x, y, w, h, g);
     const min = g.min || 0, v = g.value;
     let max = g.max == null ? 100 : g.max;
     const step = g.step || niceStep(max - min, 4);
@@ -365,6 +417,69 @@ function bar(cv, t, x, y, w, h, g) {
 }
 
 /**
+ * bar() in the iDrive 7 skin: the same parts in the same places (label / value row, the bar at y + 44, its scale
+ * under it), drawn as the head unit's rails: a dark slanted track, a silver fill (a zone's colour or g.color mixed
+ * in), a red slanted marker at the value, a fine orange peak line along the top, and a white scale line with ticks
+ * down to regular-weight numbers.
+ */
+function railBar(cv, t, x, y, w, h, g) {
+    const min = g.min || 0, v = g.value;
+    let max = g.max == null ? 100 : g.max;
+    const step = g.step || niceStep(max - min, 4);
+    if (g.niceMax) max = min + Math.ceil((max - min) / step - 1e-9) * step;
+    const sv = sm(g, 'bar|' + x + '|' + y, v), head = g.head !== false;
+    if (head) {
+        const label = capt(t, g.label || '');
+        cv.text(label, x, y + 26, 24, t.dim, { font: 'label' });
+        const uw = g.unit ? cv.textWidth(' ' + g.unit, 26) : 0, vs = g.text != null ? g.text : fmt(v, g.decimals);
+        cv.text(vs, x + w - uw, y + 32, 44, g.valueColor ? t[g.valueColor] || g.valueColor : isNum(v) ? t.text : t.dim, { align: 'right', font: 'label' });
+        if (g.unit) cv.text(' ' + g.unit, x + w, y + 32, 26, t.dim, { align: 'right' });
+        if (g.peakText && isNum(g.peak)) {
+            const ps = localizeLabel('PEAK') + ' ' + fmt(g.peak, g.decimals), po = { font: 'label', literal: true };
+            const px = x + cv.textWidth(label, 24, { font: 'label' }) + 22;
+            if (px + cv.textWidth(ps, 22, po) <= x + w - uw - cv.textWidth(vs, 44, { font: 'label' }) - 18) cv.text(ps, px, y + 26, 22, t.hang || t.accent, po);
+        }
+    }
+    const bh = 22, by = y + (head ? 44 : 0), SL = 18, bw = w - SL;
+    const X = (val) => x + clamp((val - min) / (max - min), 0, 1) * bw;
+    slab(cv, x, x + bw, by, bh, SL, g.track ? t[g.track] || g.track : t.track);
+    // the fill's tint: the zone the value is in, else the colour asked for (none: plain silver)
+    let tint = g.color ? t[g.color] || g.color : null;
+    for (const z of g.zones || []) if (!z.tintOnly && isNum(sv) && sv >= z.from && sv <= z.to) tint = t[z.color] || z.color;
+    const o = g.origin == null ? min : clamp(g.origin, min, max), xo = X(o), mk = t.marker || t.crit;
+    const marker = (xe) => cv.line(xe - 1, by + bh + 3, xe + SL + 3, by - 5, 4, mk);
+    if (isNum(sv) && sv > o && X(sv) > xo) {
+        const xe = X(sv);
+        silverSlab(cv, t, xo, xe, by, bh, SL, tint);
+        marker(xe);
+    } else if (isNum(sv) && sv < o && X(sv) < xo) {
+        const xe = X(sv);
+        silverSlab(cv, t, xe, xo, by, bh, SL, g.negColor ? t[g.negColor] || g.negColor : tint);
+        marker(xe);
+    }
+    if (g.origin != null) cv.line(xo + SL + 5, by - 6, xo - 5, by + bh + 6, 3, t.text);
+    if (isNum(g.peak) && (g.peak - min) / (max - min) > 0.02) {
+        const px = X(g.peak), hc = t.hang || t.accent;
+        cv.fillRect(x + SL, by - 3, px - x, 3, hc);
+        if (!isNum(sv) || g.peak > sv) cv.line(px + SL, by, px, by + bh, 3, hc);
+    }
+    const dec = g.scaleDecimals != null ? g.scaleDecimals : step % 1 ? 1 : 0;
+    let marks = g.ticks;
+    if (!marks) {
+        marks = [];
+        for (let a = min; a <= max + 1e-9; a += step) marks.push(a);
+        if (max - marks[marks.length - 1] > step * 0.45) marks.push(max);
+    }
+    const sc = '#dedcdd';
+    cv.fillRect(x, by + bh + 3, bw, 2, sc);
+    marks.forEach((a) => cv.fillRect(X(a) - 1, by + bh + 3, 2, 9, sc));
+    if (h >= (head ? 80 : 50)) {
+        (g.labels || marks.map((a) => ({ value: a, text: fmt(a, dec) }))).forEach((l) =>
+            cv.text(l.text, X(l.value), by + bh + 32, 20, l.color ? t[l.color] || l.color : sc, { align: l.align || 'center', font: 'label' }));
+    }
+}
+
+/**
  * Tach bar widget (the Redline rev bar as a widget): digital value top right, a slanted bar
  * filling left to right in segments, scale below. g = { label, value, unit, decimals, min, max,
  * step (segment size), scale: { every, div, decimals }, peak, marks: [{ value, color }],
@@ -379,7 +494,7 @@ function segBar(cv, t, x, y, w, h, g) {
     const segCol = (mid) => (over ? '#ff2a2a' : hot ? ramp(t.hotRamp || t.ramp, clamp((mid - min) / (lim - min), 0, 1)) : zoneColor(t, g, mid, base));
     const uw = g.unit ? cv.textWidth(' ' + g.unit, 26) : 0;
     if (g.panel !== false) {
-        cv.text(fmt(v, g.decimals), x + w - 24 - uw, y + 60, 64, !isNum(v) ? t.dim : over ? '#ff4a4a' : t.text, { align: 'right', font: 'num' });
+        cv.text(fmt(v, g.decimals), x + w - 24 - uw, y + 60, 64, !isNum(v) ? t.dim : over ? '#ff4a4a' : t.text, { align: 'right', font: vfont(t, 64) });
         if (g.unit) cv.text(' ' + g.unit, x + w - 24, y + 60, 26, t.dim, { align: 'right' });
     }
     const bx = x + (g.panel !== false ? 24 : 0), bw = w - (g.panel !== false ? 48 : 0) - SL;
@@ -400,7 +515,7 @@ function segBar(cv, t, x, y, w, h, g) {
         band(min, vv, withAlpha(segCol(vv), 0.14), 6);
         for (let a = min; a < vv; a += step) band(a, Math.min(vv, a + step), segCol(a + step / 2));
         const xe = X(vv);
-        cv.line(xe, y1 + 4, xe + SL, y0 - 4, 6, '#ffffff');
+        cv.line(xe, y1 + 4, xe + SL, y0 - 4, SK(t) ? 5 : 6, SK(t) ? t.marker || t.crit : '#ffffff');
     }
     for (let a = min + step; a < max - 1e-9; a += step) gapAt(a, t.bg);
     if (isNum(g.peak) && (g.peak - min) / (max - min) > 0.02) {
@@ -413,7 +528,7 @@ function segBar(cv, t, x, y, w, h, g) {
     for (let a = min; a <= max + 1e-9; a += step) {
         const xx = X(a), lab = sc.every && Math.abs((a - min) / sc.every - Math.round((a - min) / sc.every)) < 1e-6;
         cv.fillRect(xx - (lab ? 1.5 : 1), y1 + 8, lab ? 3 : 2, lab ? (sc.tick || 12) : 7, lab ? (hot && a >= lim ? t.crit : t.text) : t.tick);
-        if (lab) cv.text(fmt(a / (sc.div || 1), sc.decimals || 0), xx, y1 + (sc.labelY || 42), sc.size || 24, hot && a >= lim ? t.crit : sc.labelColor ? t[sc.labelColor] || sc.labelColor : t.dim, { align: 'center', font: 'bold' });
+        if (lab) cv.text(fmt(a / (sc.div || 1), sc.decimals || 0), xx, y1 + (sc.labelY || 42), sc.size || 24, hot && a >= lim ? t.crit : sc.labelColor ? t[sc.labelColor] || sc.labelColor : t.dim, { align: 'center', font: lfont(t) });
     }
 }
 
@@ -436,8 +551,8 @@ function stat(cv, t, x, y, w, h, g) {
         cv.polyline(pts, 2.5, withAlpha(c, 0.85));
     }
     const vs = fmt(v, g.decimals);
-    const vw = cv.textWidth(vs, size, { font: 'num' });
-    cv.text(vs, x + 18, vy, size, isNum(v) ? vcol : t.dim, { font: 'num' });
+    const vw = cv.textWidth(vs, size, { font: vfont(t, size) });
+    cv.text(vs, x + 18, vy, size, isNum(v) ? vcol : t.dim, { font: vfont(t, size) });
     if (g.unit) cv.text(g.unit, x + 26 + vw, vy, 28, t.dim);
     if (g.sub) cv.text(g.sub, x + 18, y + hb - MARGIN, 22, t.dim, { spacing: 0.5 });
 }
@@ -450,14 +565,15 @@ function stat(cv, t, x, y, w, h, g) {
 function readout(cv, t, x, y, g) {
     const al = g.align || 'left', size = g.size || 64, ls = g.labelSize || 18;
     let yy = y;
-    if (g.label) { cv.text(upperText(g.label), x, y + ls, ls, t.dim, { align: al, font: 'bold', spacing: 2 }); yy += ls + 10; }
+    if (g.label) { cv.text(capt(t, g.label), x, y + ls, SK(t) ? ls + 2 : ls, t.dim, { align: al, font: lfont(t), spacing: SK(t) ? 0 : 2 }); yy += ls + 10; }
     const v = g.value, s = g.text != null ? String(g.text) : fmt(v, g.decimals);
     const has = g.text != null || isNum(v), c = has ? zoneColor(t, g, v, col(t, g.color, t.text)) : t.dim;
     const us = g.unit ? ' ' + g.unit : '', uz = Math.max(18, Math.round(size * 0.36));
-    const vw = cv.textWidth(s, size, { font: g.font || 'num' }), uw = us ? cv.textWidth(us, uz) : 0;
+    const vf = g.font && g.font !== 'num' ? g.font : vfont(t, size);
+    const vw = cv.textWidth(s, size, { font: vf }), uw = us ? cv.textWidth(us, uz) : 0;
     const base = yy + size * 0.78;
     const left = al === 'right' ? x - vw - uw : al === 'center' ? x - (vw + uw) / 2 : x;
-    cv.text(s, left, base, size, c, { font: g.font || 'num' });
+    cv.text(s, left, base, size, c, { font: vf });
     if (us) cv.text(us, left + vw, base, uz, t.dim);
     return base - y + 8;
 }
@@ -556,13 +672,14 @@ function table(cv, t, x, y, w, cols, rows, g) {
     const xs = cols.map((c) => { const at = cx; cx += c.w; return at; });
     cols.forEach((c, i) => {
         const al = c.align || 'left', tx = al === 'right' ? xs[i] + c.w - 8 : al === 'center' ? xs[i] + c.w / 2 : xs[i];
-        cv.text(upperText(c.label || ''), tx, y + hs, hs, t.dim, { align: al, font: 'bold', spacing: 1.5 });
+        cv.text(capt(t, c.label || ''), tx, y + hs, SK(t) ? hs + 2 : hs, t.dim, { align: al, font: lfont(t), spacing: SK(t) ? 0 : 1.5 });
     });
     const top = y + hs + 14;
     if (!rows.length && g.empty) { cv.text(g.empty, x, top + rh * 0.8, 24, t.dim); return; }
     rows.forEach((r, k) => {
         const ry = top + k * rh;
-        if (g.stripe !== false && k % 2 === 1) cv.fillRect(x - 8, ry, w + 16, rh, withAlpha('#ffffff', 0.03));
+        if (SK(t)) { if (k) cv.fillRect(x - 8, ry, w + 16, 1, withAlpha(t.line || '#ffffff', SK(t) ? 0.7 : 0.1)); }
+        else if (g.stripe !== false && k % 2 === 1) cv.fillRect(x - 8, ry, w + 16, rh, withAlpha('#ffffff', 0.03));
         cols.forEach((c, i) => {
             const cell = r[i];
             if (cell == null) return;
@@ -577,8 +694,8 @@ function table(cv, t, x, y, w, cols, rows, g) {
 function pill(cv, t, x, y, w, h, text, g) {
     g = g || {};
     const c = col(t, g.color, t.accent);
-    cv.roundRect(x, y, w, h, Math.min(10, h / 2), withAlpha(c, g.filled == null ? 0.22 : g.filled));
-    cv.text(String(text), x + w / 2, y + h / 2 + (g.size || 20) * 0.36, g.size || 20, g.textColor ? col(t, g.textColor, t.text) : c, { align: 'center', font: 'bold', spacing: g.spacing == null ? 2 : g.spacing });
+    cv.roundRect(x, y, w, h, SK(t) ? 3 : Math.min(10, h / 2), withAlpha(c, g.filled == null ? 0.22 : g.filled));
+    cv.text(String(text), x + w / 2, y + h / 2 + (g.size || 20) * 0.36, g.size || 20, g.textColor ? col(t, g.textColor, t.text) : c, { align: 'center', font: lfont(t), spacing: SK(t) ? 0 : g.spacing == null ? 2 : g.spacing });
     return w;
 }
 
@@ -680,26 +797,30 @@ function tabWidths(cv, names, size, opt, min, pad, room, pad0) {
 }
 function frame(cv, t, tabs, sel, badges) {
     if (cv.chrome) { cv.chrome.tabs = { tabs: tabs || [], sel, badges: (badges || []).filter(Boolean) }; return; }
-    const W = cv.w, S = t.sel || t.accent;
+    const W = cv.w, S = t.sel || t.accent, sk = SK(t);
     cv.fillRect(0, 0, W, BAR_H, t.bg);
-    cv.fillRect(0, 0, W, BAR_H, withAlpha('#ffffff', 0.07));
-    cv.fillRect(0, BAR_H - 1, W, 1, withAlpha('#ffffff', 0.18));
-    const opt = { align: 'center', font: 'bold', spacing: 1.5 };
+    if (sk) headEdge(cv, t, 0, BAR_H, W);
+    else {
+        cv.fillRect(0, 0, W, BAR_H, withAlpha('#ffffff', 0.07));
+        cv.fillRect(0, BAR_H - 1, W, 1, withAlpha('#ffffff', 0.18));
+    }
+    const opt = sk ? { align: 'center', font: 'label' } : { align: 'center', font: 'bold', spacing: 1.5 }, tsz = sk ? 22 : 20;
     const live = (badges || []).filter(Boolean);
-    const labels = (tabs || []).map((n) => upperText(n));
+    const labels = (tabs || []).map((n) => capt(t, n));
     const badgesW = live.reduce((a, b) => a + Math.max(24 * 3.5, cv.textWidth(b.text, 18, opt) + 24) + 24 * 0.4, 0);
-    const widths = tabWidths(cv, labels, 20, opt, 150, 48, W - 32 - badgesW, 20);
+    const widths = tabWidths(cv, labels, tsz, opt, 150, 48, W - 32 - badgesW, 20);
     let x = 16;
     cv.tabRects = [];
     labels.forEach((label, i) => {
         const tw = widths[i], on = i === sel;
         cv.tabRects.push({ i, x, y: 0, w: tw, h: BAR_H });
-        if (on) {
+        if (on && sk) focusFill(cv, t, x, 0, tw, BAR_H - 3);
+        else if (on) {
             cv.gradientRect(x, 0, tw, BAR_H, [[0, withAlpha(S, 0)], [1, withAlpha(S, 0.22)]]);
             cv.fillRect(x, BAR_H - 4, tw, 4, S);
         }
-        cv.text(label, x + tw / 2, 25, 20, on ? t.selText || S : t.dim, opt);
-        if (i < tabs.length - 1) cv.fillRect(x + tw, 9, 1, BAR_H - 18, withAlpha('#ffffff', 0.12));
+        cv.text(label, x + tw / 2, 25, tsz, on ? t.selText || S : sk ? t.text : t.dim, opt);
+        if (i < tabs.length - 1) cv.fillRect(x + tw, 9, 1, BAR_H - 18, sk ? t.line : withAlpha('#ffffff', 0.12));
         x += tw;
     });
     badgeRow(cv, t, W - 16, 6, 24, 18, (badges || []).filter(Boolean));
@@ -711,7 +832,7 @@ function badgeRow(cv, t, xr, y, h, size, badges) {
     let bx = xr;
     badges.forEach((b) => {
         const bw = Math.max(h * 3.5, cv.textWidth(b.text, size, opt) + h), c = t[b.color] || b.color || t.warn;
-        cv.roundRect(bx - bw, y, bw, h, h * 0.2, withAlpha(c, 0.2));
+        cv.roundRect(bx - bw, y, bw, h, SK(t) ? 2 : h * 0.2, withAlpha(c, 0.2));
         cv.text(b.text, bx - bw / 2, y + h / 2 + size * 0.36, size, c, opt);
         bx -= bw + h * 0.4;
     });
@@ -728,19 +849,19 @@ function badgeRow(cv, t, xr, y, h, size, badges) {
  */
 function header(cv, t, x, y, w, h, title, tabs, sel, badges, flat, compact) {
     if (compact) return headerCompact(cv, t, x, y, w, h, title, tabs, sel, badges);
-    const S = t.sel || t.accent, opt = { align: 'center', font: 'bold', spacing: 2 };
+    const S = t.sel || t.accent, sk = SK(t), opt = sk ? { align: 'center', font: 'label' } : { align: 'center', font: 'bold', spacing: 2 }, nsz = sk ? 24 : 20;
     cv.fillRect(x, y, w, h, t.bg);
     // flat: plain, to match the HMI's own black strip next to it
-    if (!flat) cv.gradientRect(x, y, w, h, [[0, withAlpha('#ffffff', 0.02)], [1, withAlpha('#ffffff', 0.08)]]);
-    cv.fillRect(x, y + h - 2, w, 2, withAlpha('#ffffff', 0.22));
+    if (!flat && !sk) cv.gradientRect(x, y, w, h, [[0, withAlpha('#ffffff', 0.02)], [1, withAlpha('#ffffff', 0.08)]]);
+    headEdge(cv, t, x, y + h, w);
     const right = badgeRow(cv, t, x + w - 16, y + (h - 30) / 2, 30, 18, badges || []);
-    const names = (tabs || []).map((n) => upperText(n));
-    const tw = tabWidths(cv, names, 20, opt, 170, 64, right - x - 20, 24);
+    const names = (tabs || []).map((n) => capt(t, n));
+    const tw = tabWidths(cv, names, nsz, opt, 170, 64, right - x - 20, 24);
     const tabsW = tw.reduce((a, b) => a + b, 0);
     let tx = x + 20;
     const tsize = 38, titleW = title ? cv.textWidth(title, tsize) : 0;
     if (title && tx + titleW + 40 + tabsW <= right) {
-        cv.text(title, tx, y + h / 2 + tsize * 0.36, tsize, t.text);
+        cv.text(title, tx, y + h / 2 + tsize * 0.36, tsize, sk ? S : t.text);
         tx += titleW + 40;
     }
     cv.tabRects = [];
@@ -748,26 +869,28 @@ function header(cv, t, x, y, w, h, title, tabs, sel, badges, flat, compact) {
         const on = i === sel, bw = tw[i];
         if (tx + bw > right) return;
         cv.tabRects.push({ i, x: tx, y, w: bw, h });
-        if (on) {
+        if (on && sk) focusFill(cv, t, tx, y + 8, bw, h - 14);
+        else if (on) {
             cv.gradientRect(tx, y, bw, h, [[0, withAlpha(S, 0)], [1, withAlpha(S, 0.25)]]);
             cv.fillRect(tx, y + h - 5, bw, 5, S);
         }
-        cv.text(n, tx + bw / 2, y + h / 2 + 7, 20, on ? t.selText || '#ffffff' : t.dim, opt);
-        if (i < names.length - 1) cv.fillRect(tx + bw, y + h * 0.28, 1, h * 0.44, withAlpha('#ffffff', 0.14));
+        cv.text(n, tx + bw / 2, y + h / 2 + (sk ? 8 : 7), nsz, on ? t.selText || '#ffffff' : sk ? t.text : t.dim, opt);
+        if (i < names.length - 1) cv.fillRect(tx + bw, y + h * 0.28, 1, h * 0.44, sk ? t.line : withAlpha('#ffffff', 0.14));
         tx += bw;
     });
 }
 
 function headerCompact(cv, t, x, y, w, h, title, tabs, sel, badges) {
-    const S = t.sel || t.accent, opt = { align: 'center', font: 'bold', spacing: 1.6 };
+    const S = t.sel || t.accent, sk = SK(t), opt = sk ? { align: 'center', font: 'label' } : { align: 'center', font: 'bold', spacing: 1.6 };
     const bopt = { align: 'center', font: 'bold', spacing: 1.5 };
-    const names = (tabs || []).map((n) => upperText(n));
+    const names = (tabs || []).map((n) => capt(t, n)), nsz = sk ? 23 : 18;
     const bh = 30, bsize = 17;
     const bws = (badges || []).map((b) => Math.max(bh * 3.5, cv.textWidth(b.text, bsize, bopt) + bh));
     const badgesW = bws.reduce((a, b) => a + b + bh * 0.4, 0);
-    const tsize = 32, titleW = title ? cv.textWidth(title, tsize) : 0;
+    // (iDrive 7: the app's name in the accent, as the head unit's own screens title themselves)
+    const tsize = sk ? 36 : 32, titleW = title ? cv.textWidth(title, tsize) : 0;
     const room = w - 20 - (badgesW ? badgesW + 12 : 0);
-    const tw = tabWidths(cv, names, 18, opt, 132, 44, room - 20, 20);
+    const tw = tabWidths(cv, names, nsz, opt, 132, 44, room - 20, 20);
     const tabsW = tw.reduce((a, b) => a + b, 0);
     // the tabs start 20 px in: the name shows only where every tab still fits after it (else the last tab, Settings, drops)
     const showTitle = title && 20 + titleW + 32 + tabsW <= room;
@@ -776,10 +899,10 @@ function headerCompact(cv, t, x, y, w, h, title, tabs, sel, badges) {
     names.forEach((n, i) => { if (end + tw[i] <= x + room) end += tw[i]; });
     end = Math.min(x + w, end + (badgesW ? 12 + badgesW : 0) + 16);
     cv.fillRect(x, y, end - x, h, t.bg);
-    cv.fillRect(x, y + h - 2, end - x, 2, withAlpha('#ffffff', 0.22));
+    headEdge(cv, t, x, y + h, end - x);
     let tx = x + 20;
     if (showTitle) {
-        cv.text(title, tx, y + h / 2 + tsize * 0.36, tsize, t.text);
+        cv.text(title, tx, y + h / 2 + tsize * 0.36, tsize, sk ? S : t.text, sk ? { font: 'label' } : undefined);
         tx += titleW + 32;
     }
     cv.tabRects = [];
@@ -787,12 +910,13 @@ function headerCompact(cv, t, x, y, w, h, title, tabs, sel, badges) {
         const on = i === sel, bw = tw[i];
         if (tx + bw > x + room) return;
         cv.tabRects.push({ i, x: tx, y, w: bw, h });
-        if (on) {
+        if (on && sk) focusFill(cv, t, tx, y + 10, bw, h - 18);
+        else if (on) {
             cv.gradientRect(tx, y, bw, h, [[0, withAlpha(S, 0)], [1, withAlpha(S, 0.25)]]);
             cv.fillRect(tx, y + h - 4, bw, 4, S);
         }
-        cv.text(n, tx + bw / 2, y + h / 2 + 6, 18, on ? t.selText || '#ffffff' : t.dim, opt);
-        if (i < names.length - 1) cv.fillRect(tx + bw, y + h * 0.3, 1, h * 0.4, withAlpha('#ffffff', 0.14));
+        cv.text(n, tx + bw / 2, y + h / 2 + (sk ? 8 : 6), nsz, on ? t.selText || '#ffffff' : sk ? t.text : t.dim, opt);
+        if (i < names.length - 1) cv.fillRect(tx + bw, y + h * 0.3, 1, h * 0.4, sk ? t.line : withAlpha('#ffffff', 0.14));
         tx += bw;
     });
     if (badgesW) badgeRow(cv, t, tx + 12 + badgesW, y + (h - bh) / 2, bh, bsize, badges);
@@ -807,6 +931,19 @@ function headerCompact(cv, t, x, y, w, h, title, tabs, sel, badges) {
 function menuBar(cv, t, x, y, w, h, buttons, focus, variant, flash) {
     const std = variant === 'standard', u = h / (std ? 120 : 48);
     const sel = t.sel || t.accent;
+    if (SK(t)) {
+        // iDrive 7: flat on the black, a fine line along the top, the focused / pressed button in the focus gradient
+        cv.fillRect(x, y, w, h, t.bg);
+        cv.fillRect(x, y, w, Math.max(1, 2 * u), t.line);
+        const sz = (std ? 32 : 23) * u;
+        buttons.forEach((b, i) => {
+            const on = i === focus, hit = i === flash;
+            if (on || hit) focusFill(cv, t, b.x, y + 2 * u, b.w, h - 2 * u, Math.max(1.5, 2 * u), hit ? 1 : 0.85);
+            cv.text(String(localizeLabel(String(b.label))), b.x + b.w / 2, y + h / 2 + sz * 0.36, sz, on || hit ? t.selText || '#ffffff' : t.text, { align: 'center', font: 'label' });
+            if (i < buttons.length - 1) cv.fillRect(b.x + b.w, y + h * 0.22, Math.max(1, u), h * 0.56, t.line);
+        });
+        return;
+    }
     cv.fillRect(x, y, w, h, t.bg);
     cv.gradientRect(x, y, w, h, [[0, withAlpha('#ffffff', 0.09)], [1, withAlpha('#ffffff', 0.03)]]);
     cv.fillRect(x, y, w, Math.max(1, 2 * u), withAlpha('#ffffff', 0.2));
@@ -849,6 +986,17 @@ function button(cv, t, x, y, w, h, label, run, opts) {
         };
     }
     const S = t.sel || t.accent, c = o.color || S;
+    if (SK(t)) {
+        // iDrive 7: a flat button with a fine frame; primary (or armed) in the focus gradient, a warning colour's own
+        const txt = localizeLabel(String(label)), sz = h * 0.44;
+        if (!w) w = Math.max(h * 3, cv.textWidth(txt, sz, { font: 'label' }) + h * 1.2);
+        if (o.primary && !o.color) focusFill(cv, t, x, y, w, h, 2, o.busy ? 0.5 : 1);
+        else if (o.primary) { cv.roundRect(x, y, w, h, 3, withAlpha(c, o.busy ? 0.3 : 0.75)); }
+        else { cv.roundRect(x, y, w, h, 3, withAlpha('#ffffff', 0.04)); cv.strokeRoundRect(x, y, w, h, 3, 1.5, o.color ? withAlpha(o.color, o.busy ? 0.3 : 0.8) : withAlpha(t.line, o.busy ? 0.5 : 1)); }
+        cv.text(txt, x + w / 2, y + h / 2 + sz * 0.36, sz, o.primary ? '#ffffff' : o.busy ? t.dim : o.color || t.text, { align: 'center', font: 'label', literal: true });
+        if (!o.busy && run) cv.target(x, y, w, h, run, o.key || label);
+        return w;
+    }
     if (!w) w = Math.max(h * 3, cv.textWidth(String(label).toUpperCase(), h * 0.4, { font: 'bold', spacing: 1.5 }) + h * 1.2);
     cv.roundRect(x, y, w, h, h / 2, o.primary ? withAlpha(c, o.busy ? 0.35 : 0.85) : withAlpha('#ffffff', 0.07));
     if (!o.primary) cv.strokeRoundRect(x, y, w, h, h / 2, 1.5, withAlpha(o.color || '#ffffff', o.busy ? 0.25 : o.color ? 0.75 : 0.3));
@@ -866,7 +1014,7 @@ function stripes(cv, t, x, y, w) {
 }
 
 module.exports = {
-    BAR_H, TOP, BOTTOM, pageBottom, MARGIN, toMargin, frame, header, layer, onLayerDrop, panel, segBar, radial, needle, ring, bar, stat, readout,
+    BAR_H, TOP, BOTTOM, pageBottom, MARGIN, toMargin, frame, header, headEdge, focusFill, silverSlab, layer, onLayerDrop, panel, segBar, radial, needle, ring, bar, stat, readout,
     shiftLights, gear, chart, table, pill, tyres, gmeter, menuBar, stripes, button, onConfirm, smooth, hold, niceStep,
     fmt, isNum, clamp, mix, zoneColor, withAlpha, ramp,
 };

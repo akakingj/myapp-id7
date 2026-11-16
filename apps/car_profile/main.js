@@ -86,11 +86,13 @@ mgu.run({
             const group = (g) => items.filter((s) => s.group === g);
             const column = (i, panels) => {
                 // each panel's rows 56 apart, 52 where two share a column; the last panel down to the page's bottom
-                const x = gap + i * (pw + gap), pitch = panels.length > 1 ? 52 : 56;
+                // (a lone panel of more than 7 rows: closer, so they fit down to the page's bottom)
+                const x = gap + i * (pw + gap);
                 let y = top;
                 panels.forEach(([g, title], k) => {
                     // (a panel of more than one group: their rows one after the other)
                     const rows = [].concat.apply([], [].concat(g).map(group)), last = k === panels.length - 1;
+                    const pitch = panels.length > 1 ? 52 : Math.min(56, Math.floor((bottom - top - 62) / Math.max(1, rows.length)));
                     const p = G.panel(cv, t, x, y, pw, last ? bottom - y : 64 + rows.length * pitch, title);
                     rows.forEach((s, j) => row(cv, t, p.x + 22, p.y + 58 + j * pitch, p.w - 44, s, pitch));
                     y = p.y + p.h + gap;
@@ -100,7 +102,8 @@ mgu.run({
             // warm-up and too hot in one panel: seven rows as the other columns (with the gearbox oil's warm-up, two panels
             // of four and three no longer fit the page)
             column(1, [[['Warm-up', 'Too hot'], 'Warm-up and too hot']]);
-            column(2, [['Units', 'Units']]);
+            // (the skin: the look of the apps, after their units)
+            column(2, [[['Units', 'Display'], 'Units and display']]);
             // whether the other apps have it, in the header (each text translated whole)
             const n = Object.keys(P.valuesOf(settings)).length;
             const badge = state.error ? { text: 'Not written for the apps', color: 'crit' }

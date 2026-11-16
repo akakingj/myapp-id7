@@ -2,7 +2,7 @@
   "id": "car_vitals",
   "title": "M Vitals",
   "description": "Live engine, thermal, intake / fuel / ignition, tyre and chassis gauges",
-  "version": "2.27.11",
+  "version": "2.28.0",
   "vendor": "custom",
   "loggingId": "OA93",
   "iconGlyph": "gauge",
@@ -689,7 +689,7 @@
     },
     {"key": "advanced", "label": "Advanced settings", "type": "bool", "default": false},
     {
-      "key": "theme",
+      "key": "theme", "when": {"skin": "classic"},
       "label": "Colour theme",
       "type": "choice",
       "default": "m_tricolour",
@@ -712,6 +712,7 @@
         ]
       ]
     },
+    {"key": "skin", "label": "Skin", "type": "choice", "default": "classic", "options": [["classic", "Classic"], ["idrive7", "iDrive 7"]], "profile": "skin"},
     {"key": "speedRate", "label": "Speed display rate", "type": "number", "unit": "fps", "default": 10, "reset": 1, "markDefault": true, "steps": [3, 5, 10, 15, 30, 60], "when": {"advanced": true}},
     {"key": "layout", "label": "Screen layout", "type": "choice", "default": "full",
      "options": [["full", "Full screen"], ["standard", "Standard"]]},

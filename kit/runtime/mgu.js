@@ -695,12 +695,14 @@ async function runInner(impl) {
         return;
     }
     const ui = new Ui(app);
-    const display = new Display(ui, log, SPEC, settings, () => themes.theme(settings.get('theme')));
+    // the colours and the skin (setting "skin": classic / idrive7, the Car profile's where it sets one; themes.js)
+    const themeNow = () => themes.theme(settings.get('theme'), settings.get('skin'));
+    const display = new Display(ui, log, SPEC, settings, themeNow);
     ui.display = display;
     const ctx = {
         app, ui, settings, log, spec: SPEC, dataDir: DATA_DIR, display, widget, background,
         signals: require('./signals'),
-        theme: () => themes.theme(settings.get('theme')),
+        theme: themeNow,
         /**
          * controller.grab(true): the iDrive controller's knob, press and tilt go to this app only
          * (the HMI stops moving its focus or opening its menus); BACK, MENU and the touchscreen

@@ -14,7 +14,7 @@ const fs = require('fs');
 
 // what the profile sets, in Settings order; FOLLOW: the apps that follow each (their app.json "profile")
 const KEYS = ['engine', 'redline', 'shiftBefore', 'rpmScale', 'coldLimit', 'lightMode', 'lightStart', 'coldGuard', 'warmOil',
-    'warmCoolant', 'warmGearbox', 'hotOil', 'hotCoolant', 'hotGearbox', 'speedUnit', 'distUnit', 'tempUnit', 'pressUnit', 'fuelUnit', 'torqueUnit', 'powerUnit'];
+    'warmCoolant', 'warmGearbox', 'hotOil', 'hotCoolant', 'hotGearbox', 'speedUnit', 'distUnit', 'tempUnit', 'pressUnit', 'fuelUnit', 'torqueUnit', 'powerUnit', 'skin'];
 const FOLLOW = {
     // (Plug-in hybrid: the AK clusters' Vehicle; the other apps take a plug-in hybrid as their own setting says: Auto, petrol)
     engine: ['M Vitals', 'Redline', 'Warm-Up', 'Virtual Dyno', 'AK Cluster', 'AK Cluster Centre'],
@@ -39,6 +39,8 @@ const FOLLOW = {
     fuelUnit: ['Redline HUD'],
     torqueUnit: ['M Vitals', 'Redline HUD', 'Virtual Dyno', 'AK Cluster'],
     powerUnit: ['M Vitals', 'Redline HUD', 'Virtual Dyno', 'AK Cluster'],
+    // the look of every app with a colour theme (kit/runtime/themes.js SKINS)
+    skin: ['Every app with a colour theme'],
 };
 // ('AK Cluster': the cluster apps of akakingj/idrive7-cluster-info, Layouts / Centre / Info, which read this file too)
 
