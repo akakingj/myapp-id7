@@ -16,7 +16,8 @@ const fs = require('fs');
 const KEYS = ['engine', 'redline', 'shiftBefore', 'rpmScale', 'coldLimit', 'lightMode', 'lightStart', 'coldGuard', 'warmOil',
     'warmCoolant', 'warmGearbox', 'hotOil', 'hotCoolant', 'hotGearbox', 'speedUnit', 'distUnit', 'tempUnit', 'pressUnit', 'fuelUnit', 'torqueUnit', 'powerUnit'];
 const FOLLOW = {
-    engine: ['M Vitals', 'Redline', 'Warm-Up', 'Virtual Dyno'],
+    // (Plug-in hybrid: the AK clusters' Vehicle; the other apps take a plug-in hybrid as their own setting says: Auto, petrol)
+    engine: ['M Vitals', 'Redline', 'Warm-Up', 'Virtual Dyno', 'AK Cluster', 'AK Cluster Centre'],
     redline: ['M Vitals', 'Redline', 'Warm-Up', 'AK Cluster'],
     shiftBefore: ['Redline', 'Warm-Up', 'AK Cluster'],
     rpmScale: ['M Vitals', 'Redline', 'Virtual Dyno', 'AK Cluster'],

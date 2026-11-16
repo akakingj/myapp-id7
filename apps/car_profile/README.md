@@ -4,7 +4,7 @@ One place for the car's engine values and units. Set them here once and the othe
 
 | Setting | Followed by |
 |---|---|
-| Engine (Auto / Diesel / Petrol) | M Vitals, Redline, Warm-Up, Virtual Dyno |
+| Engine (Auto / Diesel / Petrol / Plug-in hybrid) | M Vitals, Redline, Warm-Up, Virtual Dyno, AK Cluster Layouts and Centre (their Vehicle; the others take a plug-in hybrid as their own setting says) |
 | Redline | M Vitals, Redline, Warm-Up, AK Cluster |
 | Shift point before redline | Redline, Warm-Up, AK Cluster |
 | Rev scale up to | M Vitals, Redline, Virtual Dyno (*Graph up to*), AK Cluster |

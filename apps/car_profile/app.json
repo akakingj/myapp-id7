@@ -2,7 +2,7 @@
   "id": "car_profile",
   "title": "Car profile",
   "description": "One place for the car's engine values and units: the redline, rev scale, cold rev limit, shift lights, warm-up and too-hot temperatures and the speed, distance, temperature, pressure, fuel use, torque and power units. M Vitals, Redline, Warm-Up, Virtual Dyno, Drag Timer, Brake Test, G-Force, eDrive and Transmission Config follow them; what is left to each app stays as each app has it",
-  "version": "1.2.10",
+  "version": "1.2.11",
   "vendor": "custom",
   "loggingId": "OAA9",
   "iconGlyph": "profile",
@@ -21,7 +21,7 @@
     }
   ],
   "settings": [
-    {"key": "engine", "label": "Engine", "type": "choice", "default": "app", "options": [["app", "Each app"], ["auto", "Auto (from the car)"], ["diesel", "Diesel"], ["petrol", "Petrol"]], "group": "Engine"},
+    {"key": "engine", "label": "Engine", "type": "choice", "default": "app", "options": [["app", "Each app"], ["auto", "Auto (from the car)"], ["diesel", "Diesel"], ["petrol", "Petrol"], ["phev", "Plug-in hybrid (petrol)"]], "group": "Engine"},
     {"key": "redline", "label": "Redline", "type": "number", "unit": "rpm", "default": -1, "labels": {"-1": "Each app", "0": "Auto"}, "steps": [-1, 0, 4000, 4500, 5000, 5500, 5800, 6000, 6200, 6500, 6800, 7000, 7200, 7500, 7800, 8000, 8500, 9000], "group": "Engine"},
     {"key": "shiftBefore", "label": "Shift point before redline", "type": "number", "unit": "rpm", "default": -1, "labels": {"-1": "Each app"}, "steps": [-1, 0, 100, 200, 300, 400, 500, 700, 800, 1000], "group": "Engine"},
     {"key": "rpmScale", "label": "Rev scale up to", "type": "number", "unit": "rpm", "default": -1, "labels": {"-1": "Each app", "0": "Auto"}, "steps": [-1, 0, 5000, 6000, 7000, 8000, 9000, 10000], "group": "Engine"},

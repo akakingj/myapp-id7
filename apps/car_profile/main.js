@@ -2,7 +2,7 @@
 /**
  * Car profile - one place for the car's engine values and units, followed by the other apps.
  *
- * Settings: the engine (Auto / Diesel / Petrol), redline, rev scale, cold rev limit, the shift lights (shift point
+ * Settings: the engine (Auto / Diesel / Petrol / Plug-in hybrid), redline, rev scale, cold rev limit, the shift lights (shift point
  * or rev bar, and where the rev bar starts), when oil and coolant count as warm, when oil, coolant and gearbox count
  * as too hot (red), and the speed, distance,
  * temperature, pressure, fuel use, torque and power units. Each one starts at "Each app": until it is set here, every
