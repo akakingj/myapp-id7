@@ -1,0 +1,2 @@
+# the demo's own files on this computer (each app's settings, the shared /dev/shm files, staged apps)
+.data/

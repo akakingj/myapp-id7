@@ -1,0 +1,2 @@
+# the launcher for Windows: CRLF, as cmd.exe reads it
+*.bat text eol=crlf
