@@ -202,17 +202,3 @@ details.adv[open] > summary { color: var(--text); }
 #cluster .turn { top: 3.2%; width: 2.6%; height: 4.6%; fill: #2fd27a; filter: drop-shadow(0 0 .4cqw #2fd27a88); display: none; pointer-events: none; }
 #turnL { left: 37.2%; }
 #turnR { left: 60.2%; }
-
-/* a phone or a tablet: the controller's buttons under the centre display, no double-tap zoom */
-html, body { touch-action: manipulation; }
-#dial { display: none; flex: none; gap: 6px; justify-content: center; flex-wrap: wrap; }
-#dial button { min-width: 46px; min-height: 40px; font-size: 17px; padding: 4px 10px; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
-#dial button.wide { min-width: 80px; font-size: 14px; }
-#dial button:active { background: #1f3550; border-color: var(--accent); }
-body.touch #dial { display: flex; }
-body.touch #legend { display: none; }
-#lanBody { display: flex; gap: 12px; align-items: center; }
-#lanBody svg { width: 132px; height: 132px; flex: none; background: #fff; border-radius: 6px; }
-#lanBody .u { font: 12px ui-monospace, monospace; word-break: break-all; color: var(--text); user-select: all; -webkit-user-select: all; }
-#lanBody .h { font-size: 11px; color: var(--dim); margin-top: 6px; }
-body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }

@@ -9,9 +9,7 @@
  *     it (their GLSL, WebGL)
  *   - one car for every app: an automatic drive or your own values (the panel), and each app's settings
  *
- *   node demo/server.js [--cluster ../idrive7-cluster-info] [--data <folder>] [--port 8077] [--no-open] [--lan]
- *   (--lan: also on this computer's home network, for a phone or tablet: the page's address with a key, as text and a
- *   QR code in the panel and here; without the key another device gets nothing)
+ *   node demo/server.js [--cluster ../idrive7-cluster-info] [--data <folder>] [--port 8077] [--no-open]
  *   (Windows: MGU_데모_실행.bat, which also fetches the newest code of both repositories first)
  *
  * The apps are not copied or changed for the demo: each is built from apps/<id> as the MGU Store builds it (this repo:
@@ -36,7 +34,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { spawn, spawnSync, fork, exec } = require('child_process');
 
-const DEMO_VERSION = '1.1.0';
+const DEMO_VERSION = '1.0.1';
 const A = path.resolve(__dirname, '..');                       // this repository (akakingj/idrive7-apps)
 const WEB = path.join(__dirname, 'web');
 const GFX = path.join(A, 'kit', 'emu', 'web', 'gfx');            // the car's draw engine as WebAssembly (GPL-3.0-or-later)
@@ -46,7 +44,6 @@ const opt = (k, d) => { const i = args.indexOf(k); if (i < 0) return d; const v 
 const flag = (k) => { const i = args.indexOf(k); if (i < 0) return false; args.splice(i, 1); return true; };
 let PORT = Number(opt('--port', 8077));
 const OPEN = !flag('--no-open');
-const LAN = flag('--lan');
 const BG = (() => { const b = opt('--bg', null); return b ? path.resolve(b) : null; })();
 const Touch = { on: !flag('--no-touch') };
 /** the cluster apps' repository: --cluster, else beside this one */
@@ -61,23 +58,7 @@ const SHM = path.join(DATA, 'shm');
 const STAGE = path.join(DATA, 'stage');
 [DATA, SHM, STAGE, path.join(SHM, 'run', 'waze-on-cluster')].forEach((d) => fs.mkdirSync(d, { recursive: true }));
 let HOSTS = [];
-const LOCAL = () => ['localhost:' + PORT, '127.0.0.1:' + PORT];
-/** this computer's addresses on its networks (IPv4, not its own loopback) */
-function lanIps() {
-    const out = [];
-    Object.values(os.networkInterfaces()).forEach((l) => (l || []).forEach((a) => { if ((a.family === 'IPv4' || a.family === 4) && !a.internal) out.push(a.address); }));
-    return out;
-}
-const setHosts = () => { HOSTS = LOCAL().concat(LAN ? lanIps().map((ip) => ip + ':' + PORT) : []); };
-/** the key a phone needs (kept: a bookmark or a home screen icon goes on working) */
-const KEY = (() => {
-    const f = path.join(DATA, 'lan-key.txt');
-    try { const k = fs.readFileSync(f, 'utf8').trim(); if (/^[0-9a-f]{12}$/.test(k)) return k; } catch (e) { /* a new one */ }
-    const k = crypto.randomBytes(6).toString('hex');
-    try { fs.writeFileSync(f, k); } catch (e) { /* this run only */ }
-    return k;
-})();
-const lanUrls = () => (LAN ? lanIps().map((ip) => 'http://' + ip + ':' + PORT + '/?k=' + KEY) : []);
+const setHosts = () => { HOSTS = ['localhost:' + PORT, '127.0.0.1:' + PORT]; };
 setHosts();
 // the renderer's socket: a named pipe on Windows (demo/preload.js lets kit/renderd.js take it)
 const SOCK = process.platform === 'win32' ? '\\\\.\\pipe\\mgu-demo-' + process.pid : path.join(os.tmpdir(), 'mgu-demo-' + process.pid + '.sock');
@@ -250,17 +231,7 @@ const toPages = (x) => pages.forEach((w) => w.send(x));
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
     '.wasm': 'application/wasm', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.svg': 'image/svg+xml', '.map': 'application/json' };
 // another site's page in the browser (Origin) or a DNS name pointed at 127.0.0.1 (Host) gets nothing
-// (--lan: from another device only with the key, in the address once and then its cookie)
-const keyIn = (req) => {
-    const q = /[?&]k=([0-9a-f]+)/.exec(req.url || ''), c = /(?:^|;\s*)mgu_k=([0-9a-f]+)/.exec(req.headers.cookie || '');
-    return (q && q[1] === KEY) || (c && c[1] === KEY);
-};
-const ours = (req) => {
-    if (LAN) setHosts();                          // (an address the computer got since)
-    const host = String(req.headers.host);
-    if (HOSTS.indexOf(host) < 0 || (req.headers.origin && !HOSTS.some((h) => req.headers.origin === 'http://' + h))) return false;
-    return LOCAL().indexOf(host) >= 0 || !!keyIn(req);
-};
+const ours = (req) => HOSTS.indexOf(String(req.headers.host)) >= 0 && (!req.headers.origin || HOSTS.some((h) => req.headers.origin === 'http://' + h));
 const inside = (f, dir) => f.indexOf(dir + path.sep) === 0;
 const server = http.createServer((req, res) => {
     const fail = (code) => { res.writeHead(code, { 'content-type': 'text/plain' }); res.end(String(code)); };
@@ -280,10 +251,8 @@ const server = http.createServer((req, res) => {
         fs.readFile(f, (e, d) => {
             if (e) { fail(404); return; }
             // (cross-origin isolated: a finer performance.now() for the draw times; everything the page loads is from here)
-            const h = { 'content-type': MIME[path.extname(f).toLowerCase()] || 'application/octet-stream', 'cache-control': 'no-store',
-                'cross-origin-opener-policy': 'same-origin', 'cross-origin-embedder-policy': 'require-corp' };
-            if (LAN && /[?&]k=/.test(req.url)) h['set-cookie'] = 'mgu_k=' + KEY + '; Path=/; SameSite=Strict; Max-Age=31536000';
-            res.writeHead(200, h);
+            res.writeHead(200, { 'content-type': MIME[path.extname(f).toLowerCase()] || 'application/octet-stream', 'cache-control': 'no-store',
+                'cross-origin-opener-policy': 'same-origin', 'cross-origin-embedder-policy': 'require-corp' });
             res.end(d);
         });
     } catch (e) { fail(500); }
@@ -310,8 +279,7 @@ server.on('upgrade', (req, sock, head) => {
 });
 function hello() {
     return { t: 'hello', apps: listApps(), titles: appTitles(), auto: listApps().filter((id) => REG[id].auto), repo: listApps().reduce((o, id) => { o[id] = REG[id].repo; return o; }, {}),
-        app: appId, bg: !!BG, touch: Touch.on, demo: DEMO_VERSION, cluster: clusterGeometry(), sources: sourcesInfo(), python: !!PY,
-        lan: LAN ? lanUrls().map((u) => ({ url: u, qr: (require('./qr.js').qr(u) || []).map((r) => r.map((d) => (d ? 1 : 0)).join('')) })) : null };
+        app: appId, bg: !!BG, touch: Touch.on, demo: DEMO_VERSION, cluster: clusterGeometry(), sources: sourcesInfo(), python: !!PY };
 }
 /** what each repository is (the launcher writes .demo-source.json: branch and commit) */
 function sourcesInfo() {
@@ -1066,12 +1034,6 @@ server.on('listening', () => {
     console.log('MGU demo ' + DEMO_VERSION + '   ' + url);
     console.log('  ' + src);
     console.log('  apps: ' + listApps().length + (B ? '' : '  (the cluster repository was not found: --cluster <folder>)') + (PY ? '' : '  (no Python 3: this repository\'s apps cannot be built)'));
-    if (LAN) {
-        console.log('  아이폰 / 아이패드 (같은 와이파이): 아래 주소를 Safari로 여세요 (PC 화면 패널의 QR 코드를 카메라로 찍어도 됩니다)');
-        lanUrls().forEach((u) => console.log('    ' + u));
-        if (!lanUrls().length) console.log('    (이 컴퓨터의 네트워크 주소를 찾지 못했습니다)');
-        console.log('  Windows 방화벽이 묻으면 "개인 네트워크"에서 허용하세요.');
-    }
     console.log('  (close this window or Ctrl+C to stop the demo)');
     writeWaze();
     watchAll();
@@ -1079,10 +1041,10 @@ server.on('listening', () => {
     if (OPEN) openBrowser(url);
 });
 server.on('error', (e) => {
-    if (e.code === 'EADDRINUSE' && tries++ < 20) { PORT++; setHosts(); server.listen(PORT, LAN ? '0.0.0.0' : '127.0.0.1'); return; }
+    if (e.code === 'EADDRINUSE' && tries++ < 20) { PORT++; setHosts(); server.listen(PORT, '127.0.0.1'); return; }
     console.error('demo: ' + e.message); cleanup(1);
 });
-daemon.listen(SOCK, () => server.listen(PORT, LAN ? '0.0.0.0' : '127.0.0.1'));
+daemon.listen(SOCK, () => server.listen(PORT, '127.0.0.1'));
 function cleanup(code) {
     watchers.forEach((w) => w.close());
     [App.child].concat(Array.from(Bg.values()).map((b) => b.child)).forEach((ch) => { if (ch) { try { ch.kill('SIGKILL'); } catch (e) { /* gone */ } } });

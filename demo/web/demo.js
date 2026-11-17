@@ -95,7 +95,6 @@ function onText(m) {
     $('#ver').textContent = 'v' + m.demo;
     $('#src').textContent = (m.sources || []).map((s) => s.name + ': ' + (s.missing ? '없음' : (s.branch || '?') + ' ' + (s.commit || '') + (s.date ? ' (' + s.date + ')' : ''))).join('\n') + (m.python ? '' : '\nPython 3 없음: idrive7-apps 앱은 빌드할 수 없습니다');
     if (m.cluster) Cluster.geo(m.cluster);
-    lanBox(m.lan);
     buildPicker(m.apps, S.titles);
     if (m.bg) { const b = $('#bgimg'); b.src = '/bg?' + Date.now(); b.hidden = false; }
     $('#log').replaceChildren();
@@ -742,34 +741,6 @@ function pickOpen(i) {
   body.addEventListener('pointercancel', end);
 }
 
-/* ---------------- a phone or a tablet: the address and its QR code (on the computer), the controller's buttons ---------------- */
-const onThisPc = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
-function lanBox(lan) {
-  const box = $('#lanBox'), body = $('#lanBody');
-  if (!onThisPc) { box.hidden = true; return; }
-  box.hidden = false;
-  if (!lan) { body.innerHTML = '<div class="h">아이폰 · 아이패드에서 보려면 데모를 <b>mgu_demo_iphone.bat</b> 으로 실행하세요 (같은 와이파이).</div>'; return; }
-  if (!lan.length) { body.innerHTML = '<div class="h">이 컴퓨터의 네트워크 주소를 찾지 못했습니다. 유선 · 와이파이 연결을 확인하세요.</div>'; return; }
-  const one = lan[0], n = one.qr.length, q = 2;
-  const path = [];
-  one.qr.forEach((row, y) => { for (let x = 0; x < n; x++) if (row[x] === '1') path.push('M' + (x + q) + ' ' + (y + q) + 'h1v1h-1z'); });
-  body.innerHTML = '<svg viewBox="0 0 ' + (n + 2 * q) + ' ' + (n + 2 * q) + '" shape-rendering="crispEdges"><path d="' + path.join('') + '" fill="#000"/></svg>' +
-    '<div><div class="u">' + lan.map((l) => esc(l.url)).join('<br>') + '</div><div class="h">아이폰 카메라로 QR을 찍거나 Safari에 주소를 넣으세요. ' +
-    '공유 → "홈 화면에 추가"를 하면 앱처럼 전체 화면으로 열립니다. 주소의 k=… 가 없으면 열리지 않습니다.</div></div>';
-}
-const touchy = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0 && !matchMedia('(pointer: fine)').matches;
-document.body.classList.toggle('touch', touchy);
-// (each button: the key it stands for, pressed while the finger is on it)
-document.querySelectorAll('#dial button').forEach((b) => {
-  const key = b.dataset.key;
-  let down = false;
-  const press = (e) => { e.preventDefault(); if (down) return; down = true; document.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true })); };
-  const release = () => { if (!down) return; down = false; document.dispatchEvent(new KeyboardEvent('keyup', { key, bubbles: true })); };
-  b.addEventListener('pointerdown', press);
-  ['pointerup', 'pointercancel', 'pointerleave'].forEach((t) => b.addEventListener(t, release));
-  b.addEventListener('contextmenu', (e) => e.preventDefault());
-});
-
 /* ---------------- layout: the cluster over the centre display, both 1920 x 720, as large as fit; the panel at the right ---------------- */
 function layout() {
   const vw = document.documentElement.clientWidth;
@@ -777,7 +748,7 @@ function layout() {
   document.body.classList.toggle('narrow', narrow);
   const m = $('#main'), cs = getComputedStyle(m), px = (k) => parseFloat(cs[k]) || 0;
   const aw = m.getBoundingClientRect().width - px('paddingLeft') - px('paddingRight');
-  const fixed = ['#capCluster', '#capStage', '#legend', '#dial'].reduce((n, s) => n + ($(s).offsetHeight || 0), 0) + 6 * px('rowGap');
+  const fixed = ['#capCluster', '#capStage', '#legend'].reduce((n, s) => n + ($(s).offsetHeight || 0), 0) + 5 * px('rowGap');
   const ah = (narrow ? window.innerHeight * 0.9 : m.clientHeight) - px('paddingTop') - px('paddingBottom') - fixed;
   const w = Math.max(240, Math.floor(Math.min(aw, ah / 2 * W / H)));
   [stage, $('#cluster')].forEach((e) => { if (e.style.width !== w + 'px') e.style.width = w + 'px'; });
