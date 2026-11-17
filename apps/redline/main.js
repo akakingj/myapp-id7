@@ -59,6 +59,7 @@ const GearboxTemp = require('./gearbox');
 const KnockWatch = require('./knock');
 const FuelWatch = require('./fuel');
 const IntakeWatch = require('./intake');
+const TwinDme = require('./kit/twin_dme');
 const PowerLog = require('./powerlog');
 const Electrical = require('./electrical');
 const Tyres = require('./tyres');
@@ -122,9 +123,13 @@ mgu.run({
         // gearbox oil temperature for the HUD (EGS over UDS, or BasicDataSet); polled only while the HUD is on
         const gearbox = new GearboxTemp(ctx);
         // knock from the engine unit, on the gearbox reader's diagnostics link; polled only while the HUD wants it
-        const knock = new KnockWatch(ctx, () => gearbox.diag());
+        // (a V8 with a second engine unit at 0x13: bank 2's read too, kit/twin_dme.js)
+        // (its VIN's maker code too, once: N63 or an M car's S63 / S68, for the Auto redline below)
+        const twin = new TwinDme(() => gearbox.diag(), { dataDir: ctx.dataDir, log, vin: true });
+        engine.setAuto(twin.redline);
+        const knock = new KnockWatch(ctx, () => gearbox.diag(), { twin });
         // fuel use from the engine unit, the same link; polled only while the fuel readout is on and the engine runs
-        const fuel = new FuelWatch(ctx, () => gearbox.diag(), { diesel: () => engine.profile() === 'diesel' });
+        const fuel = new FuelWatch(ctx, () => gearbox.diag(), { diesel: () => engine.profile() === 'diesel', twin });
         // boost (where the sport display sends none) and intake air from the engine unit, the same link; read only while
         // a HUD readout wants them and the engine runs
         const intake = new IntakeWatch(ctx, () => gearbox.diag());
@@ -209,7 +214,8 @@ mgu.run({
 
         /* ---------- derived limits ----------
          * Redline, first that has one: the "Redline" setting, the limit learned from the limiter
-         * (limiter.js, setting "learnRedline"), the engine profile. The scale's top follows it. */
+         * (limiter.js, setting "learnRedline"), the engine's own (a V8's, kit/twin_dme.js), the engine profile.
+         * The scale's top follows it. */
         const limiter = new Limiter({ dataDir: ctx.dataDir, log });
         // setting "learn": off freezes all learning (redline, torque curve and ratios, reaction time);
         // what was learned is kept and still used
@@ -217,7 +223,7 @@ mgu.run({
         const manualRedline = () => { const v = settings.get('redline'); return typeof v === 'number' && v > 0 ? v : 0; };
         const learned = () => (settings.get('learnRedline') !== false ? limiter.value() : null);
         const profileRedline = () => Engine.PROFILES[engine.profile()].redline;
-        const redlineSource = () => (manualRedline() ? 'manual' : learned() ? 'learned' : 'profile');
+        const redlineSource = () => (manualRedline() ? 'manual' : learned() ? 'learned' : engine.auto && engine.profile() === 'petrol' ? 'V8' : 'profile');
         const baseRedline = () => manualRedline() || learned() || engine.redline();
         const maxRpm = () => {
             const s = settings.get('rpmScale');
@@ -247,6 +253,9 @@ mgu.run({
         limitsChanged();
         engine.onChange(limitsChanged);
         limiter.onChange(limitsChanged);
+        // a V8's own Auto redline once known (asked over the diagnostics link only while it is open anyway)
+        const twinRed = setInterval(() => { if (gearbox.link) twin.on(); engine.setAuto(twin.redline); }, 5000);
+        if (twinRed.unref) twinRed.unref();
         /** shift point right now for that gear (lowered while the oil is cold). */
         // (the kit's, engine.js Engine.coldShift: Warm-Up's rev limit while cold is this same point)
         function shiftPoint(oil, gear) {

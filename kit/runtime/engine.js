@@ -7,7 +7,9 @@
  *   watches[Engine.SIGNAL[0]] = Object.assign({}, watches[Engine.SIGNAL[0]], engine.handlers());
  *   engine.scaleMax()  -> setting "rpmScale" (0 = Auto: follows the redline, redline + 800 rounded up
  *                         to 1000, as before the profiles: 7000 -> 8000, 6000 -> 7000, 5000 -> 6000)
- *   engine.redline()   -> setting "redline" (0 = Auto: the profile's), never above scaleMax()
+ *   engine.redline()   -> setting "redline" (0 = Auto: the profile's, or a petrol car's own from setAuto()), never
+ *                         above scaleMax()
+ *   engine.setAuto(rpm) -> a petrol engine's own Auto redline (kit/twin_dme.js: a V8's), or null for the profile's
  *   engine.value('coldLimit', { diesel: 3000, petrol: 4500 })  -> the setting, or per profile when 0
  *   engine.coldLimit()  -> setting "coldLimit" (0 = Auto: diesel 3000, petrol 4500): the shift point with the oil at 30 °C
  *   Engine.coldShift(normal, cold, oil, warm, guard) -> { rpm, cold }: the shift point now, lowered while the oil is cold
@@ -43,7 +45,7 @@ class Engine {
         this.settings = opts.settings; this.log = opts.log;
         this.file = path.join(opts.dataDir, 'engine.json');
         this.listeners = []; this.logged = false;
-        this.type = null;
+        this.type = null; this.auto = null;
         try { const t = JSON.parse(fs.readFileSync(this.file, 'utf8')).type; this.type = t === 'diesel' || t === 'petrol' ? t : null; } catch (e) { /* not yet */ }
         this.last = this.profile();
         if (this.settings.onChange) this.settings.onChange((key) => { if (key === 'engine' || key === 'redline' || key === 'rpmScale') this._changed(true); });
@@ -73,7 +75,14 @@ class Engine {
         const v = this.settings.get(key);
         return typeof v === 'number' && v !== 0 ? v : perProfile[this.profile()];
     }
-    _redline() { return this.value('redline', { diesel: PROFILES.diesel.redline, petrol: PROFILES.petrol.redline }); }
+    _redline() { return this.value('redline', { diesel: PROFILES.diesel.redline, petrol: this.auto || PROFILES.petrol.redline }); }
+    setAuto(rpm) {
+        const v = typeof rpm === 'number' && rpm >= 3000 && rpm <= 12000 ? rpm : null;
+        if (v === this.auto) return;
+        this.auto = v;
+        if (this.log) this.log.info('engine: Auto redline ' + (v || PROFILES[this.profile()].redline) + (v ? ' (this engine)' : ' (profile)'));
+        this._changed(true);
+    }
     /** The shift point with the oil at 30 °C: setting "coldLimit", on Auto the profile's (diesel 3000, petrol 4500). */
     coldLimit() { return this.value('coldLimit', { diesel: PROFILES.diesel.coldLimit, petrol: PROFILES.petrol.coldLimit }); }
     redline() { return Math.min(this._redline(), this.scaleMax()); }
