@@ -2584,5 +2584,13 @@
   "SOOT, BANK 2": "그을음, 뱅크 2",
   "Bank 1": "뱅크 1",
   "Start the strobe with the flasher lever": "방향지시등 레버로 스트로브 켜기",
-  "Lever start of the strobe also while driving (only for use on private property)": "주행 중에도 레버로 스트로브 켜기 (사유지에서만 사용)"
+  "Lever start of the strobe also while driving (only for use on private property)": "주행 중에도 레버로 스트로브 켜기 (사유지에서만 사용)",
+  "Water Cup": "물컵",
+  "Water cup": "물컵",
+  "Slosh strength": "흔들림 강도",
+  "Water level": "물 양",
+  "Low": "낮음",
+  "Half": "절반",
+  "High": "높음",
+  "Swap G left / right": "G 좌우 반전"
 }

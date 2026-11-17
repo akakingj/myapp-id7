@@ -665,7 +665,7 @@ $('#clearlog').onclick = () => $('#log').replaceChildren();
  * Sizes in the screen's 1920 x 720 px (emu.css .pk-*). */
 // the order of the tiles on the car (the user's photo of it); apps not listed follow by name
 // (the demo: Car profile and the AK Cluster apps first, then the car's own order)
-const ORDER = ['car_profile', 'akakingj_cluster_layouts', 'akakingj_cluster_centre', 'akakingj_cluster_info', 'brake_test', 'warmup', 'service', 'redline', 'gforce', 'edrive', 'dyno', 'dtc_scanner', 'draggy', 'doom', 'car_vitals'];
+const ORDER = ['car_profile', 'akakingj_cluster_layouts', 'akakingj_cluster_centre', 'akakingj_cluster_info', 'brake_test', 'warmup', 'service', 'redline', 'gforce', 'ak_water_cup', 'edrive', 'dyno', 'dtc_scanner', 'draggy', 'doom', 'car_vitals'];
 const PK = { cols: 5, row: 236, padTop: 18, padBottom: 30, view: 640, track: 590 };   // (emu.css: grid rows, padding, .pk-body / .pk-bar height)
 const P = { tiles: [], focus: 0, scroll: 0, busy: null, shown: false };
 function buildPicker(apps, titles) {

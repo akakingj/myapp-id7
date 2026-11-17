@@ -116,7 +116,8 @@ mgu.run({
             } else {
                 // the screens' look (every app), then the AK clusters' clock and their fuel and battery figures
                 column(0, [['Display', 'Display']]);
-                column(1, [['Clock', 'Clock']]);
+                // (the clock's two rows, the G's swap under them)
+                column(1, [['Clock', 'Clock'], ['G-force', 'G-force']]);
                 column(2, [['Fuel and battery', 'Fuel and battery']]);
             }
             // whether the other apps have it, in the header (each text translated whole)
