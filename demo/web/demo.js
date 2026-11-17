@@ -371,6 +371,8 @@ const SLIDERS = [
 const STAGES = ['P', 'R', 'N', 'D', 'S', 'M'];
 const MODES = [['COMFORT', 'Comfort'], ['SPORT', 'Sport'], ['SPORT+', 'Sport+'], ['ECO PRO', 'Eco Pro']];
 const WAZE = [['off', '안 씀'], ['cluster', '계기판에'], ['hud', 'HUD에']];
+const INDS = [['off', '끔'], ['left', '◀ 왼쪽'], ['right', '오른쪽 ▶'], ['both', '⚠ 비상등']];
+const NIGHTS = [[false, '낮'], [true, '밤']];
 const PHASE_KO = { idle: '정차', accel: '가속', cruise: '순항', brake: '감속' };
 const Car = { mode: 'auto', v: {}, extra: {}, els: {}, sendT: null, sentAt: 0 };
 function seg(box, items, onPick) {
@@ -382,6 +384,8 @@ function buildCar() {
   seg($('#stageSeg'), STAGES.map((s) => [s, s]), (v) => manualSet({ stage: v, gear: /^[DSM]$/.test(v) ? Math.max(1, Car.v.gear || 1) : 0 }));
   seg($('#modeSeg'), MODES, (v) => manualSet({ driveMode: v }, true));
   seg($('#wazeSeg'), WAZE, (v) => send({ t: 'extra', k: 'waze', v }));
+  seg($('#indSeg'), INDS, (v) => send({ t: 'extra', k: 'indicator', v }));
+  seg($('#nightSeg'), NIGHTS, (v) => send({ t: 'extra', k: 'night', v }));
   const box = $('#sliders');
   SLIDERS.forEach(([group, list]) => {
     const g = el('div', { className: 'vgroup' }, el('div', { textContent: group }));
@@ -421,6 +425,7 @@ function syncCar() {
   segSync($('#vehmode'), Car.mode);
   $('#phase').textContent = Car.mode === 'auto' ? (PHASE_KO[Car.phase] || '') : '';
   segSync($('#stageSeg'), Car.v.stage); segSync($('#modeSeg'), Car.v.driveMode); segSync($('#wazeSeg'), Car.extra.waze);
+  segSync($('#indSeg'), Car.extra.indicator || 'off'); segSync($('#nightSeg'), !!Car.extra.night);
   $('#sliders').classList.toggle('auto', Car.mode === 'auto');
   Object.keys(Car.els).forEach(show);
 }
@@ -570,7 +575,13 @@ const Cluster = (() => {
     placed = k;
     [$('#glMap'), $('#map')].forEach((e) => { if (r) Object.assign(e.style, { left: r.x / 19.2 + '%', top: r.y / 7.2 + '%', width: r.w / 19.2 + '%', height: r.h / 7.2 + '%' }); e.style.visibility = r ? '' : 'hidden'; });
   }
+  function blink() {
+    const d = (Car.extra && Car.extra.indicator) || 'off', on = d !== 'off' && Math.floor(performance.now() / 400) % 2 === 0;   // (about the cluster's flash)
+    $('#turnL').style.display = on && (d === 'left' || d === 'both') ? 'block' : 'none';
+    $('#turnR').style.display = on && (d === 'right' || d === 'both') ? 'block' : 'none';
+  }
   function frame() {
+    blink();
     if (dirty || timeUsed) { dirty = false; try { draw(); } catch (e) { console.warn('cluster:', e); } }
     strip();
     requestAnimationFrame(frame);

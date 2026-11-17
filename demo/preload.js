@@ -56,8 +56,11 @@ if (process.platform === 'win32') {
 /* ---------------- the car: the panel's values ---------------- */
 // (kit/tools/hu-stub.js feeds the car's main signals itself, from the server's {t:'sig'}; the ones it has no feed for
 // go here through its signals stub: hu.feed, the head unit object it makes - found as the EventEmitter that has it)
-let VEH = null, vehAt = 0;
+let VEH = null, vehAt = 0, lightKey = '', lightAt = 0;
 const emitters = [];
+// the turn signal lever / the function blinking (indicators.js in Cluster Info, hud-signals.js in Redline)
+const IND = { off: ['BLINKEN_AUS', 'BLINKEN_AUS'], left: ['DAUER_BLINKEN_LINKS_EIN', 'DAUERBLINKEN_LINKS'],
+    right: ['DAUER_BLINKEN_RECHTS_EIN', 'DAUERBLINKEN_RECHTS'], both: ['BEIDSEITIGES_BLINKEN_EIN', 'WARNBLINKEN_MANUELL'] };
 const huFeed = () => { const h = emitters.find((e) => typeof e.feed === 'function'); return h ? h.feed : null; };
 process.on('message', (m) => {
     if (!m || m.t !== 'veh') return;
@@ -67,6 +70,17 @@ process.on('message', (m) => {
     try {
         // the sport display's boost (FES): hundredths of a bar over atmosphere (Cluster Info's BOOST, Redline's)
         if (typeof VEH.boostActual === 'number') feed('de.bmw.infotainment.drivingexcitement.FES', 'statusSwitchDriveDynamicSport2', { displayBoostPressure: Math.max(0, Math.min(253, Math.round(VEH.boostActual * 100))) });
+        // the turn signals (Light.StatusFunctionsIndicators / 2: Cluster Info's and Redline's HUD arrows, Ambient config) and
+        // day / night (the light sensor): as the car hands them over, by name; when they change, and every second
+        const key = VEH.indicator + '|' + VEH.night, now = Date.now();
+        if (key !== lightKey || now - lightAt > 1000) {
+            lightKey = key; lightAt = now;
+            const L = IND[VEH.indicator] || IND.off;
+            const v = { controlIndicateDirection: L[0], activeFunctionIndicateDirection: L[1] };
+            feed('de.bmw.body.Light', 'StatusFunctionsIndicators', v);
+            feed('de.bmw.body.Light', 'StatusFunctionsIndicators2', v);
+            feed('de.bmw.infotainment.vehicle.Vehicle', 'statusDayNightChangeOver', { dayNightChangeOver: VEH.night ? 'NACHT' : 'TAG' });
+        }
     } catch (e) { /* an app without it */ }
 });
 const fresh = () => VEH && Date.now() - vehAt < 3000;
