@@ -167,7 +167,7 @@ mgu.run({
             cv.text('COMBINED  ' + (S.peak.comb ? S.peak.comb.toFixed(2) + ' g' : '--'), 1116, 421 + e2, 22, t.accent2, { font: 'bold', spacing: 1 });
             cv.text('> 0.5 g  ' + S.over05.toFixed(0) + ' s', 1552, 421 + e2, 22, t.text, { align: 'right', font: 'bold' });
             const mins = Math.floor((Date.now() - S.start) / 60000);
-            cv.text(translate('TOP') + ' ' + Math.round(V(S.vmax)) + (mph() ? ' MPH' : ' KM/H') + '  ·  ' + Math.round(S.rpmMax) + ' RPM  ·  ' + mins + ' ' + translate('MIN'), 1116, 474 + G.toMargin(ex, 34), 22, t.dim, { font: 'bold', spacing: 0.5 });
+            cv.text(translate('TOP') + ' ' + Math.round(V(S.vmax)) + (mph() ? ' MPH' : ' KM/H') + '  ·  ' + Math.round(S.rpmMax) + ' RPM  ·  ' + mins + ' MIN', 1116, 474 + G.toMargin(ex, 34), 22, t.dim, { font: 'bold', spacing: 0.5 });
         }
 
         function drawRecords(cv, t) {

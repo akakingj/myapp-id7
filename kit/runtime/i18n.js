@@ -50,7 +50,9 @@ function t(value) {
     } else {
         // Short words need context: "min 70" is a minimum, "12 min" is minutes.
         // Keep numeric battery capacity values/units while removing the English "of".
-        out = language === 'ko' ? s.replace(/(\d+(?:\.\d+)?)\s+of\s+(\d+(?:\.\d+)?)\s+Ah\b/gi, '$1 / $2 Ah') :
+        // (Korean: "min 70" / "max 70" a minimum and a maximum, "12 MIN" minutes: a bare MIN row means a minimum)
+        out = language === 'ko' ? s.replace(/(\d+(?:\.\d+)?)\s+of\s+(\d+(?:\.\d+)?)\s+Ah\b/gi, '$1 / $2 Ah')
+            .replace(/\bmin(?=\s+-?\d)/g, '최소').replace(/\bmax(?=\s+-?\d)/g, '최대').replace(/(\d)\s*MIN\b/g, '$1분') :
             language === 'zh-CN' ? s.replace(/\bmin(?=\s+-?\d)/g, '最小').replace(/\bmax(?=\s+-?\d)/g, '最大')
             .replace(/\bAVG(?=\s+[+-]?\d)/g, '平均').replace(/\bACC\b/g, '加速') :
             language === 'ru' ? s.replace(/\bmin(?=\s+-?\d)/g, 'мин.').replace(/\bmax(?=\s+-?\d)/g, 'макс.')
