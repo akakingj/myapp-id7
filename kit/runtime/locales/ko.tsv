@@ -2617,3 +2617,15 @@ Low	낮음
 Half	절반
 High	높음
 Swap G left / right	G 좌우 반전
+Open door: the car's own warning (test, G20 / G26)	열린 문: 차량 자체 경고 (테스트, G20 / G26)
+QR log	QR 로그
+The app's log as codes to photograph	앱 로그를 사진으로 찍을 QR 코드로
+Large: easiest to scan, more pages.	크게: 가장 잘 읽히고 페이지가 늘어납니다.
+Small: more text per code, hold the phone steady.	작게: 코드마다 글이 많으니 폰을 흔들리지 않게 드세요.
+Take a photo of every page and add	모든 페이지를 사진으로 찍어
+the photos to your issue on GitHub.	GitHub 이슈에 올려 주세요.
+The newest lines are on page 1.	가장 최근 줄은 1페이지에 있습니다.
+Too hard to scan? Try Size: Large.	읽기 어렵다면 크기를 크게로 바꿔 보세요.
+Large	크게
+Small	작게
+Next	다음
