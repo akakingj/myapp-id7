@@ -17,7 +17,20 @@
 필요한 것: Node.js (LTS), Python 3 (설치할 때 "Add python.exe to PATH"). Python이 없으면 이 저장소의 앱은 빌드되지 않고
 계기판 앱만 돕니다. 보는 브랜치는 `mgu_demo.bat` 위쪽의 `APPS_BRANCH` / `CLUSTER_BRANCH` (기본: 테스트 브랜치).
 
-직접 실행: `node demo/server.js --cluster ../idrive7-cluster-info [--data 폴더] [--port 8077] [--no-open]`
+직접 실행: `node demo/server.js --cluster ../idrive7-cluster-info [--data 폴더] [--port 8077] [--no-open] [--lan]`
+
+## 아이폰 · 아이패드
+
+PC에서 데모를 돌리고, 같은 와이파이의 아이폰 · 아이패드 Safari로 봅니다 (데모는 PC에서 돌고 폰은 화면만 받음).
+
+1. PC에서 `mgu_demo_iphone.bat`을 실행합니다 (`mgu_demo.bat --lan`과 같음). Windows 방화벽이 물으면 개인 네트워크에서 허용.
+2. PC 화면 패널 맨 위의 **QR 코드**를 아이폰 카메라로 찍거나, 검은 창에 나온 주소(`http://192.168.x.x:8077/?k=…`)를 Safari에 넣습니다.
+3. 터치 기기에서는 중앙 디스플레이 아래에 **iDrive 버튼**(⟲ ⟳ ◀ ▲ ▼ ▶ 누르기 · 뒤로 · 홈)이 나옵니다.
+   Safari 공유 → "홈 화면에 추가"를 하면 앱처럼 전체 화면으로 열립니다.
+
+- 주소의 `k=…`(키)가 없으면 다른 기기에서는 열리지 않습니다. 키는 `data\lan-key.txt`에 남아서 북마크가 계속 됩니다
+  (지우면 새 키).
+- 아이폰은 가로로, 아이패드가 보기 좋습니다. PC 창과 폰은 같은 데모를 함께 보고 조작합니다.
 
 ## 업데이트 방식: 앱 코드만 고치면 된다
 
@@ -56,4 +69,5 @@
 | `server.js` | 데모 서버: 앱 빌드·실행 (앞 화면 1개 + 백그라운드), 렌더러 소켓, 차량 값, 계기판 레이어 중계. `kit/tools/emu.js` 기반 |
 | `preload.js` | 앱 프로세스마다 먼저 로드: 계기판 렌더러 대역, 차량 값, `/dev/shm`·`/run` 경로, Windows 파이프 |
 | `web/` | 페이지 (`kit/emu/web/emu-app.js`·`emu.css` 기반 + 계기판·HUD·패널) |
-| `launcher/` | 배포용 `mgu_demo.bat`, `mgu_demo_update.js` (최신 코드 받기) |
+| `qr.js` | 폰에서 열 주소의 QR 코드 (`--lan`) |
+| `launcher/` | 배포용 `mgu_demo.bat`, `mgu_demo_iphone.bat`, `mgu_demo_update.js` (최신 코드 받기) |

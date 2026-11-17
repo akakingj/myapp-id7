@@ -2,7 +2,11 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MGU 데모">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <title>MGU 데모</title>
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="demo.css">
@@ -66,6 +70,12 @@
     <div id="overlay" hidden></div>
     <div id="toast" hidden></div>
   </div>
+  <!-- the iDrive controller for a touch screen (a phone, a tablet): what the wheel and the keys do on a computer -->
+  <div id="dial" aria-label="iDrive 다이얼">
+    <button data-key="[" title="다이얼 왼쪽으로">⟲</button><button data-key="]" title="다이얼 오른쪽으로">⟳</button>
+    <button data-key="ArrowLeft" title="왼쪽으로 밀기">◀</button><button data-key="ArrowUp" title="위로 밀기">▲</button><button data-key="ArrowDown" title="아래로 밀기">▼</button><button data-key="ArrowRight" title="오른쪽으로 밀기">▶</button>
+    <button data-key="Enter" class="wide" title="다이얼 누르기">누르기</button><button data-key="Backspace" title="뒤로">뒤로</button><button data-key="h" title="앱 목록">홈</button>
+  </div>
   <div id="legend">
     <span>마우스 = 터치</span>
     <span><kbd>휠</kbd> <kbd>[</kbd> <kbd>]</kbd> 다이얼 돌리기</span>
@@ -82,6 +92,11 @@
     <span id="conn" class="pill">연결 중</span>
     <div id="src"></div>
   </div>
+
+  <section id="lanBox" hidden>
+    <h2>📱 아이폰 · 아이패드 <span class="sub">같은 와이파이에서</span></h2>
+    <div id="lanBody"></div>
+  </section>
 
   <section>
     <h2>차량 <span class="sub">모든 앱과 계기판이 이 값을 받습니다</span></h2>
