@@ -234,7 +234,8 @@ mgu.run({
         log.info('redline ' + redline() + ' (' + redlineSource() + ')');
         /* Shift point: per gear from the engine's own torque curve and the gear ratios (shiftmap.js,
          * setting "shiftMode" = learned) once it knows that gear, held 150 under the redline so the
-         * shift never meets the limiter; else (and with "fixed") the redline minus "shiftBefore".
+         * shift never meets the limiter; else (and with "fixed") the setting "shiftAt" (the Car profile's Shift point;
+         * Auto: the redline - 300, kit engine.js Engine.shiftPoint).
          * Never below 2500: shifts under that are not scored. */
         const shiftMap = new ShiftMap({ dataDir: ctx.dataDir, log });
         // the launch score: standing starts timed 0-100 km/h / 0-60 mph by the kit's run timer, best kept
@@ -248,7 +249,7 @@ mgu.run({
             return G.isNum(r) ? Math.min(r, redline() - 150) : null;     // clear of the limiter flash (redline - 40)
         };
         const minShift = () => { const v = settings.get('minShift'); return typeof v === 'number' && v > 0 ? Math.min(v, redline() - 150) : 0; };
-        const normalShift = (gear) => Math.max(2500, minShift(), learnedShift(gear) || redline() - settings.get('shiftBefore'));
+        const normalShift = (gear) => Math.max(2500, minShift(), learnedShift(gear) || Engine.shiftPoint(redline(), Number(settings.get('shiftAt'))));
         const limitsChanged = () => { car.setRedline(redline()); shiftMap.setRedline(redline()); };
         limitsChanged();
         engine.onChange(limitsChanged);

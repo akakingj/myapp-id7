@@ -555,7 +555,7 @@ limiter. **Minimum shift point** sets a floor, and the cold guard still lowers i
 cold.
 
 To fill the curve, do a few full-throttle pulls, some from low rpm (kickdowns in 2nd–4th), up to
-the redline. Until a gear is known, its shift point is *redline − Shift point before redline*.
+the redline. Until a gear is known, its shift point is *Shift point* (an rpm; Auto: the redline − 300).
 **Shift point → Redline minus the setting below** turns the per-gear points off.
 
 ### Gearbox mode (D / S / M)
@@ -756,7 +756,7 @@ so they needn't copy its scoring (bimmer-lab's HUD Widgets reads them, [bimmer-l
 ```
 
 `t` is when it was written (ms); a reader treats it as stale after a few seconds (Redline isn't running).
-`shiftPoints` has gears 1-8 (learned, else the redline less *Shift point before redline*), `shiftNow` is the
+`shiftPoints` has gears 1-8 (learned, else *Shift point*: an rpm, Auto the redline less 300), `shiftNow` is the
 current gear's point (lowered while the oil is cold: `cold`), `leadMs` the reaction lead, `mode` the gearbox
 programme (D / S / M, or null). It is written about once a second and at each shift, to a temp file renamed over
 it, so it's never read half-written; the folder is 0755 and the file 0644, readable by every app's user

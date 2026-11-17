@@ -2592,7 +2592,6 @@
   "Low": "낮음",
   "Half": "절반",
   "High": "높음",
-  "Swap G left / right": "G 좌우 반전",
   "Open door: the car's own warning (test, G20 / G26)": "열린 문: 차량 자체 경고 (테스트, G20 / G26)",
   "QR log": "QR 로그",
   "The app's log as codes to photograph": "앱 로그를 사진으로 찍을 QR 코드로",
@@ -2604,5 +2603,16 @@
   "Too hard to scan? Try Size: Large.": "읽기 어렵다면 크기를 크게로 바꿔 보세요.",
   "Large": "크게",
   "Small": "작게",
-  "Next": "다음"
+  "Next": "다음",
+  "Auto (redline - 300)": "자동 (레드라인 - 300)",
+  "G-force circle up to": "G 원 최대값",
+  "In a bend the dot goes": "커브에서 점의 방향",
+  "Outward (as you feel it)": "바깥쪽 (몸이 쏠리는 쪽)",
+  "Inward (as the car turns)": "안쪽 (차가 도는 쪽)",
+  "Braking is shown": "제동 표시 위치",
+  "On top": "위",
+  "At the bottom": "아래",
+  "G-force circle: swap left / right": "G 원: 좌우 바꾸기",
+  "G-force circle size": "G 원 크기",
+  "The shift point below": "아래의 변속 시점"
 }

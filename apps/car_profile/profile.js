@@ -13,14 +13,15 @@
 const fs = require('fs');
 
 // what the profile sets, in Settings order; FOLLOW: the apps that follow each (their app.json "profile")
-const KEYS = ['engine', 'redline', 'shiftBefore', 'rpmScale', 'coldLimit', 'lightMode', 'lightStart', 'coldGuard', 'warmOil',
+const KEYS = ['engine', 'redline', 'shiftAt', 'rpmScale', 'coldLimit', 'lightMode', 'lightStart', 'coldGuard', 'warmOil',
     'warmCoolant', 'warmGearbox', 'hotOil', 'hotCoolant', 'hotGearbox', 'speedUnit', 'distUnit', 'tempUnit', 'pressUnit', 'fuelUnit', 'torqueUnit', 'powerUnit',
-    'skin', 'theme', 'layout', 'renderer', 'demo', 'clock', 'timeZone', 'tankLitres', 'eFull', 'gFlipLat'];
+    'skin', 'theme', 'layout', 'renderer', 'demo', 'clock', 'timeZone', 'tankLitres', 'eFull', 'gMax', 'gLat', 'gLong'];
 const FOLLOW = {
     // (Plug-in hybrid: the AK clusters' Vehicle; the other apps take a plug-in hybrid as their own setting says: Auto, petrol)
     engine: ['M Vitals', 'Redline', 'Warm-Up', 'Virtual Dyno', 'AK Cluster', 'AK Cluster Centre'],
     redline: ['M Vitals', 'Redline', 'Warm-Up', 'AK Cluster'],
-    shiftBefore: ['Redline', 'Warm-Up', 'AK Cluster'],
+    // the shift point in rpm (0: Auto, each app's redline less 300; 0.3.x: was "so many before the redline")
+    shiftAt: ['Redline', 'Warm-Up', 'AK Cluster', 'AK Cluster Centre'],
     rpmScale: ['M Vitals', 'Redline', 'Virtual Dyno', 'AK Cluster'],
     coldLimit: ['Redline', 'Warm-Up', 'AK Cluster'],
     lightMode: ['Redline'],
@@ -52,8 +53,10 @@ const FOLLOW = {
     timeZone: ['AK Cluster', 'AK Cluster Centre'],
     tankLitres: ['AK Cluster', 'AK Cluster Centre'],
     eFull: ['AK Cluster', 'AK Cluster Centre'],
-    // the G's left and right swapped (off: as the driver feels it, the outside of a bend; Water Cup)
-    gFlipLat: ['Water Cup'],
+    // the G-force circles' size (g), where the dot goes in a bend (out: as the driver feels it), braking up or down
+    gMax: ['G-Force', 'M Vitals', 'AK Cluster'],
+    gLat: ['G-Force', 'M Vitals', 'Water Cup', 'AK Cluster'],
+    gLong: ['G-Force', 'M Vitals', 'AK Cluster'],
 };
 // ('AK Cluster': the cluster apps of akakingj/idrive7-cluster-info, Layouts / Centre / Info, which read this file too)
 

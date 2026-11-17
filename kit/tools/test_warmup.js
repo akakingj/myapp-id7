@@ -101,7 +101,7 @@ const checks = [
     }],
     ['the rev limit while cold: Redline\'s shift point (the kit\'s Engine.coldShift), the redline once warm', async () => {
         const Engine = require(path.join(KIT, 'engine'));
-        const set = { engine: 'petrol', redline: 6500, shiftBefore: 400, coldLimit: 4000, warmOil: 85, coldGuard: true };
+        const set = { engine: 'petrol', redline: 6500, shiftAt: 6100, coldLimit: 4000, warmOil: 85, coldGuard: true };
         await start(set);
         for (const oil of [20, 30, 45, 60, 84, 85, 100]) {
             drive({ rpm: 1500, oil, coolant: 70, speed: 40 }, 1);

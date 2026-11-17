@@ -737,7 +737,9 @@ function tyres(cv, t, x, y, w, h, g) {
 
 /**
  * Friction circle: lateral (x) / longitudinal (y) acceleration in g, with a fading trail.
- * g = { lat, long, trail: [[lat,long],...], max }. The dot glides (smoothing).
+ * g = { lat, long, trail: [[lat,long],...], max, flipLong, flipLat }. The dot glides (smoothing); it goes outward in a
+ * bend (the car's lateral G > 0 turning left: right, as the driver feels it), inward with flipLat (Car profile: In a
+ * bend the dot goes).
  */
 function gmeter(cv, t, cx, cy, r, g) {
     const max = g.max || 1.5;
@@ -755,7 +757,8 @@ function gmeter(cv, t, cx, cy, r, g) {
         c.text(flip ? 'ACCEL' : 'BRAKE', x, y + r - 14, 22, t.dim, { align: 'center', font: 'bold', spacing: 1.5 });
         c.text(flip ? 'BRAKE' : 'ACCEL', x, y - r + 32, 22, t.dim, { align: 'center', font: 'bold', spacing: 1.5 });
     }, cv.textScale), Math.round(cx) - S, Math.round(cy) - S);
-    const P = (lat, lon) => [cx + clamp(lat / max, -1.1, 1.1) * r, cy + (flip ? 1 : -1) * clamp(lon / max, -1.1, 1.1) * r];
+    const sx = g.flipLat ? -1 : 1;
+    const P = (lat, lon) => [cx + sx * clamp(lat / max, -1.1, 1.1) * r, cy + (flip ? 1 : -1) * clamp(lon / max, -1.1, 1.1) * r];
     const tr = g.trail || [];
     tr.forEach((p, i) => {
         if (!isNum(p[0]) || !isNum(p[1])) return;

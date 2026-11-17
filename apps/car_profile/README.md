@@ -6,7 +6,7 @@ One place for the car's engine values and units. Set them here once and the othe
 |---|---|
 | Engine (Auto / Diesel / Petrol / Plug-in hybrid) | M Vitals, Redline, Warm-Up, Virtual Dyno, AK Cluster Layouts and Centre (their Vehicle; the others take a plug-in hybrid as their own setting says) |
 | Redline | M Vitals, Redline, Warm-Up, AK Cluster |
-| Shift point before redline | Redline, Warm-Up, AK Cluster |
+| Shift point (an rpm; Auto: the redline less 300) | Redline (its fixed one), Warm-Up, AK Cluster Layouts, AK Cluster Centre (*Shift light: flashes at*) |
 | Rev scale up to | M Vitals, Redline, Virtual Dyno (*Graph up to*), AK Cluster |
 | Cold rev limit | Redline, Warm-Up, AK Cluster |
 | Shift lights (shift point / rev bar) | Redline |
@@ -23,6 +23,9 @@ One place for the car's engine values and units. Set them here once and the othe
 | Pressure unit | M Vitals, Redline HUD (boost and tyres), Live Data, AK Cluster |
 | Fuel use unit | Redline HUD |
 | Torque unit, Power unit | M Vitals, Redline HUD, Virtual Dyno, AK Cluster |
+| G-force circle up to (1, 1.5, 2 g) | G-Force (*Circle size*), M Vitals (*G-force circle size*), AK Cluster Layouts (JDM 2's G meter) |
+| In a bend the dot goes (outward, as you feel it / inward, as the car turns) | G-Force, M Vitals, Water Cup (its water higher outward or inward), AK Cluster Layouts (JDM 2's G meter, JDM 1's cup) |
+| Braking is shown (on top / at the bottom) | G-Force, M Vitals, AK Cluster Layouts (JDM 2's G meter) |
 
 Every setting starts at **Each app**: until it is set here, each app keeps its own setting, so installing the app
 changes nothing. A setting the profile sets shows the profile's value in the other app's Settings and can't be changed
@@ -31,15 +34,22 @@ there (no arrow on its row); set it back to *Each app* here and the app's own va
 ## One shift point, one rev limit
 
 The apps work the cold engine out the same way (the kit's `engine.js`, `Engine.coldShift`, and the AK Cluster apps
-alike): the **shift point** is the redline less *Shift point before redline*; with the *Cold-engine rev guard* on it is
+alike): the **shift point** is *Shift point* (an rpm; on *Auto* the redline less 300); with the *Cold-engine rev guard* on it is
 pulled down while the oil is colder than *Oil is warm at*, from the *Cold rev limit* with the oil at 30 °C rising in a
 straight line (on *Auto*: diesel 3000, petrol 4500 rpm). Redline flashes there and shows it as its cold *LIMIT*; Warm-Up
 shows the same number as its rev limit while cold (the redline once warm); AK Cluster Centre's shift light (Auto) and
-warm-up page the same; AK Cluster Layouts' red zone starts *Shift point before redline* above it.
+warm-up page the same; AK Cluster Layouts' red zone starts at the redline above it.
 
 For every app to show the same numbers, set the redline here: on *Auto* Redline uses the limit it learned from the
 limiter, M Vitals and Warm-Up the engine's (petrol 7000, diesel 5000), the AK Cluster apps their own setting. Redline's
 learned shift point (per gear, setting *Shift point*: learned) is its own; the others use the fixed one.
+
+## One way for the G
+
+Each app drew the G its own way: G-Force's dot went inward in a bend (where the car turns), M Vitals' outward (where
+you are pushed); braking on top in some, at the bottom in others. *In a bend the dot goes* and *Braking is shown* say it
+once for all of them, as a direction rather than a swap, and each app sets its own *Swap* to match (Water Cup's water
+rises on the same side as the dot; JDM 1's cup too). *G-force circle up to* sizes the circles alike.
 
 ## One set of too-hot temperatures
 
@@ -76,8 +86,8 @@ File format:
 
 Other apps can read the same file: only the values set are in it; unknown names are to be ignored. **AK Cluster**
 (akakingj/idrive7-cluster-info: Cluster Layouts, Centre and Info) does: its red zone and shift point, its cold-engine
-guard, its too-hot temperatures and its units follow it the same way. Its shift point is worked out as Redline's fixed one (the redline less
-*Shift point before redline*, lowered while the oil is cold from the cold rev limit at 30 °C to normal at *Oil is warm
+guard, its too-hot temperatures and its units follow it the same way. Its shift point is worked out as Redline's fixed one (*Shift point*, on Auto the redline
+less 300, lowered while the oil is cold from the cold rev limit at 30 °C to normal at *Oil is warm
 at*); Redline's learned per-gear shift point is Redline's own. The profile's *Auto* (0) for the redline, the rev scale
 and the cold rev limit is left to each cluster app's own setting (they have no Auto).
 

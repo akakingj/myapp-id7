@@ -42,14 +42,14 @@ const RPM = { factor: 0.25, invalid: 65535 }, TEMP = { offset: -48, invalid: 255
 /*
  * The rev limit for now (the screen and the cold starts counted in the background): while the oil is cold the shift
  * point Redline flashes at and shows as its cold LIMIT (the kit's Engine.coldShift: from the cold limit with the oil at
- * 30 °C up to the redline less "Shift point before redline" at "Oil is warm at"), the redline once warm or with the
+ * 30 °C up to the shift point, setting "Shift point" (Auto: the redline - 300), at "Oil is warm at"), the redline once warm or with the
  * cold-engine guard off. The same values the Car profile gives Redline and the AK Cluster apps.
  */
 function limitFor(engine, settings, oil) {
     const warm = settings.get('warmOil'), red = engine.redline();
     if (!G.isNum(oil)) return null;
-    const before = Math.max(0, Number(settings.get('shiftBefore')) || 0), guard = settings.get('coldGuard') !== false;
-    const sp = Engine.coldShift(Math.max(2500, red - before), engine.coldLimit(), oil, warm, guard);
+    const guard = settings.get('coldGuard') !== false;
+    const sp = Engine.coldShift(Math.max(2500, Engine.shiftPoint(red, Number(settings.get('shiftAt')))), engine.coldLimit(), oil, warm, guard);
     return sp.cold ? sp.rpm : red;
 }
 

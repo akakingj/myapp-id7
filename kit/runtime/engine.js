@@ -12,6 +12,7 @@
  *   engine.setAuto(rpm) -> a petrol engine's own Auto redline (kit/twin_dme.js: a V8's), or null for the profile's
  *   engine.value('coldLimit', { diesel: 3000, petrol: 4500 })  -> the setting, or per profile when 0
  *   engine.coldLimit()  -> setting "coldLimit" (0 = Auto: diesel 3000, petrol 4500): the shift point with the oil at 30 °C
+ *   Engine.shiftPoint(redline, shiftAt) -> the shift point warm: shiftAt (rpm, under the redline) or, 0, the redline - 300
  *   Engine.coldShift(normal, cold, oil, warm, guard) -> { rpm, cold }: the shift point now, lowered while the oil is cold
  *                       (Redline's; Warm-Up's rev limit while cold and the AK Cluster apps' the same)
  *
@@ -100,6 +101,12 @@ class Engine {
  * point (setting "coldGuard"); Warm-Up shows it as its rev limit while cold; the AK Cluster apps (idrive7-cluster-info)
  * work it the same way. -> { rpm, cold } (cold: lowered now).
  */
+/**
+ * The shift point once warm (setting "shiftAt", the Car profile's Shift point): that rpm, kept 100 under the redline;
+ * 0 (Auto) the redline less 300. (Was "shiftBefore", so many rpm under the redline: the Car profile now gives it as an
+ * rpm, the same for every app.)
+ */
+Engine.shiftPoint = (redline, at) => (typeof at === 'number' && at > 0 ? Math.min(at, redline - 100) : redline - 300);
 Engine.coldShift = (normal, cold, oil, warm, guard) => {
     const ok = (v) => typeof v === 'number' && isFinite(v);
     if (!guard || !ok(oil) || !ok(warm) || oil >= warm) return { rpm: normal, cold: false };

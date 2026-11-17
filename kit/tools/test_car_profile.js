@@ -143,23 +143,40 @@ const cases = {
         s._pollProfile();
         assert.strictEqual(s.get('redline'), 7000, 'another format version: not followed');
     },
-    'shift point before redline (0 a value, not Auto) and the cold guard (on / off to a switch)'() {
+    'the shift point (0: Auto, a value; -1 each app) and the cold guard (on / off to a switch)'() {
         clear();
         const schema = [
-            { key: 'shiftBefore', label: 'Shift point before redline', type: 'number', unit: 'rpm', default: 300, steps: [0, 100, 300], profile: 'shiftBefore' },
+            { key: 'shiftAt', label: 'Shift point', type: 'number', unit: 'rpm', default: 6500, labels: { 0: 'Auto (redline - 300)' }, steps: [0, 6000, 6500], profile: 'shiftAt' },
             { key: 'coldGuard', label: 'Cold-engine rev guard', type: 'bool', default: true, profile: 'coldGuard', profileMap: { on: true, off: false } },
         ];
-        const vals = P.publish(fakeProfile({ shiftBefore: 0, coldGuard: 'off' }), '1.1.0');
-        assert.deepStrictEqual(vals, { shiftBefore: 0, coldGuard: 'off' }, '0 is set (Each app is -1)');
+        const vals = P.publish(fakeProfile({ shiftAt: 0, coldGuard: 'off' }), '1.1.0');
+        assert.deepStrictEqual(vals, { shiftAt: 0, coldGuard: 'off' }, '0 (Auto) is set (Each app is -1)');
         tick += 5; fs.utimesSync(FILE, tick, tick);
-        const s = settingsIn(schema, { shiftBefore: 300, coldGuard: true });
-        assert.strictEqual(s.get('shiftBefore'), 0);
+        const s = settingsIn(schema, { shiftAt: 6500, coldGuard: true });
+        assert.strictEqual(s.get('shiftAt'), 0);
         assert.strictEqual(s.get('coldGuard'), false);
         assert.strictEqual(s.display('coldGuard'), 'Off');
         writeProfile({ coldGuard: 'on' });
         s._pollProfile();
         assert.strictEqual(s.get('coldGuard'), true);
-        assert.strictEqual(s.get('shiftBefore'), 300, 'left to the app again');
+        assert.strictEqual(s.get('shiftAt'), 6500, 'left to the app again');
+    },
+    'the G-force settings: each app\'s own flips from the same absolute choices'() {
+        clear();
+        const read = (id) => JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', id, 'app.json'), 'utf8')).settings;
+        const pick = (id, k) => read(id).find((x) => x.key === k);
+        // G-Force: the dot inward by default (x = cx - lat), its flip outward; M Vitals and Water Cup outward by
+        // default, their flip inward; braking on top = each one's flipLong
+        assert.deepStrictEqual(pick('gforce', 'flipLat').profileMap, { out: true, in: false });
+        assert.deepStrictEqual(pick('car_vitals', 'flipLat').profileMap, { out: false, in: true });
+        assert.deepStrictEqual(pick('ak_water_cup', 'flipLat').profileMap, { out: false, in: true });
+        ['gforce', 'car_vitals'].forEach((id) => assert.deepStrictEqual(pick(id, 'flipLong').profileMap, { top: true, bottom: false }));
+        ['gforce', 'car_vitals'].forEach((id) => assert.strictEqual(pick(id, id === 'gforce' ? 'scale' : 'gScale').profile, 'gMax'));
+        const schema = [pick('gforce', 'flipLat'), pick('gforce', 'flipLong'), pick('gforce', 'scale')];
+        P.publish(fakeProfile({ gLat: 'out', gLong: 'top', gMax: 2 }), '1.1.0');
+        tick += 5; fs.utimesSync(FILE, tick, tick);
+        const s = settingsIn(schema, { flipLat: false, flipLong: false, scale: 1.5 });
+        assert.strictEqual(s.get('flipLat'), true); assert.strictEqual(s.get('flipLong'), true); assert.strictEqual(s.get('scale'), 2);
     },
     'every app.json "profile" is one the Car profile sets, with values it can give'() {
         const cp = JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', 'car_profile', 'app.json'), 'utf8'));
