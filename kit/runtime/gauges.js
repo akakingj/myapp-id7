@@ -746,10 +746,16 @@ function gmeter(cv, t, cx, cy, r, g) {
     const key = ['gmeter', r, max, t.name].join('|'), S = Math.ceil(r + 4);
     cv.blit(layer(key, 2 * S + 80, 2 * S, (c) => {
         const x = S, y = S;
+        // (a size off the half-g steps - 1.2 g - its own ring at the edge, figured; the step's figure next to it left out)
+        const edge = Math.abs(max * 2 - Math.round(max * 2)) > 1e-6;
         for (let ring_ = 0.5; ring_ <= max + 1e-6; ring_ += 0.5) {
             const rr = (ring_ / max) * r;
             c.arc(x, y, rr - 1.5, rr + 1.5, 0, 360, ring_ % 1 === 0 ? t.tick : withAlpha(t.tick, 0.5));
-            c.text(ring_.toFixed(1), x + rr * 0.7071 + 6, y - rr * 0.7071 - 4, 22, t.dim);
+            if (!edge || (max - ring_) / max >= 0.2) c.text(ring_.toFixed(1), x + rr * 0.7071 + 6, y - rr * 0.7071 - 4, 22, t.dim);
+        }
+        if (edge) {
+            c.arc(x, y, r - 1.5, r + 1.5, 0, 360, t.tick);
+            c.text(max.toFixed(1), x + r * 0.7071 + 6, y - r * 0.7071 - 4, 22, t.dim);
         }
         c.line(x - r, y, x + r, y, 2, withAlpha(t.tick, 0.6));
         c.line(x, y - r, x, y + r, 2, withAlpha(t.tick, 0.6));

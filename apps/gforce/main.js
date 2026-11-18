@@ -89,10 +89,16 @@ mgu.run({
         function circle(cv, t, cx, cy, r) {
             const max = settings.get('scale');
             cv.circle(cx, cy, r + 14, withAlpha(t.panelTop, 0.9));
+            // (a size off the quarter-g steps - 1.2 g - its own ring at the edge, figured; a figure next to it left out)
+            const edge = Math.abs(max * 4 - Math.round(max * 4)) > 1e-6;
             for (let ring = 0.25; ring <= max + 1e-6; ring += 0.25) {
                 const rr = (ring / max) * r, major = Math.abs(ring % 0.5) < 1e-6;
                 cv.arc(cx, cy, rr - (major ? 1.5 : 0.75), rr + (major ? 1.5 : 0.75), 0, 360, major ? t.tick : withAlpha(t.tick, 0.35));
-                if (major) cv.text(ring.toFixed(1), cx + rr * 0.7071 + 6, cy - rr * 0.7071 - 4, 20, t.dim);
+                if (major && (!edge || (max - ring) / max >= 0.2)) cv.text(ring.toFixed(1), cx + rr * 0.7071 + 6, cy - rr * 0.7071 - 4, 20, t.dim);
+            }
+            if (edge) {
+                cv.arc(cx, cy, r - 1.5, r + 1.5, 0, 360, t.tick);
+                cv.text(max.toFixed(1), cx + r * 0.7071 + 6, cy - r * 0.7071 - 4, 20, t.dim);
             }
             cv.line(cx - r, cy, cx + r, cy, 2, withAlpha(t.tick, 0.5));
             cv.line(cx, cy - r, cx, cy + r, 2, withAlpha(t.tick, 0.5));

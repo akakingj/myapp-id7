@@ -2,7 +2,7 @@
   "id": "car_profile",
   "title": "Car profile",
   "description": "One place for the car's engine values and units: the redline, rev scale, cold rev limit, shift lights, warm-up and too-hot temperatures and the speed, distance, temperature, pressure, fuel use, torque and power units. M Vitals, Redline, Warm-Up, Virtual Dyno, Drag Timer, Brake Test, G-Force, eDrive and Transmission Config follow them; what is left to each app stays as each app has it",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "vendor": "custom",
   "loggingId": "OAA9",
   "iconGlyph": "profile",
@@ -51,6 +51,6 @@
     {"key": "timeZone", "label": "Time zone (the clock)", "type": "choice", "default": "app", "options": [["app", "Each app"], ["eastern", "US Eastern"], ["central", "US Central"], ["mountain", "US Mountain"], ["arizona", "Arizona (no DST)"], ["pacific", "US Pacific"], ["alaska", "Alaska"], ["hawaii", "Hawaii"], ["atlantic", "Atlantic"], ["utc", "UTC"], ["uk", "UK / Ireland / Portugal"], ["cet", "Central Europe"], ["eet", "Eastern Europe"], ["utc+9", "Korea / Japan (UTC+9)"]], "group": "Clock"},
     {"key": "tankLitres", "label": "Fuel tank size", "type": "number", "unit": "L", "default": -1, "labels": {"-1": "Each app"}, "steps": [-1, 40, 42, 46, 50, 52, 55, 57, 59, 60, 63, 65, 66, 68, 69, 70, 74, 80, 83, 85, 90], "group": "Fuel and battery"},
     {"key": "eFull", "label": "Electric range when full", "type": "number", "unit": "mi", "default": -1, "labels": {"-1": "Each app"}, "steps": [-1, 20, 22, 24, 26, 28, 30, 31, 32, 34, 36, 38, 40, 45, 50], "group": "Fuel and battery"},
-    {"key": "gMax", "label": "G-force circle up to", "type": "number", "unit": "g", "default": -1, "labels": {"-1": "Each app"}, "steps": [-1, 1, 1.5, 2], "group": "G-force"}
+    {"key": "gMax", "label": "G-force circle up to", "type": "number", "unit": "g", "default": -1, "labels": {"-1": "Each app"}, "steps": [-1, 1, 1.2, 1.5, 2], "group": "G-force"}
   ]
 }

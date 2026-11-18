@@ -2,7 +2,7 @@
   "id": "car_vitals",
   "title": "M Vitals",
   "description": "Live engine, thermal, intake / fuel / ignition, tyre and chassis gauges",
-  "version": "2.30.0",
+  "version": "2.30.1",
   "vendor": "custom",
   "loggingId": "OA93",
   "iconGlyph": "gauge",
@@ -376,7 +376,7 @@
       "type": "number",
       "unit": "g",
       "default": 1.5,
-      "steps": [1.0, 1.5, 2.0]
+      "steps": [1.0, 1.2, 1.5, 2.0]
     },
     {
       "key": "peaks",
