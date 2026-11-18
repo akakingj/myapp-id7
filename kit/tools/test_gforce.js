@@ -37,7 +37,7 @@ Module._load = function (req, parent, isMain) {
 require(path.join(ROOT, 'apps/gforce/main'));
 const { Recorder } = require(path.join(kit, 'record'));
 const themes = require(path.join(kit, 'themes'));
-const vals = { scale: 1.5, trail: 4, flipLat: false, speedUnit: 'kmh', theme: 'm_tricolour', gRate: 10, demo: 'off' };
+const vals = { scale: 1.5, trail: 4, speedUnit: 'kmh', theme: 'm_tricolour', gRate: 10, demo: 'off' };
 app.start({
     ui: { image: async () => {}, text() {}, onClick() {} }, settings: { get: (k) => vals[k], onChange() {} },
     log: { info() {}, warn() {}, error() {} }, spec: {}, dataDir: process.argv[3],

@@ -5,7 +5,7 @@
  * The water moves as the cup of AK Cluster Layouts' JDM 1 (akakingj/idrive7-cluster-info, layout_arc_tach.js 0.41.x):
  * the same constants, drawn here with the kit's shapes instead of a shader.
  *   - sideways: the surface tilts to atan(gain x g), at most MAX_TILT, higher on the outside of the bend (where the
- *     driver is pushed; swap: Settings > Swap left / right, or the Car profile's)
+ *     driver is pushed: every app's G as the driver feels it, no setting)
  *   - fore and aft: braking sends it to the far side (its surface seen taller), accelerating to the near side
  *     (flatter): the surface's ellipse e x (1 + lon), lon = -gain x gLong within LON_MIN .. LON_MAX
  *   - each on a spring (1.2 a second, damping 0.09): it sloshes back a few times after a change

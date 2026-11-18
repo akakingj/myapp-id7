@@ -737,14 +737,13 @@ function tyres(cv, t, x, y, w, h, g) {
 
 /**
  * Friction circle: lateral (x) / longitudinal (y) acceleration in g, with a fading trail.
- * g = { lat, long, trail: [[lat,long],...], max, flipLong, flipLat }. The dot glides (smoothing); it goes outward in a
- * bend (the car's lateral G > 0 turning left: right, as the driver feels it), inward with flipLat (Car profile: In a
- * bend the dot goes).
+ * g = { lat, long, trail: [[lat,long],...], max }. The dot glides (smoothing) and moves as the driver feels the G, in
+ * every app (no setting): right in a left bend (the car's lateral G > 0 turning left), down accelerating, up braking -
+ * BRAKE on top, ACCEL at the bottom.
  */
 function gmeter(cv, t, cx, cy, r, g) {
     const max = g.max || 1.5;
-    const flip = !!g.flipLong;                  // brake on top, accel at the bottom (issue #72)
-    const key = ['gmeter', r, max, t.name, flip].join('|'), S = Math.ceil(r + 4);
+    const key = ['gmeter', r, max, t.name].join('|'), S = Math.ceil(r + 4);
     cv.blit(layer(key, 2 * S + 80, 2 * S, (c) => {
         const x = S, y = S;
         for (let ring_ = 0.5; ring_ <= max + 1e-6; ring_ += 0.5) {
@@ -754,11 +753,11 @@ function gmeter(cv, t, cx, cy, r, g) {
         }
         c.line(x - r, y, x + r, y, 2, withAlpha(t.tick, 0.6));
         c.line(x, y - r, x, y + r, 2, withAlpha(t.tick, 0.6));
-        c.text(flip ? 'ACCEL' : 'BRAKE', x, y + r - 14, 22, t.dim, { align: 'center', font: 'bold', spacing: 1.5 });
-        c.text(flip ? 'BRAKE' : 'ACCEL', x, y - r + 32, 22, t.dim, { align: 'center', font: 'bold', spacing: 1.5 });
+        c.text('ACCEL', x, y + r - 14, 22, t.dim, { align: 'center', font: 'bold', spacing: 1.5 });
+        c.text('BRAKE', x, y - r + 32, 22, t.dim, { align: 'center', font: 'bold', spacing: 1.5 });
     }, cv.textScale), Math.round(cx) - S, Math.round(cy) - S);
-    const sx = g.flipLat ? -1 : 1;
-    const P = (lat, lon) => [cx + sx * clamp(lat / max, -1.1, 1.1) * r, cy + (flip ? 1 : -1) * clamp(lon / max, -1.1, 1.1) * r];
+    // (as the driver feels it: right turning left, down accelerating)
+    const P = (lat, lon) => [cx + clamp(lat / max, -1.1, 1.1) * r, cy + clamp(lon / max, -1.1, 1.1) * r];
     const tr = g.trail || [];
     tr.forEach((p, i) => {
         if (!isNum(p[0]) || !isNum(p[1])) return;

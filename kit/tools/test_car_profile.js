@@ -161,22 +161,23 @@ const cases = {
         assert.strictEqual(s.get('coldGuard'), true);
         assert.strictEqual(s.get('shiftAt'), 6500, 'left to the app again');
     },
-    'the G-force settings: each app\'s own flips from the same absolute choices'() {
+    'the G-force: no direction setting anywhere (every app as the driver feels it), the circle\'s size still shared'() {
         clear();
         const read = (id) => JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', id, 'app.json'), 'utf8')).settings;
         const pick = (id, k) => read(id).find((x) => x.key === k);
-        // G-Force: the dot inward by default (x = cx - lat), its flip outward; M Vitals and Water Cup outward by
-        // default, their flip inward; braking on top = each one's flipLong
-        assert.deepStrictEqual(pick('gforce', 'flipLat').profileMap, { out: true, in: false });
-        assert.deepStrictEqual(pick('car_vitals', 'flipLat').profileMap, { out: false, in: true });
-        assert.deepStrictEqual(pick('ak_water_cup', 'flipLat').profileMap, { out: false, in: true });
-        ['gforce', 'car_vitals'].forEach((id) => assert.deepStrictEqual(pick(id, 'flipLong').profileMap, { top: true, bottom: false }));
+        assert(P.KEYS.indexOf('gLat') < 0 && P.KEYS.indexOf('gLong') < 0, 'no G direction in the profile');
+        ['gforce', 'car_vitals', 'ak_water_cup'].forEach((id) => ['flipLat', 'flipLong'].forEach((k) => assert(!pick(id, k), id + ' ' + k)));
+        fs.readdirSync(path.join(ROOT, 'apps')).forEach((id) => {
+            let st = [];
+            try { st = read(id) || []; } catch (e) { return; }
+            st.forEach((x) => assert(x.profile !== 'gLat' && x.profile !== 'gLong', id + ' ' + x.key + ': ' + x.profile));
+        });
         ['gforce', 'car_vitals'].forEach((id) => assert.strictEqual(pick(id, id === 'gforce' ? 'scale' : 'gScale').profile, 'gMax'));
-        const schema = [pick('gforce', 'flipLat'), pick('gforce', 'flipLong'), pick('gforce', 'scale')];
-        P.publish(fakeProfile({ gLat: 'out', gLong: 'top', gMax: 2 }), '1.1.0');
+        const schema = [pick('gforce', 'scale')];
+        P.publish(fakeProfile({ gMax: 2 }), '1.1.0');
         tick += 5; fs.utimesSync(FILE, tick, tick);
-        const s = settingsIn(schema, { flipLat: false, flipLong: false, scale: 1.5 });
-        assert.strictEqual(s.get('flipLat'), true); assert.strictEqual(s.get('flipLong'), true); assert.strictEqual(s.get('scale'), 2);
+        const s = settingsIn(schema, { scale: 1.5 });
+        assert.strictEqual(s.get('scale'), 2);
     },
     'every app.json "profile" is one the Car profile sets, with values it can give'() {
         const cp = JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', 'car_profile', 'app.json'), 'utf8'));

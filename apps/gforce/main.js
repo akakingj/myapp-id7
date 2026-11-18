@@ -52,7 +52,7 @@ mgu.run({
             if (!G.isNum(d.gLong)) return;
             // a road car can't exceed ~3 g: anything above is a bad sample, not a record
             if (Math.abs(d.gLong) > 3 || (G.isNum(d.gLat) && Math.abs(d.gLat) > 3)) return;
-            const lat0 = G.isNum(d.gLat) ? (settings.get('flipLat') ? -d.gLat : d.gLat) : 0;
+            const lat0 = G.isNum(d.gLat) ? d.gLat : 0;
             smooth.push([t, lat0, d.gLong]);
             while (smooth.length && t - smooth[0][0] > 150) smooth.shift();
             const lat = smooth.reduce((a, s) => a + s[1], 0) / smooth.length, long = smooth.reduce((a, s) => a + s[2], 0) / smooth.length;
@@ -96,10 +96,10 @@ mgu.run({
             }
             cv.line(cx - r, cy, cx + r, cy, 2, withAlpha(t.tick, 0.5));
             cv.line(cx, cy - r, cx, cy + r, 2, withAlpha(t.tick, 0.5));
-            const flipLong = settings.get('flipLong');      // brake on top, accel at the bottom (issue #62)
-            const ySign = flipLong ? 1 : -1;
-            const P = (lat, lon) => [cx - G.clamp(lat / max, -1.08, 1.08) * r, cy + ySign * G.clamp(lon / max, -1.08, 1.08) * r];
-            // grip envelope (left = positive lat drawn to the left)
+            // the dot as the driver feels the G, in every app (no setting): right in a left bend (lateral G > 0), down
+            // accelerating, up braking (BRAKE on top)
+            const P = (lat, lon) => [cx + G.clamp(lat / max, -1.08, 1.08) * r, cy + G.clamp(lon / max, -1.08, 1.08) * r];
+            // grip envelope (through P: drawn the same way round)
             const pts = S.env.map((g, i) => {
                 const a = (i + 0.5) * (360 / SECT) * Math.PI / 180;
                 return P(Math.sin(a) * g, Math.cos(a) * g);
@@ -116,11 +116,9 @@ mgu.run({
                 cv.circle(x, y, 12, t.accent);
                 cv.circle(x, y, 5, t.text);
             }
-            const [topLbl, botLbl] = flipLong ? ['BRAKE', 'ACCEL'] : ['ACCEL', 'BRAKE'];
-            cv.text(topLbl, cx, cy - r - 20, 22, t.dim, { align: 'center', font: 'bold', spacing: 1.5 });
-            cv.text(botLbl, cx, cy + r + 38, 22, t.dim, { align: 'center', font: 'bold', spacing: 1.5 });
-            cv.text('L', cx - r - 30, cy + 8, 22, t.dim, { align: 'center', font: 'bold' });
-            cv.text('R', cx + r + 30, cy + 8, 22, t.dim, { align: 'center', font: 'bold' });
+            // (no L / R at the sides: as the driver feels it, a left bend puts the dot on the right)
+            cv.text('BRAKE', cx, cy - r - 20, 22, t.dim, { align: 'center', font: 'bold', spacing: 1.5 });
+            cv.text('ACCEL', cx, cy + r + 38, 22, t.dim, { align: 'center', font: 'bold', spacing: 1.5 });
         }
 
         function peakBox(cv, t, x, y, label, v, rec) {

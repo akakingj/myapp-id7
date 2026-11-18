@@ -15,7 +15,7 @@ const fs = require('fs');
 // what the profile sets, in Settings order; FOLLOW: the apps that follow each (their app.json "profile")
 const KEYS = ['engine', 'redline', 'shiftAt', 'rpmScale', 'coldLimit', 'lightMode', 'lightStart', 'coldGuard', 'warmOil',
     'warmCoolant', 'warmGearbox', 'hotOil', 'hotCoolant', 'hotGearbox', 'speedUnit', 'distUnit', 'tempUnit', 'pressUnit', 'fuelUnit', 'torqueUnit', 'powerUnit',
-    'skin', 'theme', 'layout', 'renderer', 'demo', 'clock', 'timeZone', 'tankLitres', 'eFull', 'gMax', 'gLat', 'gLong'];
+    'skin', 'theme', 'layout', 'renderer', 'demo', 'clock', 'timeZone', 'tankLitres', 'eFull', 'gMax'];
 const FOLLOW = {
     // (Plug-in hybrid: the AK clusters' Vehicle; the other apps take a plug-in hybrid as their own setting says: Auto, petrol)
     engine: ['M Vitals', 'Redline', 'Warm-Up', 'Virtual Dyno', 'AK Cluster', 'AK Cluster Centre'],
@@ -55,8 +55,6 @@ const FOLLOW = {
     eFull: ['AK Cluster', 'AK Cluster Centre'],
     // the G-force circles' size (g), where the dot goes in a bend (out: as the driver feels it), braking up or down
     gMax: ['G-Force', 'M Vitals', 'AK Cluster'],
-    gLat: ['G-Force', 'M Vitals', 'Water Cup', 'AK Cluster'],
-    gLong: ['G-Force', 'M Vitals', 'AK Cluster'],
 };
 // ('AK Cluster': the cluster apps of akakingj/idrive7-cluster-info, Layouts / Centre / Info, which read this file too)
 

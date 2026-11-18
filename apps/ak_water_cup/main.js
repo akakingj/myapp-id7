@@ -17,8 +17,7 @@
  *   - demo data (Settings > Demo data, or the Car profile's): a drive of its own (cup.js demoG)
  *   - the fuel: KombiIF.statusRangeTankStatus (the car's tank level, litres, read-only), over Settings > Fuel tank size
  *     (the Car profile's where it sets one; 59 L); demo data: a tank of its own going down (tofu.js demoFuel)
- * Settings: Slosh strength (x the G, 2.2 as Layouts), Water level, Fuel tofu, Fuel tank size, Swap left / right (the Car profile's "Swap G left /
- * right" where it sets one), skin, colour theme, layout, renderer, demo data (the Car profile's).
+ * Settings: Slosh strength (x the G, 2.2 as Layouts), Water level, Fuel tofu, Fuel tank size, skin, colour theme, layout, renderer, demo data (the Car profile's).
  */
 const mgu = require('./kit/mgu');
 const { withAlpha } = require('./kit/canvas');
@@ -58,7 +57,7 @@ mgu.run({
         const want = () => {
             // (no G for over 3 s: level)
             const now = Date.now(), gOk = g && now - gAt < 3000;
-            return C.targets(gOk ? g : null, Number(settings.get('gain')) || 2.2, settings.get('flipLat') ? -1 : 1);
+            return C.targets(gOk ? g : null, Number(settings.get('gain')) || 2.2, 1);
         };
         settings.onChange(() => { force = true; });
         ctx.onLayout(() => { force = true; });

@@ -24,8 +24,6 @@ One place for the car's engine values and units. Set them here once and the othe
 | Fuel use unit | Redline HUD |
 | Torque unit, Power unit | M Vitals, Redline HUD, Virtual Dyno, AK Cluster |
 | G-force circle up to (1, 1.5, 2 g) | G-Force (*Circle size*), M Vitals (*G-force circle size*), AK Cluster Layouts (JDM 2's G meter) |
-| In a bend the dot goes (outward, as you feel it / inward, as the car turns) | G-Force, M Vitals, Water Cup (its water higher outward or inward), AK Cluster Layouts (JDM 2's G meter, JDM 1's cup) |
-| Braking is shown (on top / at the bottom) | G-Force, M Vitals, AK Cluster Layouts (JDM 2's G meter) |
 
 Every setting starts at **Each app**: until it is set here, each app keeps its own setting, so installing the app
 changes nothing. A setting the profile sets shows the profile's value in the other app's Settings and can't be changed
@@ -47,9 +45,10 @@ learned shift point (per gear, setting *Shift point*: learned) is its own; the o
 ## One way for the G
 
 Each app drew the G its own way: G-Force's dot went inward in a bend (where the car turns), M Vitals' outward (where
-you are pushed); braking on top in some, at the bottom in others. *In a bend the dot goes* and *Braking is shown* say it
-once for all of them, as a direction rather than a swap, and each app sets its own *Swap* to match (Water Cup's water
-rises on the same side as the dot; JDM 1's cup too). *G-force circle up to* sizes the circles alike.
+you are pushed); braking on top in some, at the bottom in others. Since Car profile 1.6.0 there is no setting for it:
+every app moves the dot as the driver feels the G - right in a left bend, down (back) accelerating, up braking, BRAKE
+on top - G-Force, M Vitals, Water Cup (its water higher on the outside of the bend), AK Cluster Layouts (JDM 2's G meter,
+JDM 1's cup). *G-force circle up to* sizes the circles alike.
 
 ## One set of too-hot temperatures
 
