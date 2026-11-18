@@ -1,7 +1,8 @@
 'use strict';
 /*
  * test_water_cup.js - Water Cup (apps/ak_water_cup): its water stays in the cup, its springs stay in bounds, a still
- * cup sends no frames, a hidden-then-shown cup doesn't jump, and it asks the car for nothing (no diagnostics).
+ * cup sends no frames, a hidden-then-shown cup doesn't jump, and it asks the car for nothing (no diagnostics); its fuel
+ * tofu: the tank's level read from the car's field names, a block for each tenth, no blinking at a step.
  *   node kit/tools/test_water_cup.js
  */
 const assert = require('assert');
@@ -11,6 +12,7 @@ const Module = require('module');
 const ROOT = path.join(__dirname, '..', '..');
 const APP = path.join(ROOT, 'apps', 'ak_water_cup');
 const C = require(path.join(APP, 'cup'));
+const T = require(path.join(APP, 'tofu'));
 const spec = JSON.parse(fs.readFileSync(path.join(APP, 'app.json'), 'utf8'));
 let n = 0;
 const ok = (name, fn) => { fn(); n++; console.log('ok ' + name); };
@@ -73,6 +75,67 @@ ok('the demo drives: weaving, a stop, still between', () => {
     assert.deepStrictEqual(at(12), { gLat: 0, gLong: 0 });
 });
 
+ok('the fuel: the tank\'s own level by its field\'s name, not a saddle tank\'s half; no value dropped', () => {
+    assert.strictEqual(T.fuelLitres({ fluidLevelFuelTank: 41, fluidLevelFuelTankLeftHand: 20, fluidLevelFuelTankRightHand: 21, range: 452, mileageKilometre: 23817 }), 41);
+    assert.strictEqual(T.fuelLitres({ fluidLevelFuelTankLeftHand: 0, fluidLevelFuelTankRightHand: 77 }), 0, 'only halves: the first');
+    assert.strictEqual(T.fuelLitres({ tank: { fuelLevel: 38 } }), 38, 'nested');
+    assert.strictEqual(T.fuelLitres({ fluidLevelFuelTank: 0xFFFF, range: 300 }), null, 'no value');
+    assert.strictEqual(T.fuelLitres({ range: 300 }), null);
+    assert.strictEqual(T.fuelLitres(null), null);
+    assert.strictEqual(T.fuelPct(59, 59), 100);
+    assert.strictEqual(T.fuelPct(70, 59), 100, 'over the size: full');
+    assert.strictEqual(T.fuelPct(29.5, 59), 50);
+    assert.strictEqual(T.fuelPct(null, 59), null);
+    assert.strictEqual(T.fuelPct(30, 0), null);
+});
+
+ok('the tofu: a block for each tenth, the last drop still one, no blinking at a step', () => {
+    assert.strictEqual(T.count(100, null), 10);
+    assert.strictEqual(T.count(95, null), 10);
+    assert.strictEqual(T.count(90, null), 9);
+    assert.strictEqual(T.count(0.5, null), 1, 'a drop left: one');
+    assert.strictEqual(T.count(0, null), 0);
+    assert.strictEqual(T.count(null, 6), 6, 'no reading: kept');
+    assert.strictEqual(T.count(null, null), null);
+    // swinging round 60 % (a bend): 7 stays 7 until under 58.5, then 6 stays 6 until over 61.5
+    let k = T.count(65, null);
+    [61, 59.5, 58.6, 60.9].forEach((p) => { k = T.count(p, k); assert.strictEqual(k, 7, p + ' -> ' + k); });
+    k = T.count(58.4, k); assert.strictEqual(k, 6);
+    [59.9, 61.4, 60.2].forEach((p) => { k = T.count(p, k); assert.strictEqual(k, 6, p + ' -> ' + k); });
+    k = T.count(61.6, k); assert.strictEqual(k, 7);
+    assert.strictEqual(T.count(20, 9), 2, 'a big jump (filled up, or a first reading) goes straight there');
+    for (let t = 0; t < 120000; t += 500) { const p = T.demoFuel(t); assert(p >= 5 - 1e-9 && p <= 100); }
+});
+
+ok('the tofu stays on the page, clear of the cup, at any wobble', () => {
+    const TG = { x0: 850, y0: 200, w: 78, h: 58, dx: 26, dy: 20, gap: 12, rowGap: 64 };
+    const cupRight = 470 + 150;
+    for (const sh of [-8, 0, 8]) T.blocks(TG, sh).forEach((b) => [].concat(b.front, b.top, b.side).forEach(([x, y]) => {
+        assert(Number.isFinite(x) && Number.isFinite(y));
+        assert(x > cupRight + 40 && x < 1600 - 40 && y > 60 && y < 520 - 40, 'off the page or on the cup: ' + [b.i, x, y]);
+    }));
+    [0, 1].forEach((r) => { const t = T.tray(TG, r); assert(t.x > cupRight + 40 && t.x + t.w < 1560 && t.y + t.h < 480); });
+    // the rows apart, the order: 0 .. 4 the bottom row from the left, the top row's right end the first to go
+    const bs = T.blocks(TG, 0);
+    assert(bs[0].front[0][1] > bs[9].front[0][1] && bs[0].front[0][0] < bs[4].front[0][0] && bs[9].front[0][0] > bs[5].front[0][0]);
+    assert(bs[5].front[3][1] < bs[0].top[1][1], 'the top row clear of the bottom row\'s tops');
+});
+
+ok('the sign: its eight glyphs its own (the shared CJK atlas lacks them), kept in its own family', () => {
+    const S = require(path.join(APP, 'sign_font'));
+    const fonts = require(path.join(ROOT, 'kit/runtime/fonts'));
+    assert.strictEqual(S.text, '東河豆腐亀島本店');
+    assert(fonts.register(S.family, S));
+    const f = fonts.get(S.family, 36, S.text);
+    assert.strictEqual(f.family, S.family, 'not switched to the shared cjk atlas');
+    for (const c of S.text) assert(f.glyphs[c.codePointAt(0)] && f.glyphs[c.codePointAt(0)][2] > 0, 'glyph ' + c);
+    assert.strictEqual(fonts.get('label', 24, '本').family, 'cjk', 'other families still switch');
+    assert(!fonts.register('bad', { sizes: null }));
+    const TG = { x0: 850, y0: 200, w: 78, h: 58, dx: 26, dy: 20, gap: 12, rowGap: 64 }, r = T.tray(TG, 0), sy = TG.y0 - TG.dy - 72;
+    assert(sy > 50 && sy + 54 < TG.y0 - TG.dy, 'the board under the header, over the top row');
+    assert(fonts.measure(f, S.text) * 36 / f.size + 7 * 8 < r.w - 24, 'the name fits the board');
+});
+
 ok('it asks the car for nothing: no diagnostics, read-only signals only', () => {
     const src = fs.readdirSync(APP).filter((f) => f.endsWith('.js')).map((f) => fs.readFileSync(path.join(APP, f), 'utf8')).join('\n');
     assert(!/kit\/(diag|readonly-diag|ecus|dids|sgbd)\b/.test(src), 'no diagnostics module');
@@ -84,7 +147,8 @@ ok('it asks the car for nothing: no diagnostics, read-only signals only', () => 
 (async () => {
     const kit = path.join(ROOT, 'kit/runtime');
     let app = null, sample = null, loopFn = null, frames = 0, lastWords = null;
-    class FakeCar { onSample(fn) { sample = fn; } data() { return { demo: false }; } }
+    let extra = null;
+    class FakeCar { constructor(ctx, groups, x) { extra = x; } onSample(fn) { sample = fn; } data() { return { demo: false }; } }
     const load = Module._load;
     Module._load = function (req, parent, isMain) {
         if (req === './kit/mgu') return { run: (a) => { app = a; } };
@@ -96,7 +160,7 @@ ok('it asks the car for nothing: no diagnostics, read-only signals only', () => 
     Module._load = load;
     const { Recorder } = require(path.join(kit, 'record'));
     const themes = require(path.join(kit, 'themes'));
-    const vals = { gain: 2.2, level: 0.5, flipLat: false, theme: 'm_tricolour', skin: 'classic', demo: 'off' };
+    const vals = { gain: 2.2, level: 0.5, flipLat: false, tofu: true, tankLitres: 59, theme: 'm_tricolour', skin: 'classic', demo: 'off' };
     await app.start({
         ui: { image: async (k, cv) => { frames++; lastWords = Array.from(cv.words()); } }, settings: { get: (k) => vals[k], onChange() {} },
         log: { info() {}, warn() {}, error() {} }, theme: () => themes.theme(vals.theme, vals.skin), canvas: (w, h) => new Recorder(w, h),
@@ -117,6 +181,19 @@ ok('it asks the car for nothing: no diagnostics, read-only signals only', () => 
     frames = 0; await loopFn(); const first = frames;
     await run(800, { gLat: -0.2, gLong: 0 });
     assert(first === 1 && frames <= 2, 'shown again: one frame and still (' + frames + ')'); n++; console.log('ok shown again without a jump');
+    // the fuel: a new block count sends one frame; the same count again, nothing
+    const tank = extra['de.bmw.infotainment.KombiIF'].statusRangeTankStatus;
+    tank({ fluidLevelFuelTank: 41, range: 452 });
+    frames = 0; await run(300, { gLat: -0.2, gLong: 0 });
+    assert.strictEqual(frames, 1, 'fuel read: one frame (' + frames + ')');
+    tank({ fluidLevelFuelTank: 40.5, range: 450 });                    // (69 %: still 7 blocks)
+    frames = 0; await run(300, { gLat: -0.2, gLong: 0 });
+    assert.strictEqual(frames, 0, 'the same blocks: no frame'); n++; console.log('ok the tofu: a frame only when a block goes');
+    vals.tofu = false; tank({ fluidLevelFuelTank: 5 });
+    frames = 0; await run(300, { gLat: -0.2, gLong: 0 });
+    assert.strictEqual(frames, 1, 'tofu off: one frame (the cup back in the middle)');
+    frames = 0; tank({ fluidLevelFuelTank: 50 }); await run(300, { gLat: -0.2, gLong: 0 });
+    assert.strictEqual(frames, 0, 'tofu off: the fuel draws nothing'); n++; console.log('ok tofu off: the fuel ignored');
     assert(lastWords && lastWords.length > 100);
     console.log(n + ' passed');
     process.exit(0);

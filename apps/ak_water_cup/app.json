@@ -1,8 +1,8 @@
 {
   "id": "ak_water_cup",
   "title": "Water Cup",
-  "description": "A clear cup of water that sloshes with the car's G, as the cup of AK Cluster Layouts' JDM 1: higher on the outside of a bend, to the far side braking, to the near side accelerating",
-  "version": "1.0.2",
+  "description": "A clear cup of water that sloshes with the car's G, as the cup of AK Cluster Layouts' JDM 1: higher on the outside of a bend, to the far side braking, to the near side accelerating. Beside it ten blocks of tofu, one for each tenth of the fuel in the tank",
+  "version": "1.1.0",
   "vendor": "custom",
   "loggingId": "AKWC",
   "iconGlyph": "WC",
@@ -15,6 +15,9 @@
     },
     "de.bmw.infotainment.vehicle.Vehicle2": {
       "statusCarSpeed2": "rs"
+    },
+    "de.bmw.infotainment.KombiIF": {
+      "statusRangeTankStatus": "rs"
     }
   },
   "screens": [
@@ -30,6 +33,9 @@
   "settings": [
     {"key": "gain", "label": "Slosh strength", "type": "number", "unit": "x", "default": 2.2, "steps": [1.0, 1.6, 2.2, 3.0]},
     {"key": "level", "label": "Water level", "type": "number", "default": 0.5, "steps": [0.35, 0.5, 0.65], "labels": {"0.35": "Low", "0.5": "Half", "0.65": "High"}},
+    {"key": "tofu", "label": "Fuel tofu", "type": "bool", "default": true},
+    {"key": "tankLitres", "profile": "tankLitres", "when": {"tofu": [true]}, "label": "Fuel tank size", "type": "number", "unit": "L", "default": 59,
+     "steps": [40, 42, 46, 50, 52, 55, 57, 59, 60, 63, 65, 66, 68, 69, 70, 74, 80, 83, 85, 90]},
     {"key": "flipLat", "label": "Swap left / right", "type": "bool", "default": false, "profile": "gLat", "profileMap": {"out": false, "in": true}},
     {"key": "theme", "profile": "theme", "when": {"skin": "classic"}, "label": "Colour theme", "type": "choice", "default": "m_tricolour",
      "options": [["m_red", "M Red"], ["m_tricolour", "M Tricolour"], ["ice", "Ice White"], ["amber", "Night Amber"]]},

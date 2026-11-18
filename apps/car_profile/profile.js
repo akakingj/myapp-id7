@@ -51,7 +51,7 @@ const FOLLOW = {
     // the AK clusters' clock, and their fuel and battery figures
     clock: ['AK Cluster', 'AK Cluster Centre'],
     timeZone: ['AK Cluster', 'AK Cluster Centre'],
-    tankLitres: ['AK Cluster', 'AK Cluster Centre'],
+    tankLitres: ['Water Cup', 'AK Cluster', 'AK Cluster Centre'],
     eFull: ['AK Cluster', 'AK Cluster Centre'],
     // the G-force circles' size (g), where the dot goes in a bend (out: as the driver feels it), braking up or down
     gMax: ['G-Force', 'M Vitals', 'AK Cluster'],
