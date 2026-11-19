@@ -3,7 +3,7 @@
 >
 > This repository is for personal testing. Do not misuse it, use it for anything illegal, or use it for profit without permission.
 
-**English** | [中文 (Chinese translation)](README.zh-CN.md) | [Русский (Russian translation)](README.ru.md) | [한국어 수정본](README.ko.md)
+**English** | [中文 (Chinese translation)](README.zh-CN.md) | [Русский (Russian translation)](README.ru.md) | [한국어 수정본](README.ko.md) | [Español](README.es.md)
 
 <h1 align="center">Idrive Custom Apps</h1>
 
@@ -329,6 +329,7 @@ too; the tool lists anything missing.
 python3 kit/tools/build.py            # all apps, English -> dist/<id>@<ver>.mgu
 python3 kit/tools/build.py redline    # just one app, English
 python3 kit/tools/build.py --language ko       # Korean -> dist/<id>@<ver>-ko.1.mgu
+python3 kit/tools/build.py --language es       # Spanish -> dist/<id>@<ver>-es.1.mgu
 python3 kit/tools/build.py --language ru       # Russian -> dist/<id>@<ver>-ru.<revision>.mgu
 python3 kit/tools/build.py --language zh-CN    # Simplified Chinese -> dist/<id>@<ver>-zh.cn.2.mgu
 node kit/tools/preview.js dist/redline preview wait=10   # English PC preview -> preview/*.png
@@ -350,6 +351,10 @@ database translation is included with `zh-CN`. `kit/tools/import_diagnostic_ru.p
 Russian catalog from your own EN/RU `DiagDocDb` databases without changing the bundled English
 `dtc_db.pack`.
 
+`--language es` (also `es-ES`) builds Spanish: every app's UI, the Service app's dates, and the label, bold,
+light and num atlases with the Spanish letters added (every English glyph unchanged). Fault Scanner
+descriptions stay English. Guide: [Español](README.es.md). Spanish translation by Rubén Ríos ([rubenrios](https://github.com/rubenrios)).
+
 Chinese translation by 小白151
 ([JackieZ123430](https://github.com/JackieZ123430), [idrive7-apps-cn](https://github.com/JackieZ123430/idrive7-apps-cn));
 guides: [中文](README.zh-CN.md), [Русский](README.ru.md).
@@ -366,6 +371,7 @@ deploy/make-car-kit.sh                 # macOS / Linux / WSL: all apps, English
 deploy\make-car-kit.cmd                # Windows (cmd or PowerShell)
 python3 kit/tools/make_kit.py redline  # any OS; just some apps, English
 python3 kit/tools/make_kit.py --language ru       # Russian kit -> dist/mgu-custom-apps-ru(.tar.gz)
+python3 kit/tools/make_kit.py --language es       # Spanish kit -> dist/mgu-custom-apps-es(.tar.gz)
 python3 kit/tools/make_kit.py --language zh-CN    # Chinese kit -> dist/mgu-custom-apps-zh-CN(.tar.gz)
 ```
 
