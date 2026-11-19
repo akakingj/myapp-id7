@@ -251,11 +251,14 @@ mgu.run({
             // panel ends at the page's bottom, and G.panel adds the room back to it
             const room = G.pageBottom(cv) - G.BOTTOM, half = Math.round(room / 2);
             const gb = gearT(d), warmG = settings.get('warmGearbox'), hasGb = G.isNum(gb);
+            // (the three gauges from the start, the gearbox's '--' till its first reading: only a car that can't tell it
+            // - no source, a minute on - gets the two; READY and the state go by a reading, hasGb)
+            const show3 = hasGb || !gearbox.absent();
             // (Settings / the Car profile: Oil is too hot at, Gearbox is too hot at - each gauge's red from there)
             const hotO = Number(settings.get('hotOil')) || 125, hotG = Number(settings.get('hotGearbox')) || GEAR_HOT;
             // (the coolant's red from Coolant is too hot at: 135 as before, the Car profile's when it sets it, as M Vitals' and Redline's)
             const hotC = Number(settings.get('hotCoolant')) || 135;
-            if (hasGb) {
+            if (show3) {
                 // three gauges in the room of two: the oil (what matters most) gets the extra room below the page
                 gaugeSmall(cv, t, G.TOP, 144 + half, d.oil, 'Engine oil', warm, hotO);
                 gaugeSmall(cv, t, G.TOP + 161 + half, 144, d.coolant, 'Coolant', warmC, hotC);
@@ -302,7 +305,7 @@ mgu.run({
                 const f = needS ? G.clamp(cool / needS, 0, 1) : 1;
                 cv.roundRect(952, 303, 600, 12, 6, t.track);
                 if (f > 0) cv.rampRect(952, 303, Math.max(12, 600 * f), 12, 6, [t.warn, GO], 952, 600);
-            } else if (hasGb) {
+            } else if (show3) {
                 etaLine(cv, t, 166, 'OIL READY IN', eta('oil', d.oil, warm, d), warm);
                 etaLine(cv, t, 226, 'COOLANT READY IN', eta('coolant', d.coolant, warmC, d), warmC);
                 etaLine(cv, t, 286, 'GEARBOX READY IN', eta('gearbox', gb, warmG, d), warmG);
@@ -328,7 +331,7 @@ mgu.run({
             const X = (ts) => nowX - ((now0 - ts) / span) * (gw - 90), Y = (c) => gy + gh - (G.clamp(c, lo, hi) - lo) / (hi - lo) * gh;
             cv.fillRect(gx, gy - 20, 22, 4, t.oil || t.accent); cv.text('OIL', gx + 30, gy - 11, 20, t.dim, { font: 'bold' });
             cv.fillRect(gx + 100, gy - 20, 22, 4, t.cold); cv.text('COOLANT', gx + 130, gy - 11, 20, t.dim, { font: 'bold' });
-            if (hasGb) { cv.fillRect(gx + 250, gy - 20, 22, 4, GEAR_C); cv.text('GEARBOX', gx + 280, gy - 11, 20, t.dim, { font: 'bold' }); }
+            if (show3) { cv.fillRect(gx + 250, gy - 20, 22, 4, GEAR_C); cv.text('GEARBOX', gx + 280, gy - 11, 20, t.dim, { font: 'bold' }); }
             cv.fillRect(gx, Y(warm), gw, 1, withAlpha(GO, 0.5));
             cv.text(String(Math.round(T(warm))), gx + gw + 4, Y(warm) + 7, 20, GO);
             cv.fillRect(nowX, gy, 1, gh, withAlpha(t.tick, 0.5));       // "now"

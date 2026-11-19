@@ -79,7 +79,8 @@ async function watch(iface, instance, handlers, log, opts) {
         const fields = Object.keys(handlers || {});
         const fetchAll = () => fields.forEach((f) => {
             if (cfg.fields && cfg.fields[f] && cfg.fields[f].getter) {
-                p.getValue(f, 3000).then((v) => handlers[f](v)).catch(() => {});
+                // (a read that came back with no value - none, null - is no reading: the handlers take a struct's fields)
+                p.getValue(f, 3000).then((v) => { if (v !== undefined && v !== null) handlers[f](v); }).catch(() => {});
             }
         });
         await nativeTick(() => {
@@ -87,7 +88,7 @@ async function watch(iface, instance, handlers, log, opts) {
         });
         for (const f of fields) {
             try {
-                await nativeTick(() => p.subscribe({ name: f, onReceive: (v) => { try { handlers[f](v); } catch (e) { if (log) log.warn(iface + '.' + f + ': ' + e); } } }));
+                await nativeTick(() => p.subscribe({ name: f, onReceive: (v) => { if (v === undefined || v === null) return; try { handlers[f](v); } catch (e) { if (log) log.warn(iface + '.' + f + ': ' + e); } } }));
             } catch (e) {
                 if (log) log.warn('subscribe ' + iface + '.' + f + ': ' + e);
             }

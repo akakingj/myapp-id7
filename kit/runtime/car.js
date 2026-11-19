@@ -111,7 +111,8 @@ class Car {
             if (tick && !this.demoActive) this._emit(this.live, this.lastCar);
         };
         const watches = {};
-        const add = (iface, field, fn) => { (watches[iface] = watches[iface] || {})[field] = fn; };
+        // (a value that is no struct - none, a number - never reaches the readers: they take its fields)
+        const add = (iface, field, fn) => { (watches[iface] = watches[iface] || {})[field] = (v) => { if (v && typeof v === 'object') fn(v); }; };
         if (groups.includes('rpm')) add('de.bmw.infotainment.vehicle.CDS', 'statusEngineSpeed2', (v) => put('rpm', engineRpm(sc('rpm', v.actualValueRPMEngineCrankshaft)), true));
         if (groups.includes('temps')) add('de.bmw.infotainment.vehicle.CDS', 'statusEngineTemperature', (v) => { put('coolant', sc('temp', v.temperatureEngineDrive)); put('oil', sc('temp', v.temperatureEngineOilDrive)); });
         if (groups.includes('speed')) add('de.bmw.infotainment.vehicle.Vehicle2', 'statusCarSpeed2', (v) => put('speed', sc('speed', v.speedVehicleCentreOfGravity), true));

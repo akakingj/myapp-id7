@@ -28,8 +28,8 @@ class FakeCar {
     setRedline() {}   // the demo drive's rpm (engine.js profile)
 }
 // the gearbox oil (gearbox.js): set by hand here (gearC = null: the car has none); gearbox.js is tested on its own below
-let gearC = null;
-class FakeGearbox { start() { return this; } temp() { return gearC; } source() { return gearC === null ? null : 'EGS'; } }
+let gearC = null, gearAbsent = true;   // (gearAbsent: no source can have it - Warm-Up then shows two gauges)
+class FakeGearbox { start() { return this; } temp() { return gearC; } source() { return gearC === null ? null : 'EGS'; } absent() { return gearC === null && gearAbsent; } }
 const stubs = { './kit/mgu': { run(a) { app = a; } }, './kit/car': FakeCar, './gearbox': { Gearbox: FakeGearbox } };
 const load = Module._load;
 Module._load = function (req, parent, isMain) {
@@ -136,6 +136,19 @@ const checks = [
         gearC = null;
         t = await render();
         assert(t.indexOf('GEARBOX READY IN') < 0 && t.indexOf('COOLANT READY IN') >= 0 && status(t) === 'READY', 'no gearbox: as before: ' + t.join(' | '));
+    }],
+    ['gearbox oil: its gauge from the start, "--" till its first reading (this fork)', async () => {
+        gearC = null; gearAbsent = false;
+        await start();
+        let t = await render();
+        assert(t.filter((x) => x === ' °C').length === 3 && t.indexOf('GEARBOX READY IN') >= 0 && t.indexOf('GEARBOX') >= 0, 'three gauges at once: ' + t.join(' | '));
+        drive(GENTLE, 5);
+        t = await render();
+        assert(t.indexOf('WARMING UP') < 0 || t.indexOf('GEARBOX WARMING UP') < 0, 'no reading: READY / the state go by the oil');
+        gearC = 40;
+        t = await render();
+        assert(t.filter((x) => x === ' °C').length === 3 && t.indexOf('40') >= 0, 'then the reading in the same place: ' + t.join(' | '));
+        gearAbsent = true;
     }],
     ['gearbox oil warm-up from the Car profile (Gearbox oil is warm at, this fork): the kit\'s Settings, READY waits for it', async () => {
         // the kit's own Settings class (cut from mgu.js as test_runtime.js does) reading a Car profile file

@@ -210,7 +210,7 @@ function find(v, key, str) {
     return null;
 }
 /** JSON without icons, with lossless Unicode escapes for the ASCII-only diagnostic font. */
-const brief = (v) => JSON.stringify(v, (k, x) => (k === 'symbolData' ? '[icon]' : x))
+const brief = (v) => String(JSON.stringify(v, (k, x) => (k === 'symbolData' ? '[icon]' : x)))
     .replace(/[^\x20-\x7e]/g, (ch) => '\\u' + ch.charCodeAt(0).toString(16).padStart(4, '0'));
 const colour = (c) => (typeof c === 'number' ? c : COLORS[String(c)] !== undefined ? COLORS[String(c)] : 0);
 const HMI_ASCII = {
@@ -290,7 +290,7 @@ mgu.run({
         sig.watch(KOMBI, '1', {
             cbsDataServiceList: (v) => {
                 rawList = brief(v);
-                const arr = Array.isArray(v) ? v : (v && (v.cbsDataServiceList || v.value)) || [];
+                const w = Array.isArray(v) ? v : (v && (v.cbsDataServiceList || v.value)) || [], arr = Array.isArray(w) ? w : [];
                 list = arr.map((e) => {
                     const s = find(e, 'cBSIdentifier') || {};
                     const name = txt(s.cBSServcieName || s.cBSServiceName);

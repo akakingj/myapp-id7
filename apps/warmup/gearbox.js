@@ -10,6 +10,8 @@
  *   const gb = new Gearbox(ctx, log, () => visible).start();
  *   gb.temp()     deg C, or null (no source has it)
  *   gb.source()   'EGS' | 'signal' | null
+ *   gb.absent()   true once no source can have it (the unit has neither identifier or no link, and the signal sent
+ *                 nothing, ABSENT_MS after the start): till then Warm-Up keeps the gearbox gauge up, '--' while empty
  *
  * The unit is asked every POLL_MS while the screen shows (visible()), and not at all once it said it has neither
  * identifier; a unit that doesn't answer is asked every SLOW_MS.
@@ -19,7 +21,7 @@ const { ReadOnlyDiag } = require('./kit/readonly-diag');
 const EGS = 0x18, POLL_MS = 5000, SLOW_MS = 30000, FRESH_MS = 20000;
 const DIDS = [{ did: 0x6000, offset: -40, sure: true }, { did: 0xDA12, offset: -48, sure: false }];
 const ABSENT = [0x11, 0x12, 0x31];         // NRCs that mean "this unit has no such identifier"
-const MIN = -40, MAX = 160, MOVE = 1;
+const MIN = -40, MAX = 160, MOVE = 1, ABSENT_MS = 60000;
 
 /** A value that counts only once it has moved by MOVE from the first one seen. */
 class Moving {
@@ -38,7 +40,7 @@ class Gearbox {
         this.ctx = ctx; this.log = log; this.visible = visible || (() => true);
         this.egs = DIDS.map((d) => Object.assign({ gone: false, val: new Moving(d.sure) }, d));
         this.sig = new Moving(false);
-        this.silent = 0; this.timer = null; this.link = null; this.logged = {};
+        this.silent = 0; this.timer = null; this.link = null; this.logged = {}; this.noLink = false; this.t0 = Date.now();
     }
 
     start() {
@@ -54,8 +56,8 @@ class Gearbox {
                 .catch((e) => this.log.warn('gearbox: signal: ' + (e && e.message || e)));
         }
         this.link = new ReadOnlyDiag(signals, this.log);
-        this.link.init().then(() => { if (this.link.ready) this._next(1000); else this.log.info('gearbox: no diagnostic link'); })
-            .catch((e) => this.log.warn('gearbox: diagnostic link: ' + (e && e.message || e)));
+        this.link.init().then(() => { if (this.link.ready) this._next(1000); else { this.noLink = true; this.log.info('gearbox: no diagnostic link'); } })
+            .catch((e) => { this.noLink = true; this.log.warn('gearbox: diagnostic link: ' + (e && e.message || e)); });
         return this;
     }
 
@@ -63,6 +65,7 @@ class Gearbox {
 
     temp() { const s = this._pick(); return s ? s.v : null; }
     source() { const s = this._pick(); return s ? s.name : null; }
+    absent() { return (this.noLink || this.egs.every((e) => e.gone)) && this.sig.first === null && Date.now() - this.t0 > ABSENT_MS; }
 
     _pick() {
         const now = Date.now();
