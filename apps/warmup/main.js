@@ -329,9 +329,13 @@ mgu.run({
             const ahead = 300000;                                  // projection: up to 5 min ahead
             const lo = 0, hi = 140;
             const X = (ts) => nowX - ((now0 - ts) / span) * (gw - 90), Y = (c) => gy + gh - (G.clamp(c, lo, hi) - lo) / (hi - lo) * gh;
-            cv.fillRect(gx, gy - 20, 22, 4, t.oil || t.accent); cv.text('OIL', gx + 30, gy - 11, 20, t.dim, { font: 'bold' });
-            cv.fillRect(gx + 100, gy - 20, 22, 4, t.cold); cv.text('COOLANT', gx + 130, gy - 11, 20, t.dim, { font: 'bold' });
-            if (show3) { cv.fillRect(gx + 250, gy - 20, 22, 4, GEAR_C); cv.text('GEARBOX', gx + 280, gy - 11, 20, t.dim, { font: 'bold' }); }
+            // (the legend's keys one after the other by their own widths: a translation longer than 'OIL' ran into the next)
+            let lx = gx;
+            [[t.oil || t.accent, 'OIL'], [t.cold, 'COOLANT']].concat(show3 ? [[GEAR_C, 'GEARBOX']] : []).forEach(([c, label]) => {
+                cv.fillRect(lx, gy - 20, 22, 4, c);
+                cv.text(label, lx + 30, gy - 11, 20, t.dim, { font: 'bold' });
+                lx += 30 + cv.textWidth(label, 20, { font: 'bold' }) + 28;
+            });
             cv.fillRect(gx, Y(warm), gw, 1, withAlpha(GO, 0.5));
             cv.text(String(Math.round(T(warm))), gx + gw + 4, Y(warm) + 7, 20, GO);
             cv.fillRect(nowX, gy, 1, gh, withAlpha(t.tick, 0.5));       // "now"
