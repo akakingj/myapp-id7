@@ -1,18 +1,565 @@
 {
   "schema": 1,
+  "components": [
+    {
+      "id": "ak_water_cup",
+      "kind": "app",
+      "path": "apps/ak_water_cup",
+      "title": "물컵",
+      "manifest": "app.json",
+      "icon": "icon.png",
+      "build": {
+        "python": "kit/tools/build.py",
+        "args": [
+          "--language",
+          "ko",
+          "{id}"
+        ],
+        "sdk": "oap-sdk",
+        "output": "dist/{id}@{version}.tgz",
+        "network": [
+          "doom"
+        ],
+        "shared": [
+          "kit/runtime",
+          "kit/platform",
+          "kit/localization",
+          "kit/tools/build.py",
+          "kit/tools/pack_data.py",
+          "kit/tools/localize.py",
+          "kit/tools/locale-revisions.json",
+          "kit/tools/oapgen",
+          "oap-sdk"
+        ]
+      }
+    },
+    {
+      "id": "ambient_config",
+      "kind": "app",
+      "path": "apps/ambient_config",
+      "title": "앰비언트 설정",
+      "manifest": "app.json",
+      "icon": "icon.png",
+      "build": {
+        "python": "kit/tools/build.py",
+        "args": [
+          "--language",
+          "ko",
+          "{id}"
+        ],
+        "sdk": "oap-sdk",
+        "output": "dist/{id}@{version}.tgz",
+        "network": [
+          "doom"
+        ],
+        "shared": [
+          "kit/runtime",
+          "kit/platform",
+          "kit/localization",
+          "kit/tools/build.py",
+          "kit/tools/pack_data.py",
+          "kit/tools/localize.py",
+          "kit/tools/locale-revisions.json",
+          "kit/tools/oapgen",
+          "oap-sdk"
+        ]
+      }
+    },
+    {
+      "id": "brake_test",
+      "kind": "app",
+      "path": "apps/brake_test",
+      "title": "제동 테스트",
+      "manifest": "app.json",
+      "icon": "icon.png",
+      "build": {
+        "python": "kit/tools/build.py",
+        "args": [
+          "--language",
+          "ko",
+          "{id}"
+        ],
+        "sdk": "oap-sdk",
+        "output": "dist/{id}@{version}.tgz",
+        "network": [
+          "doom"
+        ],
+        "shared": [
+          "kit/runtime",
+          "kit/platform",
+          "kit/localization",
+          "kit/tools/build.py",
+          "kit/tools/pack_data.py",
+          "kit/tools/localize.py",
+          "kit/tools/locale-revisions.json",
+          "kit/tools/oapgen",
+          "oap-sdk"
+        ]
+      }
+    },
+    {
+      "id": "car_profile",
+      "kind": "app",
+      "path": "apps/car_profile",
+      "title": "차량 프로필",
+      "manifest": "app.json",
+      "icon": "icon.png",
+      "build": {
+        "python": "kit/tools/build.py",
+        "args": [
+          "--language",
+          "ko",
+          "{id}"
+        ],
+        "sdk": "oap-sdk",
+        "output": "dist/{id}@{version}.tgz",
+        "network": [
+          "doom"
+        ],
+        "shared": [
+          "kit/runtime",
+          "kit/platform",
+          "kit/localization",
+          "kit/tools/build.py",
+          "kit/tools/pack_data.py",
+          "kit/tools/localize.py",
+          "kit/tools/locale-revisions.json",
+          "kit/tools/oapgen",
+          "oap-sdk"
+        ]
+      }
+    },
+    {
+      "id": "car_vitals",
+      "kind": "app",
+      "path": "apps/car_vitals",
+      "title": "M 차량 정보",
+      "manifest": "app.json",
+      "icon": "icon.png",
+      "build": {
+        "python": "kit/tools/build.py",
+        "args": [
+          "--language",
+          "ko",
+          "{id}"
+        ],
+        "sdk": "oap-sdk",
+        "output": "dist/{id}@{version}.tgz",
+        "network": [
+          "doom"
+        ],
+        "shared": [
+          "kit/runtime",
+          "kit/platform",
+          "kit/localization",
+          "kit/tools/build.py",
+          "kit/tools/pack_data.py",
+          "kit/tools/localize.py",
+          "kit/tools/locale-revisions.json",
+          "kit/tools/oapgen",
+          "oap-sdk"
+        ]
+      }
+    },
+    {
+      "id": "draggy",
+      "kind": "app",
+      "path": "apps/draggy",
+      "title": "가속 타이머",
+      "manifest": "app.json",
+      "icon": "icon.png",
+      "build": {
+        "python": "kit/tools/build.py",
+        "args": [
+          "--language",
+          "ko",
+          "{id}"
+        ],
+        "sdk": "oap-sdk",
+        "output": "dist/{id}@{version}.tgz",
+        "network": [
+          "doom"
+        ],
+        "shared": [
+          "kit/runtime",
+          "kit/platform",
+          "kit/localization",
+          "kit/tools/build.py",
+          "kit/tools/pack_data.py",
+          "kit/tools/localize.py",
+          "kit/tools/locale-revisions.json",
+          "kit/tools/oapgen",
+          "oap-sdk"
+        ]
+      }
+    },
+    {
+      "id": "dtc_scanner",
+      "kind": "app",
+      "path": "apps/dtc_scanner",
+      "title": "고장 진단",
+      "manifest": "app.json",
+      "icon": "icon.png",
+      "build": {
+        "python": "kit/tools/build.py",
+        "args": [
+          "--language",
+          "ko",
+          "{id}"
+        ],
+        "sdk": "oap-sdk",
+        "output": "dist/{id}@{version}.tgz",
+        "network": [
+          "doom"
+        ],
+        "shared": [
+          "kit/runtime",
+          "kit/platform",
+          "kit/localization",
+          "kit/tools/build.py",
+          "kit/tools/pack_data.py",
+          "kit/tools/localize.py",
+          "kit/tools/locale-revisions.json",
+          "kit/tools/oapgen",
+          "oap-sdk"
+        ]
+      }
+    },
+    {
+      "id": "dyno",
+      "kind": "app",
+      "path": "apps/dyno",
+      "title": "가상 다이노",
+      "manifest": "app.json",
+      "icon": "icon.png",
+      "build": {
+        "python": "kit/tools/build.py",
+        "args": [
+          "--language",
+          "ko",
+          "{id}"
+        ],
+        "sdk": "oap-sdk",
+        "output": "dist/{id}@{version}.tgz",
+        "network": [
+          "doom"
+        ],
+        "shared": [
+          "kit/runtime",
+          "kit/platform",
+          "kit/localization",
+          "kit/tools/build.py",
+          "kit/tools/pack_data.py",
+          "kit/tools/localize.py",
+          "kit/tools/locale-revisions.json",
+          "kit/tools/oapgen",
+          "oap-sdk"
+        ]
+      }
+    },
+    {
+      "id": "gforce",
+      "kind": "app",
+      "path": "apps/gforce",
+      "title": "G 미터",
+      "manifest": "app.json",
+      "icon": "icon.png",
+      "build": {
+        "python": "kit/tools/build.py",
+        "args": [
+          "--language",
+          "ko",
+          "{id}"
+        ],
+        "sdk": "oap-sdk",
+        "output": "dist/{id}@{version}.tgz",
+        "network": [
+          "doom"
+        ],
+        "shared": [
+          "kit/runtime",
+          "kit/platform",
+          "kit/localization",
+          "kit/tools/build.py",
+          "kit/tools/pack_data.py",
+          "kit/tools/localize.py",
+          "kit/tools/locale-revisions.json",
+          "kit/tools/oapgen",
+          "oap-sdk"
+        ]
+      }
+    },
+    {
+      "id": "live_adjustments",
+      "kind": "app",
+      "path": "apps/live_adjustments",
+      "title": "엔진 설정",
+      "manifest": "app.json",
+      "icon": "icon.png",
+      "build": {
+        "python": "kit/tools/build.py",
+        "args": [
+          "--language",
+          "ko",
+          "{id}"
+        ],
+        "sdk": "oap-sdk",
+        "output": "dist/{id}@{version}.tgz",
+        "network": [
+          "doom"
+        ],
+        "shared": [
+          "kit/runtime",
+          "kit/platform",
+          "kit/localization",
+          "kit/tools/build.py",
+          "kit/tools/pack_data.py",
+          "kit/tools/localize.py",
+          "kit/tools/locale-revisions.json",
+          "kit/tools/oapgen",
+          "oap-sdk"
+        ]
+      }
+    },
+    {
+      "id": "live_data",
+      "kind": "app",
+      "path": "apps/live_data",
+      "title": "실시간 정보",
+      "manifest": "app.json",
+      "icon": "icon.png",
+      "build": {
+        "python": "kit/tools/build.py",
+        "args": [
+          "--language",
+          "ko",
+          "{id}"
+        ],
+        "sdk": "oap-sdk",
+        "output": "dist/{id}@{version}.tgz",
+        "network": [
+          "doom"
+        ],
+        "shared": [
+          "kit/runtime",
+          "kit/platform",
+          "kit/localization",
+          "kit/tools/build.py",
+          "kit/tools/pack_data.py",
+          "kit/tools/localize.py",
+          "kit/tools/locale-revisions.json",
+          "kit/tools/oapgen",
+          "oap-sdk"
+        ]
+      }
+    },
+    {
+      "id": "mgu_storage",
+      "kind": "app",
+      "path": "apps/mgu_storage",
+      "title": "저장 공간",
+      "manifest": "app.json",
+      "icon": "icon.png",
+      "build": {
+        "python": "kit/tools/build.py",
+        "args": [
+          "--language",
+          "ko",
+          "{id}"
+        ],
+        "sdk": "oap-sdk",
+        "output": "dist/{id}@{version}.tgz",
+        "network": [
+          "doom"
+        ],
+        "shared": [
+          "kit/runtime",
+          "kit/platform",
+          "kit/localization",
+          "kit/tools/build.py",
+          "kit/tools/pack_data.py",
+          "kit/tools/localize.py",
+          "kit/tools/locale-revisions.json",
+          "kit/tools/oapgen",
+          "oap-sdk"
+        ]
+      }
+    },
+    {
+      "id": "redline",
+      "kind": "app",
+      "path": "apps/redline",
+      "title": "레드라인",
+      "manifest": "app.json",
+      "icon": "icon.png",
+      "build": {
+        "python": "kit/tools/build.py",
+        "args": [
+          "--language",
+          "ko",
+          "{id}"
+        ],
+        "sdk": "oap-sdk",
+        "output": "dist/{id}@{version}.tgz",
+        "network": [
+          "doom"
+        ],
+        "shared": [
+          "kit/runtime",
+          "kit/platform",
+          "kit/localization",
+          "kit/tools/build.py",
+          "kit/tools/pack_data.py",
+          "kit/tools/localize.py",
+          "kit/tools/locale-revisions.json",
+          "kit/tools/oapgen",
+          "oap-sdk"
+        ]
+      }
+    },
+    {
+      "id": "service",
+      "kind": "app",
+      "path": "apps/service",
+      "title": "정비 정보",
+      "manifest": "app.json",
+      "icon": "icon.png",
+      "build": {
+        "python": "kit/tools/build.py",
+        "args": [
+          "--language",
+          "ko",
+          "{id}"
+        ],
+        "sdk": "oap-sdk",
+        "output": "dist/{id}@{version}.tgz",
+        "network": [
+          "doom"
+        ],
+        "shared": [
+          "kit/runtime",
+          "kit/platform",
+          "kit/localization",
+          "kit/tools/build.py",
+          "kit/tools/pack_data.py",
+          "kit/tools/localize.py",
+          "kit/tools/locale-revisions.json",
+          "kit/tools/oapgen",
+          "oap-sdk"
+        ]
+      }
+    },
+    {
+      "id": "warmup",
+      "kind": "app",
+      "path": "apps/warmup",
+      "title": "엔진 예열",
+      "manifest": "app.json",
+      "icon": "icon.png",
+      "build": {
+        "python": "kit/tools/build.py",
+        "args": [
+          "--language",
+          "ko",
+          "{id}"
+        ],
+        "sdk": "oap-sdk",
+        "output": "dist/{id}@{version}.tgz",
+        "network": [
+          "doom"
+        ],
+        "shared": [
+          "kit/runtime",
+          "kit/platform",
+          "kit/localization",
+          "kit/tools/build.py",
+          "kit/tools/pack_data.py",
+          "kit/tools/localize.py",
+          "kit/tools/locale-revisions.json",
+          "kit/tools/oapgen",
+          "oap-sdk"
+        ]
+      }
+    },
+    {
+      "id": "zf8hp",
+      "kind": "app",
+      "path": "apps/zf8hp",
+      "title": "변속기 설정",
+      "manifest": "app.json",
+      "icon": "icon.png",
+      "build": {
+        "python": "kit/tools/build.py",
+        "args": [
+          "--language",
+          "ko",
+          "{id}"
+        ],
+        "sdk": "oap-sdk",
+        "output": "dist/{id}@{version}.tgz",
+        "network": [
+          "doom"
+        ],
+        "shared": [
+          "kit/runtime",
+          "kit/platform",
+          "kit/localization",
+          "kit/tools/build.py",
+          "kit/tools/pack_data.py",
+          "kit/tools/localize.py",
+          "kit/tools/locale-revisions.json",
+          "kit/tools/oapgen",
+          "oap-sdk"
+        ]
+      }
+    }
+  ],
   "apps": {
     "path": "apps/*",
     "manifest": "app.json",
     "icon": "icon.png",
     "build": {
       "python": "kit/tools/build.py",
-      "args": ["--language", "ko", "{id}"],
+      "args": [
+        "--language",
+        "ko",
+        "{id}"
+      ],
       "sdk": "oap-sdk",
       "output": "dist/{id}@{version}.tgz",
-      "network": ["doom"],
-      "shared": ["kit/runtime", "kit/platform", "kit/localization", "kit/tools/build.py", "kit/tools/pack_data.py",
-        "kit/tools/localize.py", "kit/tools/locale-revisions.json", "kit/tools/oapgen", "oap-sdk"]
-    }
+      "network": [
+        "doom"
+      ],
+      "shared": [
+        "kit/runtime",
+        "kit/platform",
+        "kit/localization",
+        "kit/tools/build.py",
+        "kit/tools/pack_data.py",
+        "kit/tools/localize.py",
+        "kit/tools/locale-revisions.json",
+        "kit/tools/oapgen",
+        "oap-sdk"
+      ]
+    },
+    "exclude": [
+      "ak_water_cup",
+      "ambient_config",
+      "brake_test",
+      "car_profile",
+      "car_vitals",
+      "draggy",
+      "dtc_scanner",
+      "dyno",
+      "gforce",
+      "live_adjustments",
+      "live_data",
+      "mgu_storage",
+      "redline",
+      "service",
+      "warmup",
+      "zf8hp"
+    ]
   },
   "tools": [
     {
@@ -20,24 +567,34 @@
       "path": "kit/renderd/prebuilt",
       "title": "GPU renderer",
       "description": "The apps' own GPU renderer (mgu-render): draws them at 60 fps, beside the MGU Store's Renderer; installed with the apps (iDrive 7 and iDrive 8)",
-      "mguHmi": ["ID7", "ID8"]
+      "mguHmi": [
+        "ID7",
+        "ID8"
+      ]
     },
     {
       "id": "mgu-inputgate",
       "path": "kit/renderd/inputgate/tool",
       "title": "Controller gate",
       "description": "Lets the apps have the iDrive controller (tabs, page buttons, settings, Doom); loads into the HMI at the next start (iDrive 7 and iDrive 8)",
-      "needs": ["renderer"],
+      "needs": [
+        "renderer"
+      ],
       "optional": false,
       "uninstallable": true,
-      "mguHmi": ["ID7", "ID8"]
+      "mguHmi": [
+        "ID7",
+        "ID8"
+      ]
     },
     {
       "id": "mgu-storage-helper",
       "path": "kit/storage-helper",
       "title": "Storage helper",
       "description": "Measures how much space each app takes (BMW's own and the custom ones) for the Storage app; read only",
-      "mguHmi": ["ID7"]
+      "mguHmi": [
+        "ID7"
+      ]
     }
   ]
 }

@@ -31,3 +31,5 @@ jobs:
           git diff --exit-code -- kit/runtime/locales/ko.json
       - name: Check Korean menus, font coverage and runtime
         run: python3 kit/tools/test_ko.py
+      - name: Check the Store lists the apps under their Korean titles
+        run: python3 kit/tools/repo_titles.py --check
