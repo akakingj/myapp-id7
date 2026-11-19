@@ -1,6 +1,6 @@
 # MGU 데모
 
-이 저장소(akakingj/idrive7-apps)와 akakingj/idrive7-cluster-info의 **모든 앱**을 PC에서 차처럼 돌려 보는 데모입니다.
+이 저장소(akakingj/myapp-id7)와 akakingj/myapp-cluster의 **모든 앱**을 PC에서 차처럼 돌려 보는 데모입니다.
 브라우저 창 하나에 다음이 함께 나옵니다.
 
 - **계기판** (1920×720): AK Cluster Layouts · Centre · Info가 그리는 것. 앱의 GLSL을 WebGL로, KOMBI처럼 그립니다.

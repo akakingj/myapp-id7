@@ -16,8 +16,8 @@ const { spawnSync } = require('child_process');
 const HERE = __dirname;
 const SRC = path.join(HERE, 'src');
 const REPOS = [
-    { name: 'idrive7-apps', repo: 'akakingj/idrive7-apps', branch: process.env.APPS_BRANCH || 'car-profile-test' },
-    { name: 'idrive7-cluster-info', repo: 'akakingj/idrive7-cluster-info', branch: process.env.CLUSTER_BRANCH || 'personal-kr-test' },
+    { name: 'idrive7-apps', repo: 'akakingj/myapp-id7', branch: process.env.APPS_BRANCH || 'test' },
+    { name: 'idrive7-cluster-info', repo: 'akakingj/myapp-cluster', branch: process.env.CLUSTER_BRANCH || 'test' },
 ];
 const say = (s) => console.log(s);
 
