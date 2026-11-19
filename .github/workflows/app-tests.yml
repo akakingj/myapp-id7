@@ -3,6 +3,7 @@ name: App tests
 # The kit runtime and the apps' synthetic checks (no SDK, renderer or car needed). Live Adjustments and
 # ZF 8HP have theirs in experimental-apps.yml; the renderer's are in renderd.yml.
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - 'apps/**'                 # test_zh.py checks every app.json and the text in every app

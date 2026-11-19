@@ -1,6 +1,7 @@
 name: Experimental apps
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - 'apps/zf8hp/**'
