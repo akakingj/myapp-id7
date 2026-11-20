@@ -2645,3 +2645,10 @@ The shift point below	아래의 변속 시점
 M-Track (or similar) module: S while S / M flickers	M-Track(또는 비슷한) 모듈: S / M이 깜빡일 때 S로 표시
 Decor lights (dash, under the door trim) with	장식 조명(대시보드, 도어 트림 아래) 묶음
 Lower lights (like BMW)	아래쪽 조명 (BMW 방식)
+Yellow shift light from	노란색 시프트 라이트 시작
+Red shift light from	빨간색 시프트 라이트 시작
+Auto (the redline)	자동 (레드라인과 같게)
+Shift warning at (the shift point)	경고 시프트 (변속 시점)
+Max rpm (the end of the rev scale)	최대 rpm (회전수 눈금 끝)
+Redline (the limiter)	레드라인 (리미터)
+Shift light style (Redline app)	시프트 라이트 방식 (Redline 앱)

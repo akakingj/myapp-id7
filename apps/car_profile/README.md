@@ -5,12 +5,13 @@ One place for the car's engine values and units. Set them here once and the othe
 | Setting | Followed by |
 |---|---|
 | Engine (Auto / Diesel / Petrol / Plug-in hybrid) | M Vitals, Redline, Warm-Up, Virtual Dyno, AK Cluster Layouts and Centre (their Vehicle; the others take a plug-in hybrid as their own setting says) |
-| Redline | M Vitals, Redline, Warm-Up, AK Cluster |
-| Shift point (an rpm; Auto: the redline less 300) | Redline (its fixed one), Warm-Up, AK Cluster Layouts, AK Cluster Centre (*Shift light: flashes at*) |
-| Rev scale up to | M Vitals, Redline, Virtual Dyno (*Graph up to*), AK Cluster |
+| Yellow shift light from | Redline (*Lights from*), AK Cluster Layouts (the amber zone of ID6 M, ID7 M and ID8 M, Track's and GT3's tach turning yellow, Simple's rpm), AK Cluster Centre (*Shift light: starts at*) |
+| Red shift light from (Auto: the redline) | AK Cluster Layouts (the red zone, Simple's rpm red) |
+| Shift warning at (the shift point; Auto: the redline less 300) | Redline (its fixed one), Warm-Up, AK Cluster Layouts, AK Cluster Centre (*Shift light: flashes at*) |
+| Max rpm (the end of the rev scale) | M Vitals, Redline, Virtual Dyno (*Graph up to*), AK Cluster |
+| Redline (the limiter) | M Vitals, Redline, Warm-Up, AK Cluster |
 | Cold rev limit | Redline, Warm-Up, AK Cluster |
-| Shift lights (shift point / rev bar) | Redline |
-| Rev bar from | Redline, AK Cluster Centre (*Shift light: starts at*) |
+| Shift light style (shift point / rev bar) | Redline |
 | Cold-engine rev guard (On / Off) | Redline, Warm-Up, AK Cluster |
 | Oil is warm at | Redline, Warm-Up, AK Cluster |
 | Coolant is warm at | Warm-Up |

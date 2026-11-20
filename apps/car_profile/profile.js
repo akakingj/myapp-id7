@@ -13,19 +13,21 @@
 const fs = require('fs');
 
 // what the profile sets, in Settings order; FOLLOW: the apps that follow each (their app.json "profile")
-const KEYS = ['engine', 'redline', 'shiftAt', 'rpmScale', 'coldLimit', 'lightMode', 'lightStart', 'coldGuard', 'warmOil',
+const KEYS = ['engine', 'lightStart', 'lightRed', 'shiftAt', 'rpmScale', 'redline', 'coldLimit', 'lightMode', 'coldGuard', 'warmOil',
     'warmCoolant', 'warmGearbox', 'hotOil', 'hotCoolant', 'hotGearbox', 'speedUnit', 'distUnit', 'tempUnit', 'pressUnit', 'fuelUnit', 'torqueUnit', 'powerUnit',
     'skin', 'theme', 'layout', 'renderer', 'demo', 'clock', 'timeZone', 'tankLitres', 'eFull', 'gMax'];
 const FOLLOW = {
     // (Plug-in hybrid: the AK clusters' Vehicle; the other apps take a plug-in hybrid as their own setting says: Auto, petrol)
     engine: ['M Vitals', 'Redline', 'Warm-Up', 'Virtual Dyno', 'AK Cluster', 'AK Cluster Centre'],
-    redline: ['M Vitals', 'Redline', 'Warm-Up', 'AK Cluster'],
-    // the shift point in rpm (0: Auto, each app's redline less 300; 0.3.x: was "so many before the redline")
+    // the shift lights: yellow from, red from (0: Auto, the redline), the warning at the shift point (0: Auto, each
+    // app's redline less 300; 0.3.x: was "so many before the redline"), the rev scale's end; the redline (the limiter)
+    lightStart: ['Redline', 'AK Cluster', 'AK Cluster Centre'],
+    lightRed: ['AK Cluster'],
     shiftAt: ['Redline', 'Warm-Up', 'AK Cluster', 'AK Cluster Centre'],
     rpmScale: ['M Vitals', 'Redline', 'Virtual Dyno', 'AK Cluster'],
+    redline: ['M Vitals', 'Redline', 'Warm-Up', 'AK Cluster'],
     coldLimit: ['Redline', 'Warm-Up', 'AK Cluster'],
     lightMode: ['Redline'],
-    lightStart: ['Redline', 'AK Cluster Centre'],
     coldGuard: ['Redline', 'Warm-Up', 'AK Cluster'],
     warmOil: ['Redline', 'Warm-Up', 'AK Cluster'],
     warmCoolant: ['Warm-Up'],
