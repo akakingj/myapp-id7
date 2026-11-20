@@ -49,7 +49,7 @@ for path in sorted((ROOT / 'apps').glob('*/app.json')):
     for screen in original['screens']:
         labels += [screen.get('title', '')] + [b[1] for b in screen.get('buttons', [])]
     for setting in original['settings']:
-        labels += [setting['label']] + [o[1] for o in setting.get('options', [])]
+        labels += [setting['label']] + [o[1] for o in setting.get('options', [])] + ([setting['help']] if setting.get('help') else [])
     # Units, currencies, acronyms and numeric presets deliberately stay unchanged.
     for label in labels:
         if ' ' in label and re.search('[A-Za-z]{2,}', label) and not re.match(r'^\d', label):

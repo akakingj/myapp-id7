@@ -68,6 +68,8 @@ function chevron(r, t, x, y, c) {
     r.line(x, y - 9, x + 9, y, 3, c);
     r.line(x + 9, y, x, y + 9, 3, c);
 }
+/** The size, size at most and 15 at least, at which s takes w px (a setting's help: made smaller, not cut). */
+function sizeFor(r, s, size, w) { return Math.max(15, Math.min(size, Math.floor(size * w / Math.max(1, r.textWidth(s, size))))); }
 function fit(r, s, size, w, font) {
     s = translate(String(s));
     if (r.textWidth(s, size, { font }) <= w) return s;
@@ -240,6 +242,12 @@ function listSheet(settings, title, opts) {
             const targets = [];
             // Back (a value list) / Done (the settings): top right
             const bw = 150, bx = W - 40 - bw, by = TOP + 8;
+            // (a value list: what the setting does, app.json "help", after its name)
+            if (this.open && this.open.help) {
+                const hx = 44 + Math.ceil(r.textWidth(translate(this.open.label), 32, { font: 'bold' })) + 28;
+                const h = translate(this.open.help), hs = sizeFor(r, h, 22, bx - 24 - hx);
+                if (bx - 24 - hx > 120) r.text(fit(r, h, hs, bx - 24 - hx), hx, TOP + 38, hs, t.dim);
+            }
             // (the controller reaches it turning up from the first row: place -1)
             pill(r, t, bx, by, bw, 46, this.open || this.group ? 'Back' : 'Done', this.controller && (this.open ? this.sub : this.focus) === -1);
             targets.push({ x: bx - 10, y: by - 6, w: bw + 20, h: 58, act: () => this.back() });
@@ -267,6 +275,7 @@ function listSheet(settings, title, opts) {
             let y = y0;
             if (pv.text) { r.text(fit(r, pv.text, 34, pw), px, y + 46, 34, t.text); y += 70; }
             if (pv.note) { r.text(fit(r, pv.note, 24, pw), px, y + 30, 24, t.dim); y += 48; }
+            if (pv.help) { const hs = sizeFor(r, pv.help, 22, pw); r.text(fit(r, pv.help, hs, pw), px, y + 30, hs, t.dim); y += 44; }
             pv.rows.forEach((row) => {
                 if (y > bottom) return;
                 const cy = y + 32;
@@ -282,8 +291,9 @@ function listSheet(settings, title, opts) {
             return targets;
         },
         /**
-         * What the right side shows: { text, note, rows } - a setting's values (the saved one on), a group's settings,
-         * a switch's state; in a value list, the focused value and the saved one.
+         * What the right side shows: { text, note, help, rows } - a setting's values (the saved one on), a group's
+         * settings, a switch's state; in a value list, the focused value, the saved one and what the setting does
+         * (app.json "help").
          */
         preview() {
             const none = { rows: [] };
@@ -291,7 +301,8 @@ function listSheet(settings, title, opts) {
                 const vs = values(this.open, settings), v = vs[this.sub];
                 if (!v) return none;
                 const cur = vs.find((q) => q[0] === settings.get(this.open.key));
-                return { text: v[1], note: !cur ? null : cur[0] !== v[0] ? translate('Saved') + ': ' + translate(String(cur[1])) : translate('Saved'), rows: [] };
+                return { text: v[1], note: !cur ? null : cur[0] !== v[0] ? translate('Saved') + ': ' + translate(String(cur[1])) : translate('Saved'),
+                    help: this.open.help ? translate(this.open.help) : null, rows: [] };
             }
             const s = entries(this.group)[this.focus];
             if (!s) return none;
