@@ -236,10 +236,14 @@ function listSheet(settings, title, opts) {
             // a switch that hid settings below the focus ("when"): the focus stays on the list
             if (!this.open) this.focus = Math.min(this.focus, rows.length - 1);
             if (SK(t)) return this.drawSplit(r, t, rows);
+            const targets = [];
+            // the list first, then the header over the rows scrolled up under it (the software path draws past a clip)
+            const rects = list(r, t, this.key(), rows, this.open ? this.sub : this.focus, TOP + 74, this.controller);
+            r.noclip();
+            r.fillRect(0, 0, W, TOP + 74, t.bg);
             // the header's tab names the sheet; a value list names its setting here
             if (this.open || this.group) r.text(this.open ? this.open.label : this.group, 44, TOP + 40, 32, t.text, { font: 'bold' });
             else if (version) r.text('Version ' + version, 44, TOP + 38, 24, t.dim);
-            const targets = [];
             // Back (a value list) / Done (the settings): top right
             const bw = 150, bx = W - 40 - bw, by = TOP + 8;
             // (a value list: what the setting does, app.json "help", after its name)
@@ -251,19 +255,21 @@ function listSheet(settings, title, opts) {
             // (the controller reaches it turning up from the first row: place -1)
             pill(r, t, bx, by, bw, 46, this.open || this.group ? 'Back' : 'Done', this.controller && (this.open ? this.sub : this.focus) === -1);
             targets.push({ x: bx - 10, y: by - 6, w: bw + 20, h: 58, act: () => this.back() });
-            const rects = list(r, t, this.key(), rows, this.open ? this.sub : this.focus, TOP + 74, this.controller);
             rects.forEach((q) => targets.push(Object.assign(q, { act: () => { if (this.open) this.sub = q.i; else this.focus = q.i; return this.choose(); } })));
             return targets;
         },
         /** The iDrive 7 skin's settings: the list on the left, a preview of the focused row on the right (read only). */
         drawSplit(r, t, rows) {
             const targets = [], y0 = TOP + 74, at = this.open ? this.sub : this.focus;
+            // the list first, then the header over the rows scrolled up under it (the software path draws past a clip)
+            const rects = list(r, t, this.key(), rows, at, y0, this.controller, { x: 24, w: SPLIT - 24, always: true });
+            r.noclip();
+            r.fillRect(0, 0, W, y0, t.bg);
             if (this.open || this.group) r.text(this.open ? this.open.label : this.group, 44, TOP + 42, 32, t.text);
             else if (version) r.text('Version ' + version, 44, TOP + 40, 24, t.dim);
             const bw = 150, bx = W - 40 - bw, by = TOP + 8;
             pill(r, t, bx, by, bw, 46, this.open || this.group ? 'Back' : 'Done', this.controller && at === -1);
             targets.push({ x: bx - 10, y: by - 6, w: bw + 20, h: 58, act: () => this.back() });
-            const rects = list(r, t, this.key(), rows, at, y0, this.controller, { x: 24, w: SPLIT - 24, always: true });
             rects.forEach((q) => targets.push(Object.assign(q, { act: () => { if (this.open) this.sub = q.i; else this.focus = q.i; return this.choose(); } })));
             // between the two: the divider, and an orange mark level with the focused row where it has a preview
             const bottom = BOTTOM + (r.extra || 0), px = SPLIT + 40, pw = W - px - 32;
