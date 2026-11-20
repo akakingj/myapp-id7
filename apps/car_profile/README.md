@@ -22,7 +22,7 @@ One place for the car's engine values and units. Set them here once and the othe
 | Distance unit | Brake Test (km -> metres, miles -> feet), eDrive |
 | Temperature unit | M Vitals, Redline HUD, Warm-Up, eDrive, Transmission Config, Live Data, AK Cluster |
 | Pressure unit | M Vitals, Redline HUD (boost and tyres), Live Data, AK Cluster |
-| Fuel use unit | Redline HUD |
+| Fuel use unit | Redline HUD, AK Cluster Layouts (*Fuel economy unit*; mpg (UK): each its own) |
 | Torque unit, Power unit | M Vitals, Redline HUD, Virtual Dyno, AK Cluster |
 | G-force circle up to (1, 1.2, 1.5, 2 g) | G-Force (*Circle size*), M Vitals (*G-force circle size*), AK Cluster Layouts (JDM 2's G meter) |
 

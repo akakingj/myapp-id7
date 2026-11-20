@@ -40,7 +40,7 @@ const FOLLOW = {
     distUnit: ['Brake Test', 'eDrive'],
     tempUnit: ['M Vitals', 'Redline HUD', 'Warm-Up', 'eDrive', 'Transmission Config', 'Live Data', 'AK Cluster'],
     pressUnit: ['M Vitals', 'Redline HUD', 'Live Data', 'AK Cluster'],
-    fuelUnit: ['Redline HUD'],
+    fuelUnit: ['Redline HUD', 'AK Cluster'],
     torqueUnit: ['M Vitals', 'Redline HUD', 'Virtual Dyno', 'AK Cluster'],
     powerUnit: ['M Vitals', 'Redline HUD', 'Virtual Dyno', 'AK Cluster'],
     // the look of every app with a Skin setting (kit/runtime/themes.js SKINS): these apps and the AK Cluster apps
