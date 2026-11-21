@@ -163,25 +163,26 @@ function drawArc(cv, f, layer, h) {
         }
     }
     if (o.bar !== false) {
-        const warn = Math.max(0, f.redline - 500);
+        // amber from the yellow light, red from the red one
+        const z = h.lightsOf(f), warn = z.yellow, red = z.red;
         if (bg) {
             if (o.dim) cv.arc(A.cx, A.cy, A.b0, A.b1, R(0), R(warn), withAlpha(AC.unlit, 0.9));
-            cv.arc(A.cx, A.cy, A.b0, A.b1, R(warn), R(f.redline), withAlpha(AC.warn, 0.55));
-            cv.arc(A.cx, A.cy, A.b0, A.b1, R(f.redline), R(f.max), withAlpha(AC.zone, 0.55));
+            cv.arc(A.cx, A.cy, A.b0, A.b1, R(warn), R(red), withAlpha(AC.warn, 0.55));
+            cv.arc(A.cx, A.cy, A.b0, A.b1, R(red), R(f.max), withAlpha(AC.zone, 0.55));
         }
         if (fg && isNum(d.rpm) && d.rpm > 50) {
             const top = Math.min(d.rpm, f.max), lim = cue.limiter, c = lim ? (f.blink ? AC.zone : withAlpha(AC.zone, 0.4)) : AC.fill;
             const fill = (t, on, opts) => {
                 on.arc(A.cx, A.cy, A.b0, A.b1, R(0), R(Math.min(t, warn)), c, opts);
-                if (t > warn) on.arc(A.cx, A.cy, A.b0, A.b1, R(warn), R(Math.min(t, f.redline)), lim ? c : AC.warn, opts);
-                if (t > f.redline) on.arc(A.cx, A.cy, A.b0, A.b1, R(f.redline), R(t), lim ? c : AC.zone, opts);
+                if (t > warn) on.arc(A.cx, A.cy, A.b0, A.b1, R(warn), R(Math.min(t, red)), lim ? c : AC.warn, opts);
+                if (t > red) on.arc(A.cx, A.cy, A.b0, A.b1, R(red), R(t), lim ? c : AC.zone, opts);
             };
             // drawHud's frames (h.base: the static layer under them): the band drawn lit to the end once over that
             // layer, its pixels left of the lit end copied in, only the rest drawn (the band was over half a frame)
-            const base = layer === 'fg' && h.base, B = band(cv, base, [R(0), R(warn), R(f.redline)], R(top));
+            const base = layer === 'fg' && h.base, B = band(cv, base, [R(0), R(warn), R(red)], R(top));
             if (!B) fill(top, cv);
             else {
-                const key = [lim, lim && f.blink, f.redline, f.max].join('|');
+                const key = [lim, lim && f.blink, warn, red, f.max].join('|');
                 let lit = arcBands.filter((e) => e.key === key && e.base === base)[0];
                 if (!lit) {
                     lit = { key: key, base: base, cv: new base.constructor(base.w, base.h) };
@@ -576,11 +577,12 @@ function drawRamp(cv, f, layer, h) {
             if (st > NW) rNeedle(cv, st - NW, st, max, RC.red);
         }
         if (fg) {
-            // the red zone: a yellow dash and dot (the warning), then a thin red line from the redline on into the 8's cup.
+            // the red zone: a yellow line from the yellow light (at least a dash) and a dot (the warning), then a thin red
+            // line from the red light on into the 8's cup.
             // Drawn only ahead of the needle (the live layer: what the revs have passed is the band's, and nothing peeks
             // through the gap between band and needle), and clear of each tab as the band is, so it reads as running under
             // the marks
-            const zs = rS(f.redline, max), zm = D0 + 2, from = isNum(d.rpm) && d.rpm > 50 ? rS(Math.min(d.rpm, max), max) + 0.8 : -Infinity;
+            const z = h.lightsOf(f), zs = rS(z.red, max), ys = rS(Math.min(z.yellow, max), max), zm = D0 + 2, from = isNum(d.rpm) && d.rpm > 50 ? rS(Math.min(d.rpm, max), max) + 0.8 : -Infinity;
             // (the 8's end cup: the line runs right up to its wall, touching it, never over the white)
             const tabs = rMarks(max);
             const seg = (a, b, col) => {
@@ -595,7 +597,7 @@ function drawRamp(cv, f, layer, h) {
             };
             if (zs < RPATH.all - 6) {
                 seg(zs + 3, RPATH.all, RC.red);
-                seg(zs - 12, zs - 6, RC.yellow);
+                seg(Math.min(ys, zs - 12), zs - 6, RC.yellow);
                 seg(zs - 3.5, zs - 1.5, RC.yellow);
             }
         }
@@ -651,12 +653,12 @@ function drawDial(cv, f, layer, h) {
     const o = f.opts, d = f.d, cue = f.cue, BG = layer !== 'fg', fg = layer !== 'bg', max = f.max, fl = flashOn(o, cue);
     const flashCol = flashColour(o, cue, h, DC.red);
     const ang = (r) => D.a0 + (D.a1 - D.a0) * clamp(r / max, 0, 1);
-    // the E60's advance warning field: the last 1000 rpm before the redline (fixed, so the cached static
-    // layer stays right; the count-in itself is the shift cue's flash)
-    const warn = Math.max(0, f.redline - 1000);
+    // the E60's advance warning field: from the yellow light to the red one, the red zone from the red light (the
+    // static layer's key has both; the count-in itself is the shift cue's flash)
+    const z = h.lightsOf(f), warn = z.yellow, red = z.red;
     // the zones in the E60's colours, or the app's light style's: Race green / red / blue, one colour throughout
     const Z = o.lightStyle === 'f1' ? [h.P.low, h.P.high, h.RACE_BLUE] : o.lightStyle === 'mono' ? [h.P.text, h.P.text, h.P.text] : [DC.green, DC.orange, DC.red];
-    const zone = (r) => (r >= f.redline ? Z[2] : r >= warn ? Z[1] : Z[0]);
+    const zone = (r) => (r >= red ? Z[2] : r >= warn ? Z[1] : Z[0]);
     const step = 250, meter = (f.readouts || []).filter((it) => it.bar)[0];
     if (o.bar !== false || o.lights) {
         if (BG) for (let r = 0; r < max; r += step) {

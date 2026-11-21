@@ -129,9 +129,10 @@ function drawLights(cv, pts, pos, steps, rad, s) {
 }
 
 /**
- * The slanted rev bar in (x, y, w, h): yellow mark at the shift point and red at the redline over its
- * top edge, the dim track and the red zone (bg), the lit segments and the peak line (fg).
- * s = { rpm, cue, shift, redline, max, blink, dim, peak, P, layer }.
+ * The slanted rev bar in (x, y, w, h): a yellow mark at the yellow light and a red one at the red light over its
+ * top edge, the dim track and the red zone from the red light (bg), the lit segments (low under the yellow, mid
+ * from it, high from the red) and the peak line (fg).
+ * s = { rpm, cue, yellow, red, max, blink, dim, peak, P, layer }.
  */
 function drawBar(cv, x, y, w, h, s) {
     const bg = s.layer !== 'fg', fg = s.layer !== 'bg', P = s.P, cue = s.cue, rpm = s.rpm;
@@ -146,16 +147,16 @@ function drawBar(cv, x, y, w, h, s) {
     };
     const mark = (r, c) => cv.fillRect(Math.round(X(r) + slant) - 1, y, 3, markH, c);
     s.trackCol = withAlpha(P.text, s.outline ? 0.3 : 0.12);
-    if (fg && isNum(s.shift) && s.shift < s.redline) mark(s.shift, P.mid);
-    if (fg) mark(s.redline, P.limit);
-    if (bg && (s.dim || s.outline)) for (let r = 0; r < s.redline; r += 500) seg(r, Math.min(s.redline, r + 500), s.trackCol);
-    if (bg) for (let r = s.redline; r < s.max; r += 500) seg(r, Math.min(s.max, r + 500), withAlpha(P.limit, 0.4));
+    if (fg && s.yellow < s.red) mark(s.yellow, P.mid);
+    if (fg) mark(s.red, P.limit);
+    if (bg && (s.dim || s.outline)) for (let r = 0; r < s.red; r += 500) seg(r, Math.min(s.red, r + 500), s.trackCol);
+    if (bg) for (let r = s.red; r < s.max; r += 500) seg(r, Math.min(s.max, r + 500), withAlpha(P.limit, 0.4));
     if (fg && isNum(rpm) && rpm > 50) {
-        // low below the shift point, mid past it, high into the redline; all flashing on the limiter
+        // low under the yellow light, mid from it, high from the red; all flashing on the limiter
         const top = Math.min(rpm, s.max);
         const col = (r) => {
             const mid = r + 250;
-            return cue.limiter ? (s.blink ? P.limit : withAlpha(P.limit, 0.35)) : mid >= s.redline ? P.high : mid >= s.shift ? P.mid : P.low;
+            return cue.limiter ? (s.blink ? P.limit : withAlpha(P.limit, 0.35)) : mid >= s.red ? P.high : mid >= s.yellow ? P.mid : P.low;
         };
         // the whole segments copied from the bar drawn lit once over the static layer (drawHud's frames only: the
         // pixels under the bar are then that layer's), only the last part-lit one drawn: same pixels, a fraction of
@@ -163,7 +164,7 @@ function drawBar(cv, x, y, w, h, s) {
         const full = Math.floor(top / 500), base = s.layer === 'fg' && fgBase;
         let r0 = 0;
         if (base && full > 0 && cv.d && cv.w === base.w && cv.h === base.h) {
-            const key = [x, y, w, h, s.max, s.redline, s.shift, cue.limiter, cue.limiter && s.blink, s.outline, P === undefined ? '' : Object.keys(PALETTES).filter((k) => PALETTES[k] === P)[0]].join('|');
+            const key = [x, y, w, h, s.max, s.yellow, s.red, cue.limiter, cue.limiter && s.blink, s.outline, P === undefined ? '' : Object.keys(PALETTES).filter((k) => PALETTES[k] === P)[0]].join('|');
             // a few kept: on the limiter it flashes between two
             let lit = litBars.filter((e) => e.key === key && e.base === base)[0];
             if (!lit) {
@@ -190,10 +191,10 @@ function drawBar(cv, x, y, w, h, s) {
 }
 
 /**
- * The LCD bar graph in (x, y, w, h): 40 rectangular segments, lit up to the rpm (low below the shift
- * point, mid past it, high into the redline; all flashing on the limiter), unlit ones as faint
- * ghosts (vfd) or dim (setting), the red zone tinted; shift and redline marks over it, the peak as one
- * bright segment outline.
+ * The LCD bar graph in (x, y, w, h): 40 rectangular segments, lit up to the rpm (low under the yellow
+ * light, mid from it, high from the red; all flashing on the limiter), unlit ones as faint ghosts (vfd)
+ * or dim (setting), the red zone from the red light tinted; yellow and red light marks over it, the peak
+ * as one bright segment outline.
  */
 function drawGraph(cv, x, y, w, h, s, vfd) {
     const bg = s.layer !== 'fg', fg = s.layer !== 'bg', P = s.P, cue = s.cue, rpm = s.rpm;
@@ -201,13 +202,13 @@ function drawGraph(cv, x, y, w, h, s, vfd) {
     const rpmOf = (i) => (i + 0.5) * s.max / n;
     const sx = (i) => x + i * (sw + gap);
     const at = (r) => clamp(Math.floor(r / s.max * n), 0, n - 1);
-    if (fg && isNum(s.shift) && s.shift < s.redline) cv.fillRect(sx(at(s.shift)) + sw / 2 - 1, y, 3, 4, P.mid);
-    if (fg) cv.fillRect(sx(at(s.redline)) + sw / 2 - 1, y, 3, 4, P.limit);
+    if (fg && s.yellow < s.red) cv.fillRect(sx(at(s.yellow)) + sw / 2 - 1, y, 3, 4, P.mid);
+    if (fg) cv.fillRect(sx(at(s.red)) + sw / 2 - 1, y, 3, 4, P.limit);
     for (let i = 0; i < n; i++) {
-        const r = rpmOf(i), zone = r >= s.redline;
+        const r = rpmOf(i), zone = r >= s.red;
         if (bg && (vfd || s.dim || zone)) cv.fillRect(sx(i), top, sw, sh, withAlpha(zone ? P.limit : P.text, zone ? 0.3 : vfd ? 0.1 : 0.12));
         if (fg && isNum(rpm) && r <= rpm) {
-            const c = cue.limiter ? (s.blink ? P.limit : withAlpha(P.limit, 0.35)) : zone ? P.high : r >= s.shift ? P.mid : P.low;
+            const c = cue.limiter ? (s.blink ? P.limit : withAlpha(P.limit, 0.35)) : zone ? P.high : r >= s.yellow ? P.mid : P.low;
             cv.fillRect(sx(i), top, sw, sh, c);
         }
     }
@@ -352,8 +353,14 @@ function lightsRow(x, y, w, d) {
     return { pts: pts, rad: Math.min(d / 2, pitch * 0.36) };
 }
 
+/** A frame's yellow and red lights (rpm): its own, else red at the redline and yellow 700 under it. */
+function lightsOf(f) {
+    const red = isNum(f.red) ? f.red : f.redline;
+    return { yellow: isNum(f.yellow) ? f.yellow : Math.max(0, red - 700), red: red };
+}
+
 /**
- * Draws one layer ('bg' or 'fg') of the HUD image for f = { d, shift, redline, max, blink, cue, down,
+ * Draws one layer ('bg' or 'fg') of the HUD image for f = { d, shift, redline, yellow, red, max, blink, cue, down,
  * peak, readouts: [items], chip (verdict or null), opts: { style, palette, lights, gt3, dim, gear,
  * lightStyle } }.
  */
@@ -361,7 +368,7 @@ function drawLayer(cv, f, layer) {
     const o = f.opts, d = f.d, P = palette(o.style === 'vfd' ? 'vfd' : o.palette), cue = f.cue;
     if (o.style === 'arc' || o.style === 'ramp' || o.style === 'dial' || o.style === 'pill') {
         M.drawM(cv, f, layer, { P: P, gearText: gearText, drawDown: drawDown, lightCol: lightCol, RACE_BLUE: RACE_BLUE, gearFont: gearFont, base: layer === 'fg' ? fgBase : null,
-            drawLights: drawLights, seg7: seg7 });
+            drawLights: drawLights, seg7: seg7, lightsOf: lightsOf });
         return;
     }
     // the gearbox mode (D / S / M) as a small letter by the gear
@@ -369,7 +376,9 @@ function drawLayer(cv, f, layer) {
         const at = o.style === 'wings' ? [IW / 2 + 34, 24] : o.style === 'digital' || o.style === 'vfd' ? [58, 22] : [56, 24];
         cv.text(f.mode, at[0], at[1], 18, withAlpha(P.text, 0.85), { font: 'bold' });
     }
-    const s = { rpm: d.rpm, cue: cue, shift: f.shift, redline: f.redline, max: f.max, blink: f.blink, dim: o.dim, style: o.lightStyle, P: P, layer: layer, peak: f.peak };
+    const z = lightsOf(f);
+    const s = { rpm: d.rpm, cue: cue, shift: f.shift, redline: f.redline, yellow: z.yellow, red: z.red, max: f.max, blink: f.blink, dim: o.dim, style: o.lightStyle, P: P,
+        layer: layer, peak: f.peak };
     // knock on the layouts with no place for the warning (Minimal, Split wings): the gear goes red as well
     const knock = f.chip && f.chip.verdict === 'KNOCK';
     const gearCol = (cue.limiter && f.blink) || (knock && (o.style === 'minimal' || o.style === 'wings')) ? P.limit : P.text;
@@ -449,7 +458,7 @@ function drawLayer(cv, f, layer) {
 /** The key of the static ('bg') layer: what it depends on. */
 function bgKey(f) {
     const o = f.opts, c = f.cue;
-    return [o.style, o.style === 'vfd' ? 'vfd' : o.palette, o.gear, o.rpm, o.bar, o.lights, o.gt3, o.dim, o.lightStyle, o.clearLabels, f.redline, f.max, c.shift || c.limiter, c.limiter,
+    return [o.style, o.style === 'vfd' ? 'vfd' : o.palette, o.gear, o.rpm, o.bar, o.lights, o.gt3, o.dim, o.lightStyle, o.clearLabels, f.redline, f.yellow, f.red, f.max, c.shift || c.limiter, c.limiter,
         // the power meter's bar: its wideness and range (where the zero tick is) are static too
         f.chip ? 'chip' : (f.readouts || []).map((r) => r.label + (r.bar ? '~' + (r.wide ? 'w' : '') + r.bar.lo + '~' + r.bar.hi : '')).join(','),
         // the meter under the bar shows with a grade too
@@ -521,4 +530,4 @@ function scaled(r, k, ox, oy) {
     };
 }
 
-module.exports = { scaled, lightCol, gearFont, drawHud, drawLayer, drawDown, gearText, PALETTES, IW, IH, TEMP_X };
+module.exports = { scaled, lightsOf, lightCol, gearFont, drawHud, drawLayer, drawDown, gearText, PALETTES, IW, IH, TEMP_X };

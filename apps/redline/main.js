@@ -230,12 +230,14 @@ mgu.run({
             return typeof s === 'number' && s > 0 ? s : Math.ceil((baseRedline() + 800) / 1000) * 1000;
         };
         const redline = () => Math.min(baseRedline(), maxRpm());
+        // the yellow and red lights (Settings, the Car profile's when it sets them; Auto: the redline, 700 under the red)
+        const lightsNow = () => Hud.zonesOf(settings, redline());
         settings.onChange((key, v) => { if (key === 'learnRedline' && v === false) limiter.forget(); });
         log.info('redline ' + redline() + ' (' + redlineSource() + ')');
         /* Shift point: per gear from the engine's own torque curve and the gear ratios (shiftmap.js,
          * setting "shiftMode" = learned) once it knows that gear, held 150 under the redline so the
-         * shift never meets the limiter; else (and with "fixed") the setting "shiftAt" (the Car profile's Shift point;
-         * Auto: the redline - 300, kit engine.js Engine.shiftPoint).
+         * shift never meets the limiter; else (and with "fixed") the setting "shiftAt" (the Car profile's Shift now
+         * warning; Auto: the red light - 300, kit engine.js Engine.shiftPoint).
          * Never below 2500: shifts under that are not scored. */
         const shiftMap = new ShiftMap({ dataDir: ctx.dataDir, log });
         // the launch score: standing starts timed 0-100 km/h / 0-60 mph by the kit's run timer, best kept
@@ -249,7 +251,9 @@ mgu.run({
             return G.isNum(r) ? Math.min(r, redline() - 150) : null;     // clear of the limiter flash (redline - 40)
         };
         const minShift = () => { const v = settings.get('minShift'); return typeof v === 'number' && v > 0 ? Math.min(v, redline() - 150) : 0; };
-        const normalShift = (gear) => Math.max(2500, minShift(), learnedShift(gear) || Engine.shiftPoint(redline(), Number(settings.get('shiftAt'))));
+        // the set point under the redline (it may lie past the red light: warning 6500 with the red zone from 6000), Auto 300 under the red
+        const fixedShift = () => { const at = Number(settings.get('shiftAt')); return at > 0 ? Engine.shiftPoint(redline(), at) : lightsNow().red - 300; };
+        const normalShift = (gear) => Math.max(2500, minShift(), learnedShift(gear) || fixedShift());
         const limitsChanged = () => { car.setRedline(redline()); shiftMap.setRedline(redline()); };
         limitsChanged();
         engine.onChange(limitsChanged);
@@ -345,7 +349,7 @@ mgu.run({
             while (recent.length && t - recent[0][0] > 1200) recent.shift();
             // the screen's shift cue, the same as the HUD's (count-in by climb rate, early flash,
             // lift handling), updated on each sample so a fast screen doesn't see repeated readings
-            screenCue = Hud.shiftCue(cueState, d.rpm, t, shiftPoint(d.oil, d.gear).rpm, redline(), hud ? hud.lead() : 200, d.gear, undefined, Hud.revOf(settings));
+            screenCue = Hud.shiftCue(cueState, d.rpm, t, shiftPoint(d.oil, d.gear).rpm, redline(), hud ? hud.lead() : 200, d.gear, undefined, Hud.revOf(settings, redline()));
             // the moment the cue flashes: the ambient light flashes red too (real drives only)
             if (screenCue.shift && !cueShift && !car.data().demo) Hud.writeAtomic(AMBIENT_FLASH, JSON.stringify({ rgb: [255, 0, 0], ms: 1200 }) + '\n');
             cueShift = !!screenCue.shift;
@@ -401,8 +405,7 @@ mgu.run({
         }
         /** Static part of the tach page (cached layer; redrawn when the theme / limits change). */
         function background(cv, t) {
-            // the shift mark is drawn over it (per gear and cold-oil step: a key each would fill the cache)
-            const key = ['redline-bg', settings.get('theme'), maxRpm(), redline()].join('|');
+            const z = lightsNow(), key = ['redline-bg', settings.get('theme'), maxRpm(), z.yellow, z.red].join('|');
             cv.blit(G.layer(key, W, H, (c) => drawBackground(c, t), cv.textScale), 0, 0);
         }
         function drawBackground(cv, t) {
@@ -412,18 +415,19 @@ mgu.run({
             cv.polyline([[24, 92], [330, 92], [370, 122], [1230, 122], [1270, 92], [1576, 92]], 2, fl);
             cv.polyline([[370, 122], [1230, 122]], 3, withAlpha(t.accent, 0.5));
             cv.polyline([[24, 512], [330, 512], [370, 486], [1230, 486], [1270, 512], [1576, 512]], 2, fl);
-            // track, redline part tinted, segment gaps
-            band(cv, 0, redline(), t.track);
-            band(cv, redline(), maxRpm(), withAlpha(t.crit, 0.3));
+            // track, the red zone (from the red light) tinted, segment gaps
+            const z = lightsNow();
+            band(cv, 0, z.red, t.track);
+            band(cv, z.red, maxRpm(), withAlpha(t.crit, 0.3));
             for (let r = 500; r < maxRpm(); r += 500) gapAt(cv, r, t.bg);
-            // scale under the bar: ticks every 500, numbers every 1000; shift point + redline marks
+            // scale under the bar: ticks every 500, numbers every 1000; the yellow and red lights' marks
             for (let rpm = 0; rpm <= maxRpm(); rpm += 500) {
-                const x = BAR.x0 + barX(rpm), major = rpm % 1000 === 0, red = rpm >= redline();
+                const x = BAR.x0 + barX(rpm), major = rpm % 1000 === 0, red = rpm >= z.red;
                 cv.fillRect(x - (major ? 1.5 : 1), BAR.y1 + 8, major ? 3 : 2, major ? 14 : 8, red ? t.crit : major ? t.text : t.tick);
                 if (major) cv.text(String(rpm / 1000), x, BAR.y1 + 46, 26, red ? t.crit : t.text, { align: 'center', font: 'bold' });
             }
-            const rx = BAR.x0 + barX(redline());
-            cv.fillRect(rx + BAR.slant - 2, BAR.y0 - 14, 4, 12, t.crit);
+            if (z.yellow < z.red) cv.fillRect(BAR.x0 + barX(z.yellow) + BAR.slant - 2, BAR.y0 - 14, 4, 12, t.warn);
+            cv.fillRect(BAR.x0 + barX(z.red) + BAR.slant - 2, BAR.y0 - 14, 4, 12, t.crit);
         }
 
         /* ---------- drawing ---------- */
@@ -469,11 +473,9 @@ mgu.run({
         function drawTach(cv, t, d, now) {
             const sp = shiftPoint(d.oil, d.gear);
             background(cv, t);
-            const sx = BAR.x0 + barX(sp.rpm);                                                   // shift point mark
-            cv.fillRect(sx + BAR.slant - 2, BAR.y0 - 14, 4, 12, t.warn);
             const rpm = d.rpm;
             // the cue from the last sample; before any sample, the plain shift point
-            const cue = screenCue || Hud.shiftCue({}, rpm, now, sp.rpm, redline(), 0, undefined, undefined, Hud.revOf(settings));
+            const cue = screenCue || Hud.shiftCue({}, rpm, now, sp.rpm, redline(), 0, undefined, undefined, Hud.revOf(settings, redline()));
             const shiftNow = G.isNum(rpm) && cue.shift;
             // setting "flash" on: lights, gear and SHIFT blink (GPU renderer: 8 Hz clock phase;
             // software, few fps: alternate every frame) and the screen flashes red. Off: they
@@ -488,11 +490,11 @@ mgu.run({
                 cv.fillRect(0, 0, W, 8, fr); cv.fillRect(0, H - 8, W, 8, fr); cv.fillRect(0, 8, 8, H - 16, fr); cv.fillRect(W - 8, 8, 8, H - 16, fr);
             }
 
-            // ---- rev bar: left to right; theme colour -> red at the shift point, solid red above.
+            // ---- rev bar: left to right; theme colour -> red at the red light, solid red above it.
             // Each 500 rpm segment takes the colour of its position (stepped like the G20).
             const hot = t.hotRamp || t.ramp;
             if (G.isNum(rpm) && rpm > 50) {
-                const colOf = (r) => (shiftNow ? '#ff2a2a' : ramp(hot, G.clamp(r / sp.rpm, 0, 1)));
+                const colOf = (r) => (shiftNow ? '#ff2a2a' : ramp(hot, G.clamp(r / lightsNow().red, 0, 1)));
                 band(cv, 0, rpm, withAlpha(colOf(rpm), 0.14), 7);                               // glow
                 const top = Math.min(rpm, maxRpm());                                           // a garbage rpm stays one bar
                 for (let r = 0; r < top; r += 500) band(cv, r, Math.min(top, r + 500), colOf(r + 250));
@@ -503,7 +505,7 @@ mgu.run({
             // peak: a slanted line across the bar at the highest rpm (no line along the top on the tach)
             if (peakRpm > 0 && !(G.isNum(rpm) && rpm >= peakRpm)) {
                 const pk = Math.min(peakRpm, maxRpm()), px = BAR.x0 + barX(pk);
-                const pc = t.hang || (pk >= sp.rpm ? '#ff2a2a' : ramp(hot, G.clamp(pk / sp.rpm, 0, 1)));
+                const pc = t.hang || (pk >= lightsNow().red ? '#ff2a2a' : ramp(hot, G.clamp(pk / lightsNow().red, 0, 1)));
                 cv.line(px + BAR.slant, BAR.y0, px, BAR.y1, 3, pc);
             }
 

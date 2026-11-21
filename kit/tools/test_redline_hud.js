@@ -182,10 +182,29 @@ ok(c.every((q) => !q.shift && !q.limiter), 'no rpm: nothing lit');
     ok(Hud.shiftCue({}, 5000, 0, 6000, 6000, 0, 3, 5000, 6000).from === 5500, 'rev bar: a start above the redline is kept 500 under it');
     ok(Hud.shiftCue({}, null, 0, 6000, 7000, 0, 3, null, 4000).shift === false, 'rev bar: no rpm, nothing lit');
     const S = (v) => ({ get: (k) => v[k] });
-    ok(Hud.revOf(S({ lightMode: 'rev', lightStart: 4500 })) === 4500 && Hud.revOf(S({ lightMode: 'rev' })) === 4000, 'rev bar: the start from lightStart (4000 by default)');
-    ok(Hud.revOf(S({})) === null && Hud.revOf(S({ lightMode: 'shift', lightStart: 4500 })) === null, 'shift mode (the default): the count into the shift point as before');
+    const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+    ok(same(Hud.revOf(S({ lightMode: 'rev', lightStart: 4500 }), 7000), { from: 4500, at: 7000 }) &&
+        same(Hud.revOf(S({ lightMode: 'rev' }), 7000), { from: 6300, at: 7000 }), 'rev bar: from the yellow light (Auto: 700 under the red) to the red');
+    ok(same(Hud.revOf(S({ lightMode: 'rev', lightStart: 4000, lightRed: 6000 }), 7000), { from: 4000, at: 6000 }), 'rev bar: to the red light when it is set');
+    ok(Hud.revOf(S({}), 7000) === null && Hud.revOf(S({ lightMode: 'shift', lightStart: 4500 }), 7000) === null, 'shift mode (the default): the count into the shift point as before');
     const defs = {}; spec.settings.forEach((x) => { defs[x.key] = x.default; });
-    ok(Hud.optsFrom(S(Object.assign({}, defs, { lightMode: 'rev', lightStart: 3500 }))).rev === 3500 && Hud.optsFrom(S(defs)).rev === null, 'rev bar: the setting reaches the HUD');
+    const ro = Hud.optsFrom(S(Object.assign({}, defs, { lightMode: 'rev', lightStart: 3500, lightRed: 6200 })));
+    ok(ro.rev === true && ro.lightStart === 3500 && ro.lightRed === 6200 && Hud.optsFrom(S(defs)).rev === false, 'rev bar: the settings reach the HUD');
+    // the rev bar's count as the HUD draws it: from the yellow to the red, the flash at the red, the limiter at the redline
+    const rq = Hud.shiftCue({}, 6100, 0, 6500, 7000, 200, 3, 6100, { from: 4000, at: 6000 });
+    ok(rq.from === 4000 && rq.at === 6000 && rq.shift && !rq.limiter, 'rev bar: the flash at the red light, the limiter still at the redline');
+}
+
+/* ---------- the yellow and red lights (Cluster Layouts' and the Car profile's): Auto, set, held under the redline ---------- */
+{
+    const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+    ok(same(Hud.zones(0, 0, 6500), { yellow: 5800, red: 6500 }), 'lights: Auto red at the redline, Auto yellow 700 under it');
+    ok(same(Hud.zones(4000, 6000, 6500), { yellow: 4000, red: 6000 }), 'lights: set yellow 4000 and red 6000 (the redline 6500)');
+    ok(same(Hud.zones(0, 6000, 6500), { yellow: 5300, red: 6000 }), 'lights: Auto yellow 700 under a set red');
+    ok(same(Hud.zones(7000, 7500, 6500), { yellow: 6500, red: 6500 }), 'lights: the red at most the redline, the yellow at most the red');
+    const spec2 = {}; spec.settings.forEach((x) => { spec2[x.key] = x; });
+    ok(spec2.lightRed && spec2.lightRed.profile === 'lightRed' && spec2.lightRed.default === 0 && spec2.lightStart.default === 0 && !spec2.lightStart.when,
+        'lights: Red light at (the Car profile\'s lightRed) and Yellow light at, Auto by default, always shown');
 }
 
 /* ---------- driving mode (Comfort / Eco Pro) ---------- */

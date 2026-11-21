@@ -2684,3 +2684,5 @@ Where the car is, for the AK clusters' clock (the head unit keeps UTC)	AK 계기
 The tank's size, to turn the fuel gauge's percent into litres	연료 게이지 %를 리터로 바꿀 때 쓰는 탱크 크기
 A plug-in hybrid's electric range when full, used until the car's own figure comes	PHEV 완충 시 전기 주행거리. 차에서 값을 받기 전까지 사용
 How many g the G-force circles' outer ring stands for	G 미터 바깥 원이 나타내는 g 값
+Auto (700 below the red)	자동 (빨간불보다 700 아래)
+Auto (red zone - 300)	자동 (레드존 - 300)

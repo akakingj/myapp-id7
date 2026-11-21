@@ -22,7 +22,7 @@ const FOLLOW = {
     // the shift lights: yellow from, red from (0: Auto, the redline), the warning at the shift point (0: Auto, each
     // app's redline less 300; 0.3.x: was "so many before the redline"), the rev scale's end; the redline (the limiter)
     lightStart: ['Redline', 'AK Cluster', 'AK Cluster Centre'],
-    lightRed: ['AK Cluster'],
+    lightRed: ['Redline', 'AK Cluster'],
     shiftAt: ['Redline', 'Warm-Up', 'AK Cluster', 'AK Cluster Centre'],
     rpmScale: ['M Vitals', 'Redline', 'Virtual Dyno', 'AK Cluster'],
     redline: ['M Vitals', 'Redline', 'Warm-Up', 'AK Cluster'],

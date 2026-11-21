@@ -63,8 +63,9 @@ where it cannot be written, nothing is handed back. Cluster functions' side: The
 
 - **Standard:** the gear (P R N D or 1–8) with the downshift arrows under it; 12 round shift
   lights over a slanted rev bar; and a readouts row under the bar. A small yellow mark shows the
-  shift point, a red one the redline, and a thin line where the revs peaked (*Peak marker*,
-  dropping back after Redline's *Peak hold*).
+  yellow light, a red one the red light, and a thin line where the revs peaked (*Peak marker*,
+  dropping back after Redline's *Peak hold*). The bar is green under the yellow light, yellow from
+  it and red from the red light; the red zone starts at the red light.
 - **Minimal:** the gear and larger shift lights only.
 - **Split wings:** the gear in the centre, with 6 lights on each side filling in towards it and
   the bar underneath.
@@ -494,13 +495,18 @@ The 12 lights are a **shift** light, not a rev scale:
   - Hold past the shift point and the lights keep flashing.
 - **Limiter.** Within 40 rpm of the redline, the bar, the lights and the gear all flash red.
 
-The yellow mark is the shift point itself. The flash comes before it on purpose: in 1st, the revs
-climb about 3000 rpm/s, so a 240 ms reaction means a flash about 700 rpm early.
+**Yellow and red light** (Settings → Shift point, the Car profile's when it sets them, as in AK Cluster
+Layouts): *Yellow light at* (Auto: 700 under the red) is where the rev bars and gauges turn yellow,
+with the yellow mark; *Red light at* (Auto: the redline) is where they turn red and the red zone
+starts, with the red mark. *Shift now warning at* (Auto: 300 under the red light) is the shift point
+when *Shift point* is *The shift point below*; it may lie past the red light. The flash comes before
+the shift point on purpose: in 1st, the revs climb about 3000 rpm/s, so a 240 ms reaction means a
+flash about 700 rpm early. The limiter stays at the engine's top rpm (*Engine's top rpm*).
 
 **Rev bar instead** (Settings → Shift point → *Shift lights*: *Rev bar*, issue #133): the lights are a
-plain rev scale. They fill evenly from *From* (4,000 rpm by default) to the redline, the same in every
-gear and at any climb rate, and flash at the redline. No count-in, no early flash, and nothing is
-learned from it. The centre screen and the HUD both follow it.
+plain rev scale. They fill evenly from the yellow light to the red one, the same in every gear and at
+any climb rate, and flash at the red light. No count-in, no early flash, and nothing is learned from
+it. The centre screen and the HUD both follow it.
 
 ## Learning
 

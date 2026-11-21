@@ -91,12 +91,14 @@ const asBuffer = (u8) => Buffer.from(u8.buffer, u8.byteOffset, u8.length);
  */
 function shiftCue(st, rpm, tMs, shift, redline, leadMs, gear, rpmShow, revFrom) {
     if (!isNum(rpm)) { st.rate = 0; st.on = false; st.fall = null; return { from: shift - 1500, at: shift, shift: false, limiter: false, rate: 0, fallSince: null }; }
-    // Shift lights as a plain rev bar (setting lightMode "rev", issue #133): an even count from revFrom to the
-    // redline, the flash at the redline; no lead, no climb rate, nothing learned
-    if (isNum(revFrom)) {
+    // Shift lights as a plain rev bar (setting lightMode "rev", issue #133): an even count from the yellow light to
+    // the red one (revFrom = revOf's { from, at }; a number: from there to the redline), the flash at the red; no
+    // lead, no climb rate, nothing learned
+    const rev = isNum(revFrom) ? { from: revFrom, at: redline } : revFrom && isNum(revFrom.from) && isNum(revFrom.at) ? revFrom : null;
+    if (rev) {
         st.on = false; st.fall = null; st.rate = 0;
-        const r = isNum(rpmShow) ? rpmShow : rpm, from = clamp(revFrom, 0, redline - 500);
-        return { from: from, at: redline, shift: r >= redline, limiter: rpm >= redline - 40, rate: 0, fallSince: null };
+        const at = Math.min(rev.at, redline), r = isNum(rpmShow) ? rpmShow : rpm, from = clamp(rev.from, 0, at - 500);
+        return { from: from, at: at, shift: r >= at, limiter: rpm >= redline - 40, rate: 0, fallSince: null };
     }
     let rising = false;
     // the same reading again (a frame drawn between two rpm samples) is no news: the rate is only
@@ -139,8 +141,22 @@ function shiftCue(st, rpm, tMs, shift, redline, leadMs, gear, rpmShow, revFrom) 
 }
 
 const numOf = (settings, k, d) => { const v = Number(settings.get(k)); return isFinite(v) ? v : d; };
-/** Setting lightMode "rev": the rpm the plain rev bar starts at (setting lightStart), else null (the shift count). */
-const revOf = (settings) => (settings.get('lightMode') === 'rev' ? numOf(settings, 'lightStart', 4000) : null);
+/**
+ * The yellow and the red light's rpm for the engine's top rpm (redline), as Cluster Layouts and the Car profile
+ * have them: red where the red zone starts (lightRed; 0 Auto: the redline), at most the redline; yellow where the
+ * lights and the gauges turn yellow (lightStart; 0 Auto: 700 under the red), at most the red.
+ */
+function zones(lightStart, lightRed, redline) {
+    const red = lightRed > 0 ? Math.min(lightRed, redline) : redline;
+    return { yellow: lightStart > 0 ? Math.min(lightStart, red) : Math.max(0, red - 700), red: red };
+}
+const zonesOf = (settings, redline) => zones(numOf(settings, 'lightStart', 0), numOf(settings, 'lightRed', 0), redline);
+/** Setting lightMode "rev": the plain rev bar's count, { from: the yellow, at: the red }, else null (the shift count). */
+const revOf = (settings, redline) => {
+    if (settings.get('lightMode') !== 'rev') return null;
+    const z = zonesOf(settings, redline);
+    return { from: z.yellow, at: z.red };
+};
 
 /**
  * The driver's reaction time from one hand upshift: flash = { rate (rpm/s), target (rpm), lead (ms asked
@@ -435,7 +451,9 @@ function optsFrom(settings, drive) {
         peak: on('hudPeak'),
         chip: (() => { const c = settings.get('hudChip'); return c === false || c === 'off' ? 'off' : c === 'simple' ? 'simple' : 'burst'; })(),
         shake: settings.get('hudShake') === true,
-        lights: lights !== 'off', gt3: lights === 'gt3', dim: settings.get('hudUnlit') === 'dim', rev: revOf(settings),
+        lights: lights !== 'off', gt3: lights === 'gt3', dim: settings.get('hudUnlit') === 'dim',
+        // the plain rev bar (lightMode "rev") and the yellow and red lights (0: Auto), resolved for the redline in each frame
+        rev: settings.get('lightMode') === 'rev', lightStart: numOf(settings, 'lightStart', 0), lightRed: numOf(settings, 'lightRed', 0),
         lightStyle: settings.get('lights'), warmOil: numOf(settings, 'warmOil', 80),
         // too hot (red) from, °C: Settings > Engine (the Car profile's when it sets them)
         hotOil: numOf(settings, 'hotOil', 130), hotCoolant: numOf(settings, 'hotCoolant', 112), hotGearbox: numOf(settings, 'hotGearbox', 120),
@@ -650,10 +668,10 @@ function demoFrame(tMs, o, cueState, lead, now) {
     if (!isNum(now)) now = tMs;
     const dm = demoAt(tMs), redline = 6550;
     const d = { rpm: dm.rpm, gear: dm.gear, stage: dm.stage, oil: dm.oil, coolant: dm.coolant, demo: true };
-    const sp = { rpm: dm.shift, cold: false };
-    const cue = shiftCue(cueState, d.rpm, now, sp.rpm, redline, lead, d.gear, d.rpm, o.rev);
+    const sp = { rpm: dm.shift, cold: false }, z = zones(o.lightStart, o.lightRed, redline);
+    const cue = shiftCue(cueState, d.rpm, now, sp.rpm, redline, lead, d.gear, d.rpm, o.rev ? { from: z.yellow, at: z.red } : null);
     return {
-        d: d, shift: sp.rpm, redline: redline, max: 8000, blink: cue.shift || cue.limiter ? Math.floor(now / BLINK_MS) % 2 === 0 : true, cue: cue,
+        d: d, shift: sp.rpm, redline: redline, yellow: z.yellow, red: z.red, max: 8000, blink: cue.shift || cue.limiter ? Math.floor(now / BLINK_MS) % 2 === 0 : true, cue: cue,
         down: dm.down,
         peak: o.peak ? dm.peak : 0,
         chip: dm.chip && o.chip !== 'off' && dm.chipAge < 1500 ? { verdict: dm.chip.verdict, age: dm.chipAge, burst: o.chip === 'burst' } : null,
@@ -972,14 +990,14 @@ function start(ctx, src) {
         const o = optsNow(), lights = o.lights;
         // "Play on HUD": the scripted drive instead of the car, for a few seconds (nothing is learned)
         if (dm) { const f = demoFrame(now - demoStart, o, cueState, leadMs(), now); blink = f.blink; return f; }
-        const sp = src.shiftPoint(d.oil, d.gear), redline = src.redline();
+        const sp = src.shiftPoint(d.oil, d.gear), redline = src.redline(), z = zones(o.lightStart, o.lightRed, redline);
         // the lights count into the shift and flash for it, early by the reaction time; 5 Hz flash
         const was = cueState.on, lead = leadMs();
         const show = smooth(d.rpm, now, Math.min(redline - 50, src.maxRpm()));
-        const cue = shiftCue(cueState, d.rpm, now, sp.rpm, redline, lead, d.gear, show, o.rev);
+        const cue = shiftCue(cueState, d.rpm, now, sp.rpm, redline, lead, d.gear, show, o.rev ? { from: z.yellow, at: z.red } : null);
         // the reaction time is learned only from flashes the driver could see: lights on, HUD shown (not from the
-        // plain rev bar's flash at the redline: it has no lead)
-        if (cue.shift && !was && !isNum(o.rev)) {
+        // plain rev bar's flash at the red: it has no lead)
+        if (cue.shift && !was && !o.rev) {
             const seen = lights && target && target.state === 'shown';
             flashInfo = seen ? { t: Date.now(), rate: cue.rate, target: sp.rpm, lead: lead, fall: null } : null;
         }
@@ -990,7 +1008,8 @@ function start(ctx, src) {
         const gb = src.gearbox ? src.gearbox.value() : null;
         const mode = src.mode ? src.mode() : null;
         return {
-            d: isNum(show) && show !== d.rpm ? Object.assign({}, d, { rpm: show }) : d, shift: sp.rpm, redline: redline, max: src.maxRpm(), blink: blink, cue: cue,
+            d: isNum(show) && show !== d.rpm ? Object.assign({}, d, { rpm: show }) : d, shift: sp.rpm, redline: redline, yellow: z.yellow, red: z.red,
+            max: src.maxRpm(), blink: blink, cue: cue,
             down: src.downshift ? src.downshift() : 0,
             peak: o.peak ? (src.peak ? src.peak() : 0) : 0,
             chip: chipNow(o, now),
@@ -1107,7 +1126,8 @@ function start(ctx, src) {
     function sample() {
         const o = optsNow(), d = { rpm: 6300, gear: 3, stage: 'D', oil: 96, coolant: 97 };
         const deg = (c) => Math.round(o.fahrenheit ? c * 9 / 5 + 32 : c) + '°';
-        return { d: d, shift: 6700, redline: 7000, max: 8000, blink: true, cue: shiftCue({}, 6300, 0, 6700, 7000, 0), down: 0, peak: 0, chip: null,
+        const z = zones(o.lightStart, o.lightRed, 7000);
+        return { d: d, shift: 6700, redline: 7000, yellow: z.yellow, red: z.red, max: 8000, blink: true, cue: shiftCue({}, 6300, 0, 6700, 7000, 0), down: 0, peak: 0, chip: null,
             readouts: [{ label: 'BOOST', value: '1.1', tone: 'text' }, { label: 'OIL', value: deg(d.oil), tone: 'text' }, { label: 'WATER', value: deg(d.coolant), tone: 'text' }], opts: o };
     }
 
@@ -1264,7 +1284,7 @@ function start(ctx, src) {
         // (both switched off) the picture is the text, keyed by the readouts' values
         const moving = o.lights || o.bar !== false || o.style === 'digital' || o.style === 'vfd';
         return [moving && isNum(d.rpm) ? Math.round(d.rpm / step) : '-', gearText(d), f.down || 0, c.shift, c.limiter, (c.shift || c.limiter) ? f.blink : '',
-            moving ? Math.round(c.from / 25) : '', moving ? Math.round(c.at / 25) : '', f.shift, f.redline, f.max, moving ? Math.round((f.peak || 0) / 25) : '',
+            moving ? Math.round(c.from / 25) : '', moving ? Math.round(c.at / 25) : '', f.shift, f.redline, f.yellow, f.red, f.max, moving ? Math.round((f.peak || 0) / 25) : '',
             f.chip ? f.chip.verdict + (f.chip.text || '') + age : '', f.shake ? f.shake.join(',') : '', f.mode || '',
             f.readouts.map((r) => r.label + r.value + r.tone + (r.tyres ? r.tyres.join('/') : '')).join(','),
             o.style, o.palette, o.gear, o.rpm, o.bar, o.lights, o.gt3, o.dim, o.lightStyle, o.clearLabels, o.gearFont].join('|');
@@ -1418,4 +1438,4 @@ function start(ctx, src) {
 }
 
 // writeAtomic: kept here too (it moved to files.js in 2.0) for code that calls Hud.writeAtomic
-module.exports = { start, revOf, writeAtomic, navPlaceOf, blockOf, G20_WINDOW, HUD_WINDOW, BMW_SPEED, GLASS, sceneOf, useScene, scene: () => SCENE, optsFrom, PROFILE_KEYS, SETUPS, profileOf, comfortMode, setupMode, profileView, setComfortMode, setSetupMode, migrateProfiles, reactionMs, gearFontOf, M_STYLES, placeOf, outsideGlass, outsideAll, readoutsFor, rpmItem, electricalItems, electricalWants, MAX_READOUTS, METER_STYLES, driveModeOf, calmFor, calmOpts, demoAt, DEMO_MS, demoFrame, shiftCue, drawDown };
+module.exports = { start, revOf, zones, zonesOf, writeAtomic, navPlaceOf, blockOf, G20_WINDOW, HUD_WINDOW, BMW_SPEED, GLASS, sceneOf, useScene, scene: () => SCENE, optsFrom, PROFILE_KEYS, SETUPS, profileOf, comfortMode, setupMode, profileView, setComfortMode, setSetupMode, migrateProfiles, reactionMs, gearFontOf, M_STYLES, placeOf, outsideGlass, outsideAll, readoutsFor, rpmItem, electricalItems, electricalWants, MAX_READOUTS, METER_STYLES, driveModeOf, calmFor, calmOpts, demoAt, DEMO_MS, demoFrame, shiftCue, drawDown };
