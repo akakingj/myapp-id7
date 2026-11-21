@@ -1,0 +1,46 @@
+# Builds kit/renderd as renderd.yml does and commits the binaries to kit/renderd/prebuilt/ on the
+# dispatched branch, with SOURCE_SHA256 (kit/tools/make_kit.py source_hash), when the source changed.
+name: Renderer prebuilt
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  prebuilt:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build (Ubuntu 18.04 container)
+        working-directory: kit/renderd
+        run: |
+          docker build -q -t mgu-renderd-build docker >/dev/null
+          docker run --rm -u "$(id -u):$(id -g)" -v "$PWD:/src" -w /src mgu-renderd-build make
+      - name: Check the binary
+        working-directory: kit/renderd
+        run: make check-target
+      - name: Tests
+        working-directory: kit/renderd
+        run: make test
+      - name: Commit kit/renderd/prebuilt
+        run: |
+          python3 - <<'EOF'
+          import os, shutil, sys
+          sys.path.insert(0, 'kit/tools')
+          import make_kit as k
+          want = k.source_hash()
+          if k.prebuilt_hash() == want:
+              print('prebuilt matches the source'); sys.exit(0)
+          shutil.copyfile(k.BUILT, k.PRE)
+          shutil.copyfile(k.gate_of(k.BUILT), k.gate_of(k.PRE))
+          with open(k.PRE_SUM, 'w', encoding='utf-8', newline='\n') as f:
+              f.write(want + '\n# sha256 of kit/renderd src/, inputgate/*.cpp, protocol/*.xml, docker/, Makefile '
+                      '(make_kit.py source_hash) this binary was built from\n')
+          EOF
+          git add kit/renderd/prebuilt
+          if git diff --cached --quiet; then exit 0; fi
+          git -c user.name='github-actions[bot]' -c user.email='41898283+github-actions[bot]@users.noreply.github.com' \
+            commit -q -m "Renderer prebuilt: built from $(git rev-parse --short HEAD)"
+          git push -q origin "HEAD:${GITHUB_REF_NAME}"
