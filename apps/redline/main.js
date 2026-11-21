@@ -516,7 +516,11 @@ mgu.run({
             // otherwise - the gear field alone reads "N" in park too
             const g = d.gear, st = d.stage;
             const gs = st === 'P' || st === 'R' || st === 'N' ? st : g === -1 ? 'R' : G.isNum(g) && g > 0 ? String(g) : st === 'D' ? 'D' : g === 0 ? 'N' : '-';
-            cv.text(gs, GX, 500, 200, redNow ? '#ff2a2a' : t.text, { align: 'center', font: 'gear' });
+            // (its foot over the frame's bottom line at 486: 160 high, on 468)
+            const gw = cv.text(gs, GX, 468, 160, redNow ? '#ff2a2a' : t.text, { align: 'center', font: 'gear' });
+            // the gearbox programme (D / S / M) as a small letter by a gear number, as on the HUD
+            const gm = modeNow();
+            if (/^[1-9]$/.test(gs) && (gm === 'D' || gm === 'S' || gm === 'M')) cv.text(gm, GX + gw / 2 + 10, 386, 44, withAlpha(t.text, 0.8), { font: 'bold' });
             Hud.drawDown(cv, GX + 120, 470, downshift(), 2);                                // downshift cue
             if (d.gearGuessed && G.isNum(g) && g > 0) cv.text('EST.', GX + 90, 352, 22, t.dim, { font: 'bold', spacing: 1 });
             if (shiftNow) cv.text('SHIFT', GX + 150, 436, 30, redNow ? '#ff2a2a' : withAlpha('#ff2a2a', 0.5), { font: 'bold', spacing: 3 });
