@@ -1,8 +1,11 @@
 # Builds kit/renderd as renderd.yml does and commits the binaries to kit/renderd/prebuilt/ on the
-# dispatched branch, with SOURCE_SHA256 (kit/tools/make_kit.py source_hash), when the source changed.
+# branch, with SOURCE_SHA256 (kit/tools/make_kit.py source_hash), when the source changed.
 name: Renderer prebuilt
 
 on:
+  push:
+    branches: [test]
+    paths: ["kit/renderd/**", "!kit/renderd/prebuilt/**", ".github/workflows/renderd-prebuilt.yml"]
   workflow_dispatch:
 
 permissions:
