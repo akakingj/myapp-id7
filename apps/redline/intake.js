@@ -101,8 +101,8 @@ class IntakeWatch {
             this.fails[k] = 0;
             if (!this.logged[k]) { this.logged[k] = true; this.log.info('intake: ' + k + ' read from the engine unit (' + DidReader.label(CANDS[k][this.rd.pick[k] || 0]) + '), ' + v.toFixed(1)); }
             if (k === 'baro') { this.baro = v; return; }
-            // boost: bar over the outside air (under it, on a closed throttle: below 0)
-            this.v[k] = k === 'boost' ? (v - this.baro) / 100 : v;
+            // boost: bar over the outside air, from 0 (under it, on a closed throttle: 0, no vacuum)
+            this.v[k] = k === 'boost' ? Math.max(0, (v - this.baro) / 100) : v;
             this.t[k] = Date.now();
         }).catch((e) => { this.fails[k]++; this.log.warn('intake: ' + (e && e.message || e)); })
             .then(() => { this.busy = false; });

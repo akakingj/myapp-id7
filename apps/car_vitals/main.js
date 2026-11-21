@@ -580,11 +580,11 @@ mgu.run({
             if (!misCyl) { misCyl = counts.length; log.info('misfire counter: ' + misCyl + ' cylinders (counted)'); }
             return counts.length === misCyl ? counts : null;
         }
-        /** Boost from the engine unit: charge / manifold pressure (absolute, kPa) minus outside air pressure. */
+        /** Boost from the engine unit: charge / manifold pressure (absolute, kPa) minus outside air pressure, from 0 (no vacuum). */
         async function readBoost() {
             await freshBaro();
             const m = await rd.value('boost', dme.boost);
-            return m === null ? null : (m - baro) / 100;
+            return m === null ? null : Math.max(0, (m - baro) / 100);
         }
         /*
          * Bank 2's boost on a twin-unit V8: the second engine unit (0x13) answers the same identifiers for its own
@@ -606,7 +606,7 @@ mgu.run({
             if (fuelT.boost && fuelT.boost >= (fuelTry.boost || 0) && Date.now() - fuelT.boost < 3000) heard2(!!(r && r.bytes));
             // its first replies go to the log, to check the second unit's scaling against the master's
             if (r) logRaw('boost bank 2 ' + DidReader.label(c), r.bytes || r.why);
-            return m === null ? null : (m - baro) / 100;
+            return m === null ? null : Math.max(0, (m - baro) / 100);
         }
         /** Outside air pressure (kPa), read again once a minute: boost = absolute pressure minus it. */
         async function freshBaro() {
@@ -624,8 +624,8 @@ mgu.run({
             let actual = await rd.value(ak, dme[ak]);
             if (k === 'boostCtl') {
                 await freshBaro();
-                target = (target - baro) / 100;
-                actual = actual === null ? null : (actual - baro) / 100;
+                target = Math.max(0, (target - baro) / 100);
+                actual = actual === null ? null : Math.max(0, (actual - baro) / 100);
             }
             return { target, actual };
         }
