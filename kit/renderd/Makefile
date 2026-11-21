@@ -80,6 +80,8 @@ in-test: build/$(OUT)/mgu-render
 	$(CC) $(CFLAGS) -o build/$(OUT)/test_client_read test/test_client_read.c $(filter-out src/main.c,$(SRC)) $(GEN_C) $(LIBS)
 	build/$(OUT)/test_client_read
 	node test/test_gate_apps.js
+	$(CC) $(CFLAGS) -o build/$(OUT)/test_glyphs test/test_glyphs.c src/gfx.c src/log.c -lEGL -lGLESv2 -lm
+	LIBGL_ALWAYS_SOFTWARE=1 EGL_PLATFORM=surfaceless build/$(OUT)/test_glyphs
 	node test/test_client_place.js
 	node test/test_client_reconnect.js
 	sh test/test_hmi.sh
