@@ -1700,3 +1700,9 @@ Bank 2	氣缸列 2
 SOOT, BANK 1	碳煙，氣缸列 1
 SOOT, BANK 2	碳煙，氣缸列 2
 Bank 1	氣缸列 1
+Coolant temp warning	冷卻液溫度警告
+Coolant is too hot at	冷卻液過熱溫度
+Too hot	過熱
+Gearbox is too hot at	變速箱過熱溫度
+Oil is too hot at	機油過熱溫度
+Gearbox temp warning	變速箱溫度警告
