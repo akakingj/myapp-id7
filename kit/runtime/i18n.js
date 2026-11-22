@@ -20,6 +20,7 @@ const PLURAL_RULES = {
         return mod10 >= 2 && mod10 <= 4 ? 1 : 2;
     },
     'zh-CN': () => 0,
+    'zh-TW': () => 0,
     ko: () => 0,
     es: (n) => (n === 1 ? 0 : 1),
 };
@@ -65,7 +66,7 @@ function t(value) {
         // (Korean: "min 70" / "max 70" a minimum and a maximum, "12 MIN" minutes: a bare MIN row means a minimum)
         out = language === 'ko' ? s.replace(/(\d+(?:\.\d+)?)\s+of\s+(\d+(?:\.\d+)?)\s+Ah\b/gi, '$1 / $2 Ah')
             .replace(/\bmin(?=\s+-?\d)/g, '최소').replace(/\bmax(?=\s+-?\d)/g, '최대').replace(/(\d)\s*MIN\b/g, '$1분') :
-            language === 'zh-CN' ? s.replace(/\bmin(?=\s+-?\d)/g, '最小').replace(/\bmax(?=\s+-?\d)/g, '最大')
+            (language === 'zh-CN' || language === 'zh-TW') ? s.replace(/\bmin(?=\s+-?\d)/g, '最小').replace(/\bmax(?=\s+-?\d)/g, '最大')
             .replace(/\bAVG(?=\s+[+-]?\d)/g, '平均').replace(/\bACC\b/g, '加速') :
             language === 'ru' ? s.replace(/\bmin(?=\s+-?\d)/g, 'мин.').replace(/\bmax(?=\s+-?\d)/g, 'макс.')
                 .replace(/\bAVG(?=\s+[+-]?\d)/g, 'СРЕД.').replace(/\bACC\b/g, 'РАЗГОН') :
