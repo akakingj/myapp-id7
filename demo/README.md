@@ -15,9 +15,9 @@
 3. 브라우저가 열립니다 (`http://127.0.0.1:8077/`). 창을 닫으면 데모가 꺼집니다.
 
 필요한 것: Node.js (LTS), Python 3 (설치할 때 "Add python.exe to PATH"). Python이 없으면 이 저장소의 앱은 빌드되지 않고
-계기판 앱만 돕니다. 보는 브랜치는 `mgu_demo.bat` 위쪽의 `APPS_BRANCH` / `CLUSTER_BRANCH` (기본: 테스트 브랜치).
+계기판 앱만 돕니다. 보는 브랜치는 `mgu_demo.bat` 위쪽의 `APPS_BRANCH` / `CLUSTER_BRANCH` (기본: 두 저장소 모두 `test`).
 
-직접 실행: `node demo/server.js --cluster ../idrive7-cluster-info [--data 폴더] [--port 8077] [--no-open]`
+직접 실행: `node demo/server.js --cluster ../myapp-cluster [--data 폴더] [--port 8077] [--no-open]`
 
 ## 업데이트 방식: 앱 코드만 고치면 된다
 

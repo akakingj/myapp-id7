@@ -1,6 +1,6 @@
 'use strict';
 /**
- * demo/server.js - the MGU demo: every app of this repository and of akakingj/idrive7-cluster-info running on your
+ * demo/server.js - the MGU demo: every app of this repository (akakingj/myapp-id7) and of akakingj/myapp-cluster running on your
  * computer as in the car, in one browser window:
  *
  *   - the centre display (the MGU): the HMI's app list, an app's own screen when its icon is tapped (touch, the iDrive
@@ -9,7 +9,7 @@
  *     it (their GLSL, WebGL)
  *   - one car for every app: an automatic drive or your own values (the panel), and each app's settings
  *
- *   node demo/server.js [--cluster ../idrive7-cluster-info] [--data <folder>] [--port 8077] [--no-open]
+ *   node demo/server.js [--cluster ../myapp-cluster] [--data <folder>] [--port 8077] [--no-open]
  *   (Windows: MGU_데모_실행.bat, which also fetches the newest code of both repositories first)
  *
  * The apps are not copied or changed for the demo: each is built from apps/<id> as the MGU Store builds it (this repo:
@@ -34,8 +34,8 @@ const path = require('path');
 const crypto = require('crypto');
 const { spawn, spawnSync, fork, exec } = require('child_process');
 
-const DEMO_VERSION = '1.0.1';
-const A = path.resolve(__dirname, '..');                       // this repository (akakingj/idrive7-apps)
+const DEMO_VERSION = '1.2.0';
+const A = path.resolve(__dirname, '..');                       // this repository (akakingj/myapp-id7)
 const WEB = path.join(__dirname, 'web');
 const GFX = path.join(A, 'kit', 'emu', 'web', 'gfx');            // the car's draw engine as WebAssembly (GPL-3.0-or-later)
 const PRELOAD = path.join(__dirname, 'preload.js');
@@ -49,7 +49,7 @@ const Touch = { on: !flag('--no-touch') };
 /** the cluster apps' repository: --cluster, else beside this one */
 const B = (() => {
     const o = opt('--cluster', null);
-    const c = [o, process.env.DEMO_CLUSTER, path.join(A, '..', 'idrive7-cluster-info')].filter(Boolean).map((p) => path.resolve(p));
+    const c = [o, process.env.DEMO_CLUSTER, path.join(A, '..', 'myapp-cluster')].filter(Boolean).map((p) => path.resolve(p));
     return c.find((p) => fs.existsSync(path.join(p, 'apps')) && fs.existsSync(path.join(p, 'tools', 'mgu', 'stage.js'))) || null;
 })();
 /** the demo's own files (each app's settings, the shared /dev/shm files, the cluster apps' staged code): --data */
@@ -291,7 +291,7 @@ function sourcesInfo() {
         if (!s.branch) { try { s.branch = spawnSync('git', ['-C', root, 'rev-parse', '--abbrev-ref', 'HEAD'], { encoding: 'utf8', windowsHide: true }).stdout.trim(); } catch (e) { /* no git */ } }
         return Object.assign({ name }, s);
     };
-    return [one(A, 'idrive7-apps'), one(B, 'idrive7-cluster-info')];
+    return [one(A, 'myapp-id7'), one(B, 'myapp-cluster')];
 }
 /** the map's place on the cluster and the car's own bottom strip, from Cluster Layouts' layout_common.js */
 function clusterGeometry() {
@@ -871,7 +871,7 @@ function bgMsg() {
 }
 
 /* ---------------- the car: one for every app (demo/preload.js: kit/sim.js and data.js give these) ---------------- */
-// (the cluster demo's car: tools/cluster_demo.html in akakingj/idrive7-cluster-info)
+// (the cluster demo's car: tools/cluster_demo.html in akakingj/myapp-cluster)
 const VEH0 = { pedal: 0, throttle: 3, speed: 0, rpm: 750, gear: 0, stage: 'P', driveMode: 'COMFORT', boostActual: -0.6, torque: 20, timing: 10, hpfp: 60, lpfp: 5.2,
     oil: 96, coolant: 90, gearbox: 78, iat: 31, outside: 20, fuelPct: 55, frange: 520, steer: 0, yaw: 0, gLat: 0, gLong: 0, tyreP: 2.5, tyreT: 25, soc: 70, kw: 0, battTemp: 26, erange: 30 };
 const EXTRA0 = { waze: 'cluster', hudPct: 70, night: false, indicator: 'off' };   // indicator: off | left | right | both (hazards)

@@ -16,8 +16,8 @@ const { spawnSync } = require('child_process');
 const HERE = __dirname;
 const SRC = path.join(HERE, 'src');
 const REPOS = [
-    { name: 'idrive7-apps', repo: 'akakingj/myapp-id7', branch: process.env.APPS_BRANCH || 'test' },
-    { name: 'idrive7-cluster-info', repo: 'akakingj/myapp-cluster', branch: process.env.CLUSTER_BRANCH || 'test' },
+    { name: 'myapp-id7', repo: 'akakingj/myapp-id7', branch: process.env.APPS_BRANCH || 'test' },
+    { name: 'myapp-cluster', repo: 'akakingj/myapp-cluster', branch: process.env.CLUSTER_BRANCH || 'test' },
 ];
 const say = (s) => console.log(s);
 
@@ -84,9 +84,9 @@ async function update(r) {
     fs.mkdirSync(SRC, { recursive: true });
     say('최신 코드 확인 (GitHub)');
     for (const r of REPOS) { try { await update(r); } catch (e) { say('  ' + r.name + ': ' + e.message); } }
-    // Python 3 builds idrive7-apps' apps (kit/tools/build.py), as the MGU Store does
+    // Python 3 builds myapp-id7's apps (kit/tools/build.py), as the MGU Store does
     const py = (process.platform === 'win32' ? [['py', '-3'], ['python'], ['python3']] : [['python3']]).some(([c, ...a]) => {
         try { const p = spawnSync(c, a.concat(['-c', 'import sys; print(sys.version_info[0])']), { encoding: 'utf8', windowsHide: true }); return p.status === 0 && p.stdout.trim() === '3'; } catch (e) { return false; }
     });
-    if (!py) say('\n[!] Python 3가 없습니다: idrive7-apps 앱(차량 프로필, 레드라인 등)은 빌드되지 않습니다.\n    python.org 에서 설치하면서 "Add python.exe to PATH"를 체크하세요. (계기판 앱은 Python 없이도 됩니다)\n');
+    if (!py) say('\n[!] Python 3가 없습니다: myapp-id7 앱(차량 프로필, 레드라인 등)은 빌드되지 않습니다.\n    python.org 에서 설치하면서 "Add python.exe to PATH"를 체크하세요. (계기판 앱은 Python 없이도 됩니다)\n');
 })();

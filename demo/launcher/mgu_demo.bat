@@ -17,13 +17,13 @@ if errorlevel 1 (
   exit /b 1
 )
 node mgu_demo_update.js
-if not exist "src\idrive7-apps\demo\server.js" (
+if not exist "src\myapp-id7\demo\server.js" (
   echo.
-  echo The demo was not found in src\idrive7-apps. Check the internet connection and run this again.
+  echo The demo was not found in src\myapp-id7. Check the internet connection and run this again.
   pause
   exit /b 1
 )
 echo.
 echo Starting the demo. Close this window to stop it.
-node "src\idrive7-apps\demo\server.js" --cluster "src\idrive7-cluster-info" --data "data" %*
+node "src\myapp-id7\demo\server.js" --cluster "src\myapp-cluster" --data "data" %*
 pause
