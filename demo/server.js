@@ -34,7 +34,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { spawn, spawnSync, fork, exec } = require('child_process');
 
-const DEMO_VERSION = '1.6.5';
+const DEMO_VERSION = '1.6.6';
 const A = path.resolve(__dirname, '..');                       // this repository (akakingj/myapp-id7)
 const WEB = path.join(__dirname, 'web');
 const GFX = path.join(A, 'kit', 'emu', 'web', 'gfx');            // the car's draw engine as WebAssembly (GPL-3.0-or-later)
@@ -130,8 +130,8 @@ function buildApp(id) {
         }));
     }
     if (!PY) return Promise.resolve({ error: 'Python 3 was not found: this repository\'s apps are built with kit/tools/build.py.\nInstall Python 3 (python.org, "Add to PATH") and start the demo again.' });
-    // (MGU Styles: its own kit/tools/build.py in its own tree; in English, as its kit has no Korean fonts)
-    const root = a.repo === 'C' ? C : A, lang = a.repo === 'C' ? [] : ['--language', 'ko'];
+    // (AK Cluster ID8: its own kit/tools/build.py in its own tree, in Korean as the Store builds it)
+    const root = a.repo === 'C' ? C : A, lang = ['--language', 'ko'];
     return new Promise((res) => {
         let out = '';
         const p = spawn(PY.cmd, PY.args.concat([path.join(root, 'kit', 'tools', 'build.py'), '--preview-only'], lang, [id]), { cwd: root, windowsHide: true });

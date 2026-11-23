@@ -29,7 +29,7 @@ AK Cluster ID8(`akakingj_cluster_id8`)도 앱 목록에 나오고, 그 저장소
 
 - 런처가 `test` 브랜치(`STYLES_BRANCH`)를 받습니다. 저장소가 비공개인 동안에는 GitHub에 로그인한 git으로
   `src\myapp-cluster-high`에 받아 두면, 그다음부터 런처가 `git pull`로 최신을 받습니다. 받지 못하면 이 앱 없이 실행합니다.
-- 화면은 영어입니다 (그 저장소의 kit에 한글 글꼴이 없습니다).
+- 스토어처럼 한글로 빌드합니다.
 - 계기판은 앱의 켜기로 그립니다. AK Cluster Layouts가 계기판에 켜져 있으면 ID8은 기다립니다("Waiting: AK Cluster
   Layouts is on the cluster"): Layouts를 끄고 봅니다.
 - 원작자의 허락으로 개인용으로만 씁니다: 이 저장소(공개)에는 그 코드·그림을 넣지 않습니다.
