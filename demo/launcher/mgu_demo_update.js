@@ -1,10 +1,10 @@
 'use strict';
 /**
- * mgu_demo_update.js - the MGU demo's launcher (mgu_demo.bat runs it): fetches the newest code of both repositories
- * into src\ before the demo starts, so the demo always shows the apps as they are on GitHub now. Only Node is needed
+ * mgu_demo_update.js - the MGU demo's launcher (mgu_demo.bat runs it): fetches the newest code of the repositories
+ * (myapp-id7, myapp-cluster and, when it can be fetched, myapp-cluster-high) into src\ before the demo starts, so the demo always shows the apps as they are on GitHub now. Only Node is needed
  * (git when it is there; otherwise the branch's tarball from GitHub, unpacked with tar, which Windows 10 and later have).
  *
- *   node mgu_demo_update.js            (APPS_BRANCH / CLUSTER_BRANCH: the branches; defaults below)
+ *   node mgu_demo_update.js            (APPS_BRANCH / CLUSTER_BRANCH / STYLES_BRANCH: the branches; defaults below)
  *
  * A repository that is already the newest is left as it is; with no internet the code there is used as it is.
  */
@@ -18,6 +18,8 @@ const SRC = path.join(HERE, 'src');
 const REPOS = [
     { name: 'myapp-id7', repo: 'akakingj/myapp-id7', branch: process.env.APPS_BRANCH || 'test' },
     { name: 'myapp-cluster', repo: 'akakingj/myapp-cluster', branch: process.env.CLUSTER_BRANCH || 'test' },
+    // MGU Styles: shown when it can be fetched; while the repository is private, a git clone in src\ (made with a GitHub login) is updated with git pull
+    { name: 'myapp-cluster-high', repo: 'akakingj/myapp-cluster-high', branch: process.env.STYLES_BRANCH || 'main', optional: true },
 ];
 const say = (s) => console.log(s);
 
@@ -58,7 +60,7 @@ async function update(r) {
     say('  ' + r.name + ' (' + r.branch + '): 받는 중' + (info ? ' ' + info.sha.slice(0, 7) : '') + ' ...');
     let tgz;
     try { tgz = await get('https://codeload.github.com/' + r.repo + '/tar.gz/' + ref); } catch (e) {
-        say('  ' + r.name + ': 받지 못했습니다 (' + e.message + ')' + (fs.existsSync(dir) ? ' - 지금 있는 코드로 실행합니다' : ''));
+        say('  ' + r.name + ': 받지 못했습니다 (' + e.message + ')' + (fs.existsSync(dir) ? ' - 지금 있는 코드로 실행합니다' : r.optional ? ' - 이 앱 없이 실행합니다' : ''));
         return;
     }
     const tmp = fs.mkdtempSync(path.join(SRC, '.new-'));

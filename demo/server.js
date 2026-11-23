@@ -9,7 +9,7 @@
  *     it (their GLSL, WebGL)
  *   - one car for every app: an automatic drive or your own values (the panel), and each app's settings
  *
- *   node demo/server.js [--cluster ../myapp-cluster] [--data <folder>] [--port 8077] [--no-open]
+ *   node demo/server.js [--cluster ../myapp-cluster] [--styles ../myapp-cluster-high] [--data <folder>] [--port 8077] [--no-open]
  *   (Windows: MGU_데모_실행.bat, which also fetches the newest code of both repositories first)
  *
  * The apps are not copied or changed for the demo: each is built from apps/<id> as the MGU Store builds it (this repo:
@@ -34,7 +34,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { spawn, spawnSync, fork, exec } = require('child_process');
 
-const DEMO_VERSION = '1.5.0';
+const DEMO_VERSION = '1.6.0';
 const A = path.resolve(__dirname, '..');                       // this repository (akakingj/myapp-id7)
 const WEB = path.join(__dirname, 'web');
 const GFX = path.join(A, 'kit', 'emu', 'web', 'gfx');            // the car's draw engine as WebAssembly (GPL-3.0-or-later)
@@ -51,6 +51,15 @@ const B = (() => {
     const o = opt('--cluster', null);
     const c = [o, process.env.DEMO_CLUSTER, path.join(A, '..', 'myapp-cluster')].filter(Boolean).map((p) => path.resolve(p));
     return c.find((p) => fs.existsSync(path.join(p, 'apps')) && fs.existsSync(path.join(p, 'tools', 'mgu', 'stage.js'))) || null;
+})();
+/** MGU Styles (waliworld's, akakingj/myapp-cluster-high: a private copy kept with its author's leave): --styles, else
+ *  beside the cluster repository. Its one app is built with its own kit, unchanged, and run with this repository's
+ *  hu-stub.js (the same MGU App Kit). Optional: without it the demo is as before. */
+const STYLES_APP = 'mgustyles_toro';
+const C = (() => {
+    const o = opt('--styles', null);
+    const c = [o, process.env.DEMO_STYLES, B && path.join(B, '..', 'myapp-cluster-high'), path.join(A, '..', 'myapp-cluster-high')].filter(Boolean).map((p) => path.resolve(p));
+    return c.find((p) => fs.existsSync(path.join(p, 'apps', STYLES_APP, 'app.json')) && fs.existsSync(path.join(p, 'kit', 'tools', 'build.py'))) || null;
 })();
 /** the demo's own files (each app's settings, the shared /dev/shm files, the cluster apps' staged code): --data */
 const DATA = path.resolve(opt('--data', path.join(__dirname, '.data')));
@@ -82,13 +91,14 @@ const koOf = (root) => { try { return JSON.parse(fs.readFileSync(path.join(root,
 let REG = {};
 function scanApps() {
     const reg = {};
-    [[A, 'A'], [B, 'B']].forEach(([root, repo]) => {
+    [[A, 'A'], [B, 'B'], [C, 'C']].forEach(([root, repo]) => {
         if (!root) return;
         const ko = koOf(root);
         let dirs = [];
         try { dirs = fs.readdirSync(path.join(root, 'apps')); } catch (e) { return; }
         dirs.forEach((id) => {
             if (repo === 'B' && !/^akakingj_/.test(id)) return;        // (the cluster repository: the AK apps only)
+            if (repo === 'C' && id !== STYLES_APP) return;              // (MGU Styles: its app only)
             if (reg[id]) return;
             let j;
             try { j = JSON.parse(fs.readFileSync(path.join(root, 'apps', id, 'app.json'), 'utf8')); } catch (e) { return; }
@@ -119,13 +129,15 @@ function buildApp(id) {
         }));
     }
     if (!PY) return Promise.resolve({ error: 'Python 3 was not found: this repository\'s apps are built with kit/tools/build.py.\nInstall Python 3 (python.org, "Add to PATH") and start the demo again.' });
+    // (MGU Styles: its own kit/tools/build.py in its own tree; in English, as its kit has no Korean fonts)
+    const root = a.repo === 'C' ? C : A, lang = a.repo === 'C' ? [] : ['--language', 'ko'];
     return new Promise((res) => {
         let out = '';
-        const p = spawn(PY.cmd, PY.args.concat([path.join(A, 'kit', 'tools', 'build.py'), '--preview-only', '--language', 'ko', id]), { cwd: A, windowsHide: true });
+        const p = spawn(PY.cmd, PY.args.concat([path.join(root, 'kit', 'tools', 'build.py'), '--preview-only'], lang, [id]), { cwd: root, windowsHide: true });
         p.stdout.on('data', (d) => { out += d; });
         p.stderr.on('data', (d) => { out += d; });
         p.on('error', (e) => { out += String(e); });
-        p.on('close', (code) => res(code === 0 ? { dir: path.join(A, 'dist', id), out } : { error: out || 'build.py exit ' + code }));
+        p.on('close', (code) => res(code === 0 ? { dir: path.join(root, 'dist', id), out } : { error: out || 'build.py exit ' + code }));
     });
 }
 
@@ -147,8 +159,11 @@ function forkApp(id, dir, fg, closed) {
     const env = Object.assign({}, process.env, { DEMO_SHM: SHM, DEMO_APP: id, MGU_EMU_CLOSED: closed ? '1' : '' });
     delete env.MGU_RENDERD_FILE;
     if (fg) env.MGU_RENDERD_SOCKET = SOCK; else delete env.MGU_RENDERD_SOCKET;
-    if (a.repo === 'B') env.KIT_DIR = path.join(dir, 'source', 'javascript', 'kit');
-    return fork(path.join(a.root, 'kit', 'tools', 'hu-stub.js'), [dir, data], { cwd: data, env, execArgv: ['-r', PRELOAD], stdio: ['ignore', 'pipe', 'pipe', 'ipc'] });
+    if (a.repo !== 'A') env.KIT_DIR = path.join(dir, 'source', 'javascript', 'kit');
+    if (a.repo === 'C') env.MGU_EMU_BACKGROUND = '1';            // (MGU Styles draws the cluster from impl.background)
+    // (MGU Styles' tree has no hu-stub.js: this repository's runs it, the app with its own kit)
+    const stub = path.join(a.repo === 'C' ? A : a.root, 'kit', 'tools', 'hu-stub.js');
+    return fork(stub, [dir, data], { cwd: data, env, execArgv: ['-r', PRELOAD], stdio: ['ignore', 'pipe', 'pipe', 'ipc'] });
 }
 
 /* ---------------- WebSocket (RFC 6455), server side (from kit/tools/emu.js) ---------------- */
@@ -291,7 +306,7 @@ function sourcesInfo() {
         if (!s.branch) { try { s.branch = spawnSync('git', ['-C', root, 'rev-parse', '--abbrev-ref', 'HEAD'], { encoding: 'utf8', windowsHide: true }).stdout.trim(); } catch (e) { /* no git */ } }
         return Object.assign({ name }, s);
     };
-    return [one(A, 'myapp-id7'), one(B, 'myapp-cluster')];
+    return [one(A, 'myapp-id7'), one(B, 'myapp-cluster')].concat(C ? [one(C, 'myapp-cluster-high')] : []);
 }
 /** the cluster's glass as the car shows it, from Cluster Layouts' layout_common.js (its own measurements of the car):
  *  the map's place, the car's bottom strip, the driver camera's cowl, the slanted top corners, the stock warning
@@ -1011,7 +1026,7 @@ function clusterReplay(ws) {
 let watchers = [];
 function watchAll() {
     watchers.forEach((w) => w.close());
-    const dirs = [[A, 'apps'], [A, 'kit/runtime'], [B, 'apps'], [B, 'shared'], [B, 'kit/runtime']].filter(([r]) => r).map(([r, d]) => [r, path.join(r, d)]);
+    const dirs = [[A, 'apps'], [A, 'kit/runtime'], [B, 'apps'], [B, 'shared'], [B, 'kit/runtime'], [C, 'apps'], [C, 'kit/runtime']].filter(([r]) => r).map(([r, d]) => [r, path.join(r, d)]);
     let t = null, hit = new Set(), rescan = false;
     const kick = (root, dir) => (ev, f) => {
         if (f && /(^|[/\\])\.|~$|\.swp$|\.tmp$/.test(String(f))) return;            // editor temp files

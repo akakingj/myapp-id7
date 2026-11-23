@@ -1,14 +1,16 @@
 @echo off
-rem MGU demo: every app of akakingj/myapp-id7 and akakingj/myapp-cluster on this PC, in one browser window.
-rem Each start fetches the newest code of both repositories first (into src\), then runs the demo.
+rem MGU demo: every app of akakingj/myapp-id7 and akakingj/myapp-cluster (and MGU Styles, akakingj/myapp-cluster-high,
+rem when it can be fetched) on this PC, in one browser window.
+rem Each start fetches the newest code of the repositories first (into src\), then runs the demo.
 rem Needs Node.js (nodejs.org, LTS) and Python 3 (python.org, "Add python.exe to PATH").
 setlocal
 cd /d "%~dp0"
 title MGU demo
 
-rem ---- the branches the demo shows (the test branches: what is being made now) ----
+rem ---- the branches the demo shows (the test branches: what is being made now; MGU Styles: main) ----
 set APPS_BRANCH=test
 set CLUSTER_BRANCH=test
+set STYLES_BRANCH=main
 
 where node 1>NUL 2>NUL
 if errorlevel 1 (

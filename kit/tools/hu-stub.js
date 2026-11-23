@@ -111,6 +111,11 @@ function headUnit(stage, o) {
         const run = live ? async (impl) => {
             // as mgu.js: the settings screen / sheet, the app, then its entry state opened
             try { await wireSettings(src, kitDir, spec, hu.settingsRows)(ctx); } catch (e) { log.error('settings screen', e); }
+            // as mgu.js: impl.background(bg) first, its result ctx.background - where the runner asks for it
+            // (MGU_EMU_BACKGROUND=1: the MGU demo, for apps that do their work there, as MGU Styles does)
+            if (process.env.MGU_EMU_BACKGROUND === '1' && impl.background) {
+                try { ctx.background = await impl.background({ app: ctx.app || null, log, settings, signals: ctx.signals, spec, dataDir: out }); } catch (e) { log.error('background start', e); }
+            }
             try { await impl.start(ctx); } catch (e) { log.error('app start', e); }
             log.info('initialized');
             if (!o.closed) ui.open(main);           // (closed: started in the background, as after the user left it)
