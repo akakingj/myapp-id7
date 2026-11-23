@@ -207,3 +207,68 @@ details.adv[open] > summary { color: var(--text); }
 #glassView { pointer-events: none; }
 .cap label.cv { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; }
 .cap label.cv select { font-size: 11px; padding: 1px 4px; }
+
+/* ---- the layout editor (editor.js): AK Cluster Layouts' Custom 1-3, over the cluster and below it ---- */
+#editView { display: none; pointer-events: none; }
+body.editing #editView { display: block; pointer-events: auto; cursor: default; touch-action: none; }
+#editView .ep { cursor: move; }
+#editView .ep rect:first-child { pointer-events: all; }
+#editView .eh { cursor: nwse-resize; }
+#editView .eh[data-h=ne], #editView .eh[data-h=sw] { cursor: nesw-resize; }
+#editView .eh[data-h=e], #editView .eh[data-h=w] { cursor: ew-resize; }
+#editView .eh[data-h=n], #editView .eh[data-h=s] { cursor: ns-resize; }
+#editView text { pointer-events: none; paint-order: stroke; stroke: #000; stroke-width: 4px; }
+body.editing #capStage, body.editing #stage, body.editing #legend { display: none; }
+#editor { display: none; }
+body.editing #editor { display: flex; flex-direction: column; flex: none; min-height: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+#cap .on, #editBtn.on { background: #1f3550; border-color: var(--accent); color: #fff; }
+.ehd { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.ehd b { font-size: 13px; }
+.ehd .seg2 { margin: 0; }
+.ehd .sp { flex: 1; }
+.ehd #edState { font-size: 11px; }
+.ehd .err, .ehd #edCount.err { color: var(--err); }
+#edCount { font-size: 11px; }
+.ecols { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(200px, 1fr) minmax(240px, 1.2fr) minmax(260px, 1.3fr); }
+.ecol { min-width: 0; min-height: 0; overflow: auto; padding: 8px 10px; border-right: 1px solid var(--line); }
+.ecol:last-child { border-right: 0; }
+.ecol h3 { margin: 0 0 6px; font-size: 12px; color: var(--dim); font-weight: 600; }
+.ecol h4 { margin: 10px 0 4px; font-size: 11px; color: var(--accent); font-weight: 600; }
+.ecol > select { margin: 6px 0; width: 100%; }
+.el { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
+.er { display: grid; grid-template-columns: 10px auto 1fr 14px; align-items: center; gap: 6px; padding: 3px 6px; border-radius: 4px; cursor: pointer; font-size: 12px; white-space: nowrap; }
+.er span { overflow: hidden; text-overflow: ellipsis; }
+.er:hover { background: #ffffff0a; }
+.er.sel { background: #1f3550; }
+.er.over { opacity: .45; }
+.er .dot { width: 10px; height: 10px; border-radius: 3px; }
+.er .wd { font-weight: 700; text-align: center; }
+.er .wd.err { color: var(--err); } .er .wd.warn { color: var(--warn); }
+.eh2 { margin-bottom: 6px; }
+.eg { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 6px 8px; margin-bottom: 8px; }
+.ef { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--dim); min-width: 0; }
+.ef.wide { grid-column: 1 / -1; }
+.ef input[type=number], .ef input[type=text], .ef select { width: 100%; padding: 3px 6px; font-size: 12px; }
+.ef input[type=checkbox] { align-self: flex-start; margin: 4px 0; }
+.rg { display: flex; align-items: center; gap: 4px; }
+.rg input { flex: 1; min-width: 0; accent-color: var(--accent); }
+.rg .rv { font: 11px ui-monospace, monospace; width: 30px; text-align: right; color: var(--text); }
+.cl { display: flex; gap: 4px; align-items: center; }
+.cl select { flex: 1; min-width: 0; }
+input[type=color] { width: 30px; height: 24px; padding: 0 2px; border: 1px solid var(--line); border-radius: 4px; background: #1d222a; cursor: pointer; flex: none; }
+.ecs { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 3px 8px; }
+.ec { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--dim); }
+.ec.own { color: var(--text); }
+.ec span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ew { margin: 4px 0; padding: 0; list-style: none; font-size: 11px; display: flex; flex-direction: column; gap: 2px; }
+.ew li::before { content: '•'; margin-right: 5px; }
+.ew .err, div.ew.err { color: #ff9e98; } .ew .warn { color: #f3cf7a; } .ew .info { color: var(--dim); } .ew .ok { color: #8fe0ad; }
+div.ew.err { padding: 6px 10px; border-bottom: 1px solid var(--line); }
+button.primary { background: #1f3550; border-color: var(--accent); color: #fff; }
+button.danger { border-color: #5a2320; color: #ffb3ad; }
+button:disabled { opacity: .4; cursor: default; }
+#editor code { font-size: 10.5px; }
+body.narrow .ecols { grid-template-columns: 1fr; }
+/* (narrower: two columns over the layout's; the whole editor scrolls, not each column) */
+@media (max-width: 1300px) { .ecols { grid-template-columns: minmax(180px, .9fr) minmax(220px, 1.1fr); overflow: auto; align-content: start; grid-auto-rows: max-content; } .ecol { overflow: visible; min-height: auto; } .ecol:last-child { grid-column: 1 / -1; border-top: 1px solid var(--line); } }
+body.narrow .ecols { overflow: auto; grid-auto-rows: max-content; } body.narrow .ecol { overflow: visible; min-height: auto; }
