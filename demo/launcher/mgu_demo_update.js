@@ -19,7 +19,8 @@ const REPOS = [
     { name: 'myapp-id7', repo: 'akakingj/myapp-id7', branch: process.env.APPS_BRANCH || 'test' },
     { name: 'myapp-cluster', repo: 'akakingj/myapp-cluster', branch: process.env.CLUSTER_BRANCH || 'test' },
     // MGU Styles: shown when it can be fetched; while the repository is private, a git clone in src\ (made with a GitHub login) is updated with git pull
-    { name: 'myapp-cluster-high', repo: 'akakingj/myapp-cluster-high', branch: process.env.STYLES_BRANCH || 'ak', optional: true },
+    // (its work branch is test; an older mgu_demo.bat still says ak, the branch's former name)
+    { name: 'myapp-cluster-high', repo: 'akakingj/myapp-cluster-high', branch: process.env.STYLES_BRANCH && process.env.STYLES_BRANCH !== 'ak' ? process.env.STYLES_BRANCH : 'test', optional: true },
 ];
 const say = (s) => console.log(s);
 
