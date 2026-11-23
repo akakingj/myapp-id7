@@ -94,6 +94,12 @@ async function update(r) {
     fs.mkdirSync(SRC, { recursive: true });
     say('최신 코드 확인 (GitHub)');
     for (const r of REPOS) { try { await update(r); } catch (e) { say('  ' + r.name + ': ' + e.message); } }
+    // this launcher itself as myapp-id7 has it now (a new repository or branch reaches the PC without a new zip; from the next start)
+    try {
+        const mine = path.join(SRC, 'myapp-id7', 'demo', 'launcher', 'mgu_demo_update.js');
+        const next = fs.readFileSync(mine, 'utf8');
+        if (next.indexOf('mgu_demo_update.js') > 0 && next !== fs.readFileSync(__filename, 'utf8')) { fs.writeFileSync(__filename, next); say('  런처(mgu_demo_update.js)를 새 버전으로 바꿨습니다: 다음 실행부터 적용'); }
+    } catch (e) { /* as it is */ }
     // Python 3 builds myapp-id7's apps (kit/tools/build.py), as the MGU Store does
     const py = (process.platform === 'win32' ? [['py', '-3'], ['python'], ['python3']] : [['python3']]).some(([c, ...a]) => {
         try { const p = spawnSync(c, a.concat(['-c', 'import sys; print(sys.version_info[0])']), { encoding: 'utf8', windowsHide: true }); return p.status === 0 && p.stdout.trim() === '3'; } catch (e) { return false; }
