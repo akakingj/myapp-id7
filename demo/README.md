@@ -25,7 +25,7 @@
 
 `src\myapp-cluster-high`(직접 실행: `--styles 폴더`, 또는 myapp-id7 옆의 `myapp-cluster-high` 폴더)가 있으면
 AK Cluster ID8(`akakingj_cluster_id8`)도 앱 목록에 나오고, 그 저장소의 `kit/tools/build.py`로 빌드해 실행합니다.
-그 저장소에 함께 있는 원본 MGU Styles(`mgustyles_toro`)는 실행하지 않습니다.
+그 저장소의 앱은 AK Cluster ID8 하나만 실행합니다.
 
 - 런처가 `test` 브랜치(`STYLES_BRANCH`)를 받습니다. 저장소가 비공개인 동안에는 GitHub에 로그인한 git으로
   `src\myapp-cluster-high`에 받아 두면, 그다음부터 런처가 `git pull`로 최신을 받습니다. 받지 못하면 이 앱 없이 실행합니다.

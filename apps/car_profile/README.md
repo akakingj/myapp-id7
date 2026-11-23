@@ -5,7 +5,7 @@ One place for the car's engine values and units. Set them here once and the othe
 | Setting | Followed by |
 |---|---|
 | Engine (Auto / Diesel / Petrol / Plug-in hybrid) | M Vitals, Redline, Warm-Up, Virtual Dyno, AK Cluster Layouts and Centre (their Vehicle; the others take a plug-in hybrid as their own setting says) |
-| Yellow light at | Redline (*Lights from*), AK Cluster Layouts (the amber zone of ID6 M, ID7 M and ID8 M, Track's and GT3's tach turning yellow, Simple's rpm), AK Cluster Centre (*Shift light: starts at*) |
+| Yellow light at | Redline (*Lights from*), AK Cluster Layouts (the amber zone of ID6 M and ID7 M, Track's and GT3's tach turning yellow, Simple's rpm), AK Cluster Centre (*Shift light: starts at*) |
 | Red light at (Auto: the redline) | AK Cluster Layouts (the red zone, Simple's rpm red) |
 | Shift now warning at (the shift point; Auto: the redline less 300) | Redline (its fixed one), Warm-Up, AK Cluster Layouts, AK Cluster Centre (*Shift light: flashes at*) |
 | Gauge goes up to (the end of the rev scale) | M Vitals, Redline, Virtual Dyno (*Graph up to*), AK Cluster |

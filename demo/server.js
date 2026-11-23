@@ -53,9 +53,9 @@ const B = (() => {
     return c.find((p) => fs.existsSync(path.join(p, 'apps')) && fs.existsSync(path.join(p, 'tools', 'mgu', 'stage.js'))) || null;
 })();
 /** AK Cluster ID8 (akakingj/myapp-cluster-high: the owner's modification of waliworld's MGU Styles, kept with its
- *  author's leave): --styles, else beside the cluster repository. Its one app, akakingj_cluster_id8 (the original's
- *  folder, mgustyles_toro, kept there, is not run), is built with its own kit and run with this repository's
- *  hu-stub.js (the same MGU App Kit). Optional: without it the demo is as before. */
+ *  author's leave): --styles, else beside the cluster repository. Only its app akakingj_cluster_id8 is listed (any other
+ *  folder there is not run); it is built with its own kit and run with this repository's hu-stub.js (the same MGU
+ *  App Kit). Optional: without that repository the demo runs without it. */
 const STYLES_APP = 'akakingj_cluster_id8';
 const C = (() => {
     const o = opt('--styles', null);
