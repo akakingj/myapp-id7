@@ -34,7 +34,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { spawn, spawnSync, fork, exec } = require('child_process');
 
-const DEMO_VERSION = '1.6.3';
+const DEMO_VERSION = '1.6.4';
 const A = path.resolve(__dirname, '..');                       // this repository (akakingj/myapp-id7)
 const WEB = path.join(__dirname, 'web');
 const GFX = path.join(A, 'kit', 'emu', 'web', 'gfx');            // the car's draw engine as WebAssembly (GPL-3.0-or-later)
@@ -52,11 +52,11 @@ const B = (() => {
     const c = [o, process.env.DEMO_CLUSTER, path.join(A, '..', 'myapp-cluster')].filter(Boolean).map((p) => path.resolve(p));
     return c.find((p) => fs.existsSync(path.join(p, 'apps')) && fs.existsSync(path.join(p, 'tools', 'mgu', 'stage.js'))) || null;
 })();
-/** MGU Styles (waliworld's, akakingj/myapp-cluster-high: a private copy kept with its author's leave): --styles, else
- *  beside the cluster repository. Its apps (MGU Styles, mgustyles_toro, and on the branch ak AK Cluster ID8, the
- *  owner's own modification of it) are built with its own kit and run with this repository's hu-stub.js (the same MGU
- *  App Kit). Optional: without it the demo is as before. */
-const STYLES_APP = 'mgustyles_toro';
+/** AK Cluster ID8 (akakingj/myapp-cluster-high: the owner's modification of waliworld's MGU Styles, kept with its
+ *  author's leave): --styles, else beside the cluster repository. Its one app, akakingj_cluster_id8 (the original's
+ *  folder, mgustyles_toro, kept there, is not run), is built with its own kit and run with this repository's
+ *  hu-stub.js (the same MGU App Kit). Optional: without it the demo is as before. */
+const STYLES_APP = 'akakingj_cluster_id8';
 const C = (() => {
     const o = opt('--styles', null);
     const c = [o, process.env.DEMO_STYLES, B && path.join(B, '..', 'myapp-cluster-high'), path.join(A, '..', 'myapp-cluster-high')].filter(Boolean).map((p) => path.resolve(p));
@@ -99,7 +99,7 @@ function scanApps() {
         try { dirs = fs.readdirSync(path.join(root, 'apps')); } catch (e) { return; }
         dirs.forEach((id) => {
             if (repo === 'B' && !/^akakingj_/.test(id)) return;        // (the cluster repository: the AK apps only)
-            if (repo === 'C' && !/^(mgustyles_|akakingj_cluster_id8$)/.test(id)) return;   // (its apps: MGU Styles, and on the branch ak AK Cluster ID8)
+            if (repo === 'C' && id !== STYLES_APP) return;   // (its one app: AK Cluster ID8)
             if (reg[id]) return;
             let j;
             try { j = JSON.parse(fs.readFileSync(path.join(root, 'apps', id, 'app.json'), 'utf8')); } catch (e) { return; }

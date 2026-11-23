@@ -21,17 +21,18 @@
 
 직접 실행: `node demo/server.js --cluster ../myapp-cluster [--styles ../myapp-cluster-high] [--data 폴더] [--port 8077] [--no-open]`
 
-## MGU Styles (akakingj/myapp-cluster-high)
+## AK Cluster ID8 (akakingj/myapp-cluster-high)
 
 `src\myapp-cluster-high`(직접 실행: `--styles 폴더`, 또는 myapp-id7 옆의 `myapp-cluster-high` 폴더)가 있으면
-그 저장소의 앱도 앱 목록에 나오고, 그 저장소의 `kit/tools/build.py`로 빌드해 실행합니다.
-`ak` 브랜치에는 원본 MGU Styles(`mgustyles_toro`)와 개인 수정판 AK Cluster ID8(`akakingj_cluster_id8`)이 함께 있습니다.
+AK Cluster ID8(`akakingj_cluster_id8`)도 앱 목록에 나오고, 그 저장소의 `kit/tools/build.py`로 빌드해 실행합니다.
+그 저장소에 함께 있는 원본 MGU Styles(`mgustyles_toro`)는 실행하지 않습니다.
 
 - 런처가 `ak` 브랜치(`STYLES_BRANCH`)를 받습니다. 저장소가 비공개인 동안에는 GitHub에 로그인한 git으로
   `src\myapp-cluster-high`에 받아 두면, 그다음부터 런처가 `git pull`로 최신을 받습니다. 받지 못하면 이 앱 없이 실행합니다.
 - 화면은 영어입니다 (그 저장소의 kit에 한글 글꼴이 없습니다).
-- 계기판은 앱 설정의 켜기로 그립니다. AK Cluster Layouts나 다른 MGU Styles와 겹치므로 하나만 켜고 봅니다.
-- 원작자의 허락으로 개인용으로만 씁니다: 이 저장소(공개)에는 MGU Styles의 코드·그림을 넣지 않습니다.
+- 계기판은 앱의 켜기로 그립니다. AK Cluster Layouts가 계기판에 켜져 있으면 ID8은 기다립니다("Waiting: AK Cluster
+  Layouts is on the cluster"): Layouts를 끄고 봅니다.
+- 원작자의 허락으로 개인용으로만 씁니다: 이 저장소(공개)에는 그 코드·그림을 넣지 않습니다.
 
 ## 업데이트 방식: 앱 코드만 고치면 된다
 
