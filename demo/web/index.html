@@ -12,7 +12,6 @@
   <div class="cap" id="capCluster"><b>계기판</b><span id="clusterInfo"></span><span class="sp"></span>
     <label class="cv" title="실차 계기판 유리에서 보이는 모양 (Cluster Layouts의 layout_common.js 실측값)">실차 모습
       <select id="carView"><option value="off">끔</option><option value="glass">유리 모양</option><option value="guides">유리 + 안내선</option></select></label>
-    <button id="editBtn" title="AK Cluster Layouts의 커스텀 1-3을 계기판 위에서 만듭니다">✏️ 레이아웃 편집</button>
     <button id="shotCluster" title="계기판을 1920×720 PNG로 저장">📷 저장</button></div>
   <div id="cluster" class="car" aria-label="계기판, 1920 x 720">
     <canvas id="mock" class="full" width="1920" height="720"></canvas>
@@ -34,13 +33,10 @@
     <div class="glass"></div>
     <!-- (over the LCD look: the cowl and the corners are not the screen) -->
     <svg id="glassView" class="full" viewBox="0 0 1920 720" preserveAspectRatio="none" aria-hidden="true"></svg>
-    <!-- (the layout editor's outlines: over everything, while it is open) -->
-    <svg id="editView" class="full" viewBox="0 0 1920 720" preserveAspectRatio="none"></svg>
     <div id="clusterNote"></div>
     <pre id="clusterErr"></pre>
   </div>
 
-  <div id="editor" aria-label="레이아웃 편집기"></div>
   <div class="cap" id="capStage"><b>중앙 디스플레이 (MGU)</b><span id="stageInfo">앱 아이콘을 누르면 열립니다 · 왼쪽 위 집 모양: 앱 목록</span><span class="sp"></span><button id="shot" title="중앙 디스플레이를 1920×720 PNG로 저장">📷 저장</button></div>
   <div id="stage" tabindex="0" aria-label="중앙 디스플레이, 1920 x 720">
     <!-- from kit/emu/web/index.html: the HMI around the app's surface, and its app list -->

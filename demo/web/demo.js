@@ -2,7 +2,6 @@
 // renderer stream through the car's draw engine, gfx/mgu-gfx.js as WebAssembly; mouse = touchscreen, keyboard / wheel =
 // iDrive controller; the HMI's app list), the cluster and the HUD the AK Cluster apps draw (WebGL), and the panel: one
 // car for every app, the open app's settings. Sections marked "from kit/emu/web/emu-app.js" are that file's.
-import { makeEditor } from './editor.js';
 const W = 1920, H = 720;
 const $ = (s) => document.querySelector(s);
 const el = (tag, attrs, ...kids) => {
@@ -96,7 +95,6 @@ function onText(m) {
     $('#ver').textContent = 'v' + m.demo;
     $('#src').textContent = (m.sources || []).map((s) => s.name + ': ' + (s.missing ? '없음' : (s.branch || '?') + ' ' + (s.commit || '') + (s.date ? ' (' + s.date + ')' : ''))).join('\n') + (m.python ? '' : '\nPython 3 없음: idrive7-apps 앱은 빌드할 수 없습니다');
     if (m.cluster) { geoNow = m.cluster; Cluster.geo(m.cluster); }
-    Editor.hello(m);
     buildPicker(m.apps, S.titles);
     if (m.bg) { const b = $('#bgimg'); b.src = '/bg?' + Date.now(); b.hidden = false; }
     $('#log').replaceChildren();
@@ -123,7 +121,6 @@ function onText(m) {
   case 'cluster-reset': Cluster.reset(m.fs); break;
   case 'cluster': Cluster.layers(m.app, m.layers, m.fsNew); break;
   case 'mapwin': Cluster.mapWin(m.r); break;
-  case 'designs': Editor.designs(m.designs); break;
   default: break;
   }
   overlay();
@@ -591,7 +588,7 @@ const Cluster = (() => {
   }
   requestAnimationFrame(frame);
   return {
-    geo(g) { geo = g; $('#strip').style.top = g.stripY / 7.2 + '%'; placed = ''; dirty = true; glassView(); Editor.geo(); },
+    geo(g) { geo = g; $('#strip').style.top = g.stripY / 7.2 + '%'; placed = ''; dirty = true; glassView(); },
     mapWin(r) { win = r || null; placed = ''; dirty = true; },
     reset(fs) { Object.keys(FS).forEach((k) => delete FS[k]); Object.assign(FS, fs || {}); apps.clear(); px.clear(); errors.clear(); dirty = true; },
     layers(app, layers, fsNew) {
@@ -799,13 +796,9 @@ function layout() {
   document.body.classList.toggle('narrow', narrow);
   const m = $('#main'), cs = getComputedStyle(m), px = (k) => parseFloat(cs[k]) || 0;
   const aw = m.getBoundingClientRect().width - px('paddingLeft') - px('paddingRight');
-  // (the layout editor open: the cluster over the editor, which takes the centre display's place)
-  const editing = document.body.classList.contains('editing');
-  const fixed = (editing ? ['#capCluster'] : ['#capCluster', '#capStage', '#legend']).reduce((n, s) => n + ($(s).offsetHeight || 0), 0) + (editing ? 3 : 5) * px('rowGap');
+  const fixed = ['#capCluster', '#capStage', '#legend'].reduce((n, s) => n + ($(s).offsetHeight || 0), 0) + 5 * px('rowGap');
   const ah = (narrow ? window.innerHeight * 0.9 : m.clientHeight) - px('paddingTop') - px('paddingBottom') - fixed;
-  const w = Math.max(240, Math.floor(Math.min(aw, (editing ? ah * 0.56 : ah / 2) * W / H)));
-  const ed = $('#editor');
-  if (editing) { ed.style.width = Math.max(w, Math.min(aw, 1100)) + 'px'; ed.style.height = Math.max(220, Math.floor(ah - w * H / W) - 14) + 'px'; } else { ed.style.width = ''; ed.style.height = ''; }
+  const w = Math.max(240, Math.floor(Math.min(aw, ah / 2 * W / H)));
   [stage, $('#cluster')].forEach((e) => { if (e.style.width !== w + 'px') e.style.width = w + 'px'; });
   ['#capCluster', '#capStage'].forEach((s) => { $(s).style.width = w + 'px'; $(s).style.alignSelf = 'center'; });
 }
@@ -815,7 +808,6 @@ window.addEventListener('resize', layout);
 const clock = () => { $('#hmi-clock').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }); };   // (24 h, as the car)
 setInterval(clock, 10000); clock();
 
-const Editor = makeEditor({ $, el, send, geo: () => geoNow, log: (l, s) => addLog([[l, s]]) });
 buildCar();
 layout();
 connect();

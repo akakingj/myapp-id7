@@ -34,7 +34,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { spawn, spawnSync, fork, exec } = require('child_process');
 
-const DEMO_VERSION = '1.4.0';
+const DEMO_VERSION = '1.5.0';
 const A = path.resolve(__dirname, '..');                       // this repository (akakingj/myapp-id7)
 const WEB = path.join(__dirname, 'web');
 const GFX = path.join(A, 'kit', 'emu', 'web', 'gfx');            // the car's draw engine as WebAssembly (GPL-3.0-or-later)
@@ -279,7 +279,7 @@ server.on('upgrade', (req, sock, head) => {
 });
 function hello() {
     return { t: 'hello', apps: listApps(), titles: appTitles(), auto: listApps().filter((id) => REG[id].auto), repo: listApps().reduce((o, id) => { o[id] = REG[id].repo; return o; }, {}),
-        app: appId, bg: !!BG, touch: Touch.on, demo: DEMO_VERSION, cluster: clusterGeometry(), sources: sourcesInfo(), python: !!PY, custom: customInfo(), designs: Custom.designs };
+        app: appId, bg: !!BG, touch: Touch.on, demo: DEMO_VERSION, cluster: clusterGeometry(), sources: sourcesInfo(), python: !!PY };
 }
 /** what each repository is (the launcher writes .demo-source.json: branch and commit) */
 function sourcesInfo() {
@@ -328,79 +328,6 @@ function clusterGeometry() {
         } catch (x) { /* the defaults */ }
     }
     return g;
-}
-
-/* ---------------- the layout editor: AK Cluster Layouts' Custom 1-3 (its custom.js) ----------------
- * The page edits the designs; they are kept in DATA/custom_layouts.json and written to the Layouts app's data folder,
- * where custom.js reads them again within a second (the app redraws the layout on the cluster). While the editor is
- * open, the app shows the slot being edited; closing it puts back the layouts it showed before. */
-const LAYOUTS_ID = 'akakingj_cluster_layouts';
-const CUSTOM_FILE = path.join(DATA, 'custom_layouts.json');
-const Custom = { designs: [], prev: null };
-const PREV_FILE = path.join(DATA, 'custom_prev.json');        // (the layouts before the editor: kept if the demo is closed while it's open)
-try { const j = JSON.parse(fs.readFileSync(CUSTOM_FILE, 'utf8')); if (Array.isArray(j)) Custom.designs = j; } catch (e) { /* none yet */ }
-try { Custom.prev = JSON.parse(fs.readFileSync(PREV_FILE, 'utf8')); } catch (e) { Custom.prev = null; }
-/** what the editor needs of the app: the colours' roles, fonts and their letters, the readings, the limit */
-function customInfo() {
-    if (!B || !REG[LAYOUTS_ID]) return null;
-    const dir = path.join(B, 'apps', LAYOUTS_ID);
-    if (!fs.existsSync(path.join(dir, 'custom.js'))) return { missing: true };
-    try {
-        Object.keys(require.cache).forEach((k) => { if (k.indexOf(dir) === 0) delete require.cache[k]; });
-        const cu = require(path.join(dir, 'custom.js')), C = require(path.join(dir, 'layout_common.js'));
-        const chars = {};
-        try { const fb = require(path.join(dir, 'font_baked.js')); Object.keys(fb).forEach((k) => { chars[k] = fb[k].chars; }); } catch (e) { /* no check */ }
-        const s = (v) => (typeof v === 'string' ? v : '');
-        let shipped = [];
-        try { const x = require(path.join(dir, 'custom_layouts.js')); if (Array.isArray(x)) shipped = x; } catch (e) { /* none */ }
-        return { roles: cu.BASE, fonts: cu.FONTS, chars, max: cu.MAX_PIECES, shipped,
-            readouts: Object.keys(C.READOUTS).map((k) => ({ k, short: s(C.READOUTS[k].short), long: s(C.READOUTS[k].long) })),
-            gauges: Object.keys(C.GAUGES).map((k) => ({ k, label: s(C.GAUGES[k].label) })) };
-    } catch (e) { return { error: String(e.message || e) }; }
-}
-function writeAtomic(f, text) { fs.mkdirSync(path.dirname(f), { recursive: true }); const t = f + '.tmp'; fs.writeFileSync(t, text); fs.renameSync(t, f); }
-function customWrite() {
-    const text = JSON.stringify(Custom.designs, null, 1);
-    try { writeAtomic(CUSTOM_FILE, text); writeAtomic(path.join(dataDir(LAYOUTS_ID), 'custom_layouts.json'), text); } catch (e) { appLog('error', 'demo: custom layouts not saved: ' + e.message); }
-}
-/** a setting of an app, running (the front or the background copy) or not (its settings file, read when it starts) */
-function settingsOf(id) { try { return JSON.parse(fs.readFileSync(path.join(dataDir(id), 'settings.json'), 'utf8')) || {}; } catch (e) { return {}; } }
-/** an app's settings as app.json has them before anything is set */
-function defaultsOf(id) {
-    const out = {};
-    try { (JSON.parse(fs.readFileSync(path.join(REG[id].root, 'apps', id, 'app.json'), 'utf8')).settings || []).forEach((x) => { if (x && x.key && x.default !== undefined) out[x.key] = x.default; }); } catch (e) { /* none */ }
-    return out;
-}
-function setIn(id, k, v) {
-    const ch = App.childId === id && App.child ? App.child : (Bg.get(id) || {}).child;
-    if (ch && ch.connected) { try { ch.send({ t: 'set', k, v }); return; } catch (e) { /* gone: the file */ } }
-    const s = settingsOf(id); s[k] = v;
-    try { writeAtomic(path.join(dataDir(id), 'settings.json'), JSON.stringify(s, null, 1)); } catch (e) { /* next time */ }
-}
-const SHOW_KEYS = ['layout', 'layoutSport', 'layoutEco', 'show'];
-function customShow(slot) {
-    if (!REG[LAYOUTS_ID]) return;
-    if (!Custom.prev) { const s = Object.assign(defaultsOf(LAYOUTS_ID), settingsOf(LAYOUTS_ID)); Custom.prev = {}; SHOW_KEYS.forEach((k) => { if (s[k] !== undefined) Custom.prev[k] = s[k]; }); try { writeAtomic(PREV_FILE, JSON.stringify(Custom.prev)); } catch (e) { /* this run only */ } }
-    const want = { layout: 'custom' + slot, layoutSport: 'same', layoutEco: 'same', show: 'on' };
-    Object.keys(want).forEach((k) => setIn(LAYOUTS_ID, k, want[k]));
-    appLog('info', 'demo: layout editor: Custom ' + slot + ' on the cluster');
-}
-function customDone() {
-    if (!Custom.prev || !REG[LAYOUTS_ID]) { Custom.prev = null; return; }
-    const p = Custom.prev; Custom.prev = null;
-    try { fs.unlinkSync(PREV_FILE); } catch (e) { /* none */ }
-    const d = defaultsOf(LAYOUTS_ID);
-    SHOW_KEYS.forEach((k) => { const v = p[k] !== undefined ? p[k] : d[k]; if (v !== undefined) setIn(LAYOUTS_ID, k, v); });
-    appLog('info', 'demo: layout editor closed: the layouts as before (' + (p.layout || 'default') + ')');
-}
-/** the page's designs: at most the three slots, each an object with pieces, not too big */
-function customSave(list, ws) {
-    if (!Array.isArray(list)) return;
-    const keep = list.filter((d) => d && typeof d === 'object' && [1, 2, 3].indexOf(Number(d.slot)) >= 0 && Array.isArray(d.pieces)).slice(0, 3);
-    if (JSON.stringify(keep).length > 300000) { appLog('warn', 'demo: custom layouts too big: not saved'); return; }
-    Custom.designs = keep;
-    customWrite();
-    pages.forEach((w) => { if (w !== ws) w.send({ t: 'designs', designs: keep }); });
 }
 
 /* ---------------- renderer daemon (kit/renderd/PROTOCOL.md), ticks, touch, the controller (from kit/tools/emu.js) ---------------- */
@@ -781,9 +708,6 @@ function onPage(ws, m) {
     // what the car's renderer sends the app as ERROR (an upload past its limits, a bad pixmap, ...)
     case 'rerror': if (R) toApp(msg(E.ERROR, null, Buffer.from(String(m.s).slice(0, 256)))); break;
     case 'replay': replay(ws); break;
-    case 'custom-save': customSave(m.designs, ws); break;
-    case 'custom-show': if ([1, 2, 3].indexOf(Number(m.slot)) >= 0) customShow(Number(m.slot)); break;
-    case 'custom-done': customDone(); break;
     // the renderer offers touch routing or not: the app reads that when it connects, so it reconnects now
     case 'touch-routing':
         if (!!m.on === Touch.on) break;
@@ -1119,7 +1043,6 @@ const buildOnce = buildApp;
 function queuedBuild(id) { const p = (buildQ[id] || Promise.resolve()).then(() => buildOnce(id)); buildQ[id] = p.catch(() => {}); return p; }
 
 /* ---------------- go ---------------- */
-if (REG[LAYOUTS_ID]) { if (Custom.designs.length) customWrite(); if (Custom.prev) customDone(); }     // (the editor's designs in the app's folder; closed while it was open: as before)
 function openBrowser(url) {
     const cmd = process.platform === 'win32' ? 'start "" "' + url + '"' : process.platform === 'darwin' ? 'open "' + url + '"' : 'xdg-open "' + url + '"';
     exec(cmd, () => {});
