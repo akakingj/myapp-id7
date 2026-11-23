@@ -34,7 +34,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { spawn, spawnSync, fork, exec } = require('child_process');
 
-const DEMO_VERSION = '1.2.0';
+const DEMO_VERSION = '1.3.0';
 const A = path.resolve(__dirname, '..');                       // this repository (akakingj/myapp-id7)
 const WEB = path.join(__dirname, 'web');
 const GFX = path.join(A, 'kit', 'emu', 'web', 'gfx');            // the car's draw engine as WebAssembly (GPL-3.0-or-later)
@@ -293,18 +293,40 @@ function sourcesInfo() {
     };
     return [one(A, 'myapp-id7'), one(B, 'myapp-cluster')];
 }
-/** the map's place on the cluster and the car's own bottom strip, from Cluster Layouts' layout_common.js */
+/** the cluster's glass as the car shows it, from Cluster Layouts' layout_common.js (its own measurements of the car):
+ *  the map's place, the car's bottom strip, the driver camera's cowl, the slanted top corners, the stock warning
+ *  lights, the KOMBI's dark boxes (gear readout, eDrive, an M car's two) */
 function clusterGeometry() {
     const g = { map: { x: 416, y: 120, w: 1088, h: 480 }, stripY: 646 };
     if (!B) return g;
+    const f = path.join(B, 'apps', 'akakingj_cluster_layouts', 'layout_common.js');
     try {
-        const f = path.join(B, 'apps', 'akakingj_cluster_layouts', 'layout_common.js');
-        const src = fs.readFileSync(f, 'utf8');
-        const m = src.match(/MAP\s*=\s*\{\s*x:\s*(\d+),\s*y:\s*(\d+),\s*w:\s*(\d+),\s*h:\s*(\d+)/);
-        if (m) g.map = { x: +m[1], y: +m[2], w: +m[3], h: +m[4] };
-        const s = src.match(/STRIP_Y\s*=\s*(\d+)/);
-        if (s) g.stripY = +s[1];
-    } catch (e) { /* the defaults */ }
+        Object.keys(require.cache).forEach((k) => { if (k.indexOf(path.join(B, 'apps', 'akakingj_cluster_layouts')) === 0) delete require.cache[k]; });
+        const C = require(f), box = (b) => (b && isFinite(b.x) && isFinite(b.w) ? { x: b.x, y: b.y, w: b.w, h: b.h } : null);
+        if (box(C.MAP)) g.map = box(C.MAP);
+        if (isFinite(C.STRIP_Y)) g.stripY = C.STRIP_Y;
+        g.notch = box(C.NOTCH); g.telltales = box(C.TELLTALES); g.gearbox = box(C.GEARBOX_HOLE); g.edrive = box(C.EDRIVE_HOLE);
+        g.mHoles = Array.isArray(C.M_HOLES) ? C.M_HOLES.map(box).filter(Boolean) : [];
+        // the hidden top corners (inCorner): their edge, found point by point along the top
+        if (typeof C.inCorner === 'function') {
+            const edge = [];
+            for (let x = 0; x <= 960; x += 8) {
+                if (!C.inCorner(x, 0)) { edge.push([x, 0]); break; }
+                let lo = 0, hi = 720;
+                while (hi - lo > 0.5) { const m = (lo + hi) / 2; if (C.inCorner(x, m)) lo = m; else hi = m; }
+                edge.push([x, Math.round(lo * 10) / 10]);
+            }
+            if (edge.length > 1) g.corner = edge;            // (the left one; the right one is its mirror)
+        }
+    } catch (e) {
+        try {
+            const src = fs.readFileSync(f, 'utf8');
+            const m = src.match(/MAP\s*=\s*\{\s*x:\s*(\d+),\s*y:\s*(\d+),\s*w:\s*(\d+),\s*h:\s*(\d+)/);
+            if (m) g.map = { x: +m[1], y: +m[2], w: +m[3], h: +m[4] };
+            const sy = src.match(/STRIP_Y\s*=\s*(\d+)/);
+            if (sy) g.stripY = +sy[1];
+        } catch (x) { /* the defaults */ }
+    }
     return g;
 }
 

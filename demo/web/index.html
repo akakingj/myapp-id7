@@ -9,7 +9,10 @@
 </head>
 <body>
 <main id="main">
-  <div class="cap" id="capCluster"><b>계기판</b><span id="clusterInfo"></span><span class="sp"></span><button id="shotCluster" title="계기판을 1920×720 PNG로 저장">📷 저장</button></div>
+  <div class="cap" id="capCluster"><b>계기판</b><span id="clusterInfo"></span><span class="sp"></span>
+    <label class="cv" title="실차 계기판 유리에서 보이는 모양 (Cluster Layouts의 layout_common.js 실측값)">실차 모습
+      <select id="carView"><option value="off">끔</option><option value="glass">유리 모양</option><option value="guides">유리 + 안내선</option></select></label>
+    <button id="shotCluster" title="계기판을 1920×720 PNG로 저장">📷 저장</button></div>
   <div id="cluster" class="car" aria-label="계기판, 1920 x 720">
     <canvas id="mock" class="full" width="1920" height="720"></canvas>
     <div id="map">지도 자리 (Waze)</div>
@@ -28,6 +31,8 @@
     <svg id="turnR" class="turn" viewBox="0 0 40 32"><path d="M38 16 22 2v8H2v12h20v8z"/></svg>
     <div class="lcd"></div>
     <div class="glass"></div>
+    <!-- (over the LCD look: the cowl and the corners are not the screen) -->
+    <svg id="glassView" class="full" viewBox="0 0 1920 720" preserveAspectRatio="none" aria-hidden="true"></svg>
     <div id="clusterNote"></div>
     <pre id="clusterErr"></pre>
   </div>

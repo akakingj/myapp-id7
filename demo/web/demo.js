@@ -94,7 +94,7 @@ function onText(m) {
     $('#touchroute').checked = m.touch !== false;
     $('#ver').textContent = 'v' + m.demo;
     $('#src').textContent = (m.sources || []).map((s) => s.name + ': ' + (s.missing ? '없음' : (s.branch || '?') + ' ' + (s.commit || '') + (s.date ? ' (' + s.date + ')' : ''))).join('\n') + (m.python ? '' : '\nPython 3 없음: idrive7-apps 앱은 빌드할 수 없습니다');
-    if (m.cluster) Cluster.geo(m.cluster);
+    if (m.cluster) { geoNow = m.cluster; Cluster.geo(m.cluster); }
     buildPicker(m.apps, S.titles);
     if (m.bg) { const b = $('#bgimg'); b.src = '/bg?' + Date.now(); b.hidden = false; }
     $('#log').replaceChildren();
@@ -588,7 +588,7 @@ const Cluster = (() => {
   }
   requestAnimationFrame(frame);
   return {
-    geo(g) { geo = g; $('#strip').style.top = g.stripY / 7.2 + '%'; placed = ''; dirty = true; },
+    geo(g) { geo = g; $('#strip').style.top = g.stripY / 7.2 + '%'; placed = ''; dirty = true; glassView(); },
     mapWin(r) { win = r || null; placed = ''; dirty = true; },
     reset(fs) { Object.keys(FS).forEach((k) => delete FS[k]); Object.assign(FS, fs || {}); apps.clear(); px.clear(); errors.clear(); dirty = true; },
     layers(app, layers, fsNew) {
@@ -606,6 +606,54 @@ const Cluster = (() => {
     },
   };
 })();
+
+/* ---------------- the real car's glass: what of the panel shows on the car (Cluster Layouts' layout_common.js) ----------------
+ * glass: the slanted top corners and the driver camera's cowl hide what is under them, as on the car;
+ * guides: also the KOMBI's own places a layout keeps clear of (warning lights, gear and eDrive boxes, an M car's
+ * boxes, the bottom strip, the map) */
+let geoNow = null;
+const CV_KEY = 'mguDemo.carView';
+let carView = (() => { try { return localStorage.getItem(CV_KEY) || 'glass'; } catch (e) { return 'glass'; } })();
+function glassView(g) {
+  if (g) geoNow = g;
+  g = geoNow || {};
+  const sv = $('#glassView');
+  $('#carView').value = carView;
+  if (carView === 'off') { sv.innerHTML = ''; return; }
+  const out = [];
+  // the corners: the left edge as measured, the right its mirror; hidden (black), the glass's edge a thin line
+  if (g.corner && g.corner.length > 1) {
+    const L = g.corner, R = L.map(([x, y]) => [1920 - x, y]);
+    const poly = (pts, corner) => '<path d="M' + corner + ' L' + pts.map((p) => p.join(' ')).join(' L') + ' Z" fill="#000"/>';
+    out.push(poly(L, '0 0'), poly(R, '1920 0'));
+    out.push('<polyline points="' + L.map((p) => p.join(',')).join(' ') + '" fill="none" stroke="#3b424c" stroke-width="3"/>');
+    out.push('<polyline points="' + R.map((p) => p.join(',')).join(' ') + '" fill="none" stroke="#3b424c" stroke-width="3"/>');
+  }
+  // the camera's cowl over the top middle: dark, its lower corners rounded, the camera's lens in it
+  if (g.notch) {
+    const n = g.notch, r = Math.min(36, n.h / 2), x2 = n.x + n.w, y2 = n.y + n.h;
+    out.push('<path d="M' + n.x + ' ' + n.y + ' V' + (y2 - r) + ' Q' + n.x + ' ' + y2 + ' ' + (n.x + r) + ' ' + y2 + ' H' + (x2 - r) + ' Q' + x2 + ' ' + y2 + ' ' + x2 + ' ' + (y2 - r) + ' V' + n.y + ' Z" fill="#07080a" stroke="#3b424c" stroke-width="3"/>');
+    const cx = n.x + n.w / 2, cy = n.y + n.h * 0.42;
+    out.push('<circle cx="' + cx + '" cy="' + cy + '" r="15" fill="#111419" stroke="#2a3038" stroke-width="3"/><circle cx="' + cx + '" cy="' + cy + '" r="6" fill="#1d2b3d"/>');
+    [-44, 44].forEach((dx) => out.push('<circle cx="' + (cx + dx) + '" cy="' + cy + '" r="5" fill="#1a1216"/>'));   // (its infrared lights)
+    if (carView === 'guides') out.push('<text x="' + cx + '" y="' + (y2 - 14) + '" fill="#8792a0" font-size="20" text-anchor="middle" font-family="Malgun Gothic, sans-serif">운전자 카메라</text>');
+  }
+  if (carView === 'guides') {
+    const rect = (b, label, color) => {
+      if (!b) return;
+      out.push('<rect x="' + b.x + '" y="' + b.y + '" width="' + b.w + '" height="' + b.h + '" fill="' + color + '14" stroke="' + color + '" stroke-width="2.5" stroke-dasharray="10 7"/>');
+      out.push('<text x="' + (b.x + 8) + '" y="' + (b.y + 22) + '" fill="' + color + '" font-size="18" font-family="Malgun Gothic, sans-serif">' + label + '</text>');
+    };
+    rect(g.telltales, '순정 경고등', '#ffb74d');
+    rect(g.gearbox, '기어 표시 박스 (하단바 숨김일 때)', '#4fc3f7');
+    rect(g.edrive, 'eDrive (PHEV)', '#81c784');
+    (g.mHoles || []).forEach((b, i) => rect(b, 'M 박스 ' + (i + 1), '#ce93d8'));
+    rect(g.map, '지도 자리', '#90a4ae');
+    if (isFinite(g.stripY)) out.push('<line x1="0" x2="1920" y1="' + g.stripY + '" y2="' + g.stripY + '" stroke="#ef9a9a" stroke-width="2.5" stroke-dasharray="14 8"/><text x="12" y="' + (g.stripY - 8) + '" fill="#ef9a9a" font-size="18" font-family="Malgun Gothic, sans-serif">순정 하단 줄</text>');
+  }
+  sv.innerHTML = out.join('');
+}
+$('#carView').onchange = (e) => { carView = e.target.value; try { localStorage.setItem(CV_KEY, carView); } catch (x) { /* this visit only */ } glassView(); };
 
 /* the stock cluster's dials (a sketch: while no layout draws the whole panel), its bottom strip, the Waze map's place */
 function drawMock() {
