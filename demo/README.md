@@ -24,8 +24,8 @@
 ## MGU Styles (akakingj/myapp-cluster-high)
 
 `src\myapp-cluster-high`(직접 실행: `--styles 폴더`, 또는 myapp-id7 옆의 `myapp-cluster-high` 폴더)가 있으면
-그 저장소의 앱(`mgustyles_*`)도 앱 목록에 나오고, 그 저장소의 `kit/tools/build.py`로 빌드해 실행합니다.
-`ak` 브랜치에는 원본 MGU Styles(`mgustyles_toro`)와 개인 수정판 MGU Styles AK(`mgustyles_ak`)가 함께 있습니다.
+그 저장소의 앱도 앱 목록에 나오고, 그 저장소의 `kit/tools/build.py`로 빌드해 실행합니다.
+`ak` 브랜치에는 원본 MGU Styles(`mgustyles_toro`)와 개인 수정판 AK Cluster ID8(`akakingj_cluster_id8`)이 함께 있습니다.
 
 - 런처가 `ak` 브랜치(`STYLES_BRANCH`)를 받습니다. 저장소가 비공개인 동안에는 GitHub에 로그인한 git으로
   `src\myapp-cluster-high`에 받아 두면, 그다음부터 런처가 `git pull`로 최신을 받습니다. 받지 못하면 이 앱 없이 실행합니다.

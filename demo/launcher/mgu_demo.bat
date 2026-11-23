@@ -7,7 +7,7 @@ setlocal
 cd /d "%~dp0"
 title MGU demo
 
-rem ---- the branches the demo shows (the test branches: what is being made now; MGU Styles: ak, with MGU Styles AK) ----
+rem ---- the branches the demo shows (the test branches: what is being made now; MGU Styles: ak, with AK Cluster ID8) ----
 set APPS_BRANCH=test
 set CLUSTER_BRANCH=test
 set STYLES_BRANCH=ak

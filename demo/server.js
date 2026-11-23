@@ -34,7 +34,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { spawn, spawnSync, fork, exec } = require('child_process');
 
-const DEMO_VERSION = '1.6.1';
+const DEMO_VERSION = '1.6.2';
 const A = path.resolve(__dirname, '..');                       // this repository (akakingj/myapp-id7)
 const WEB = path.join(__dirname, 'web');
 const GFX = path.join(A, 'kit', 'emu', 'web', 'gfx');            // the car's draw engine as WebAssembly (GPL-3.0-or-later)
@@ -53,9 +53,9 @@ const B = (() => {
     return c.find((p) => fs.existsSync(path.join(p, 'apps')) && fs.existsSync(path.join(p, 'tools', 'mgu', 'stage.js'))) || null;
 })();
 /** MGU Styles (waliworld's, akakingj/myapp-cluster-high: a private copy kept with its author's leave): --styles, else
- *  beside the cluster repository. Its apps (mgustyles_*: the original, and on the branch ak the owner's own MGU Styles
- *  AK) are built with its own kit and run with this repository's hu-stub.js (the same MGU App Kit). Optional: without
- *  it the demo is as before. */
+ *  beside the cluster repository. Its apps (MGU Styles, mgustyles_toro, and on the branch ak AK Cluster ID8, the
+ *  owner's own modification of it) are built with its own kit and run with this repository's hu-stub.js (the same MGU
+ *  App Kit). Optional: without it the demo is as before. */
 const STYLES_APP = 'mgustyles_toro';
 const C = (() => {
     const o = opt('--styles', null);
@@ -99,7 +99,7 @@ function scanApps() {
         try { dirs = fs.readdirSync(path.join(root, 'apps')); } catch (e) { return; }
         dirs.forEach((id) => {
             if (repo === 'B' && !/^akakingj_/.test(id)) return;        // (the cluster repository: the AK apps only)
-            if (repo === 'C' && !/^mgustyles_/.test(id)) return;       // (MGU Styles: its apps only - the original, and MGU Styles AK on its branch)
+            if (repo === 'C' && !/^(mgustyles_|akakingj_cluster_id8$)/.test(id)) return;   // (its apps: MGU Styles, and on the branch ak AK Cluster ID8)
             if (reg[id]) return;
             let j;
             try { j = JSON.parse(fs.readFileSync(path.join(root, 'apps', id, 'app.json'), 'utf8')); } catch (e) { return; }
