@@ -19,7 +19,7 @@ const REPOS = [
     { name: 'myapp-id7', repo: 'akakingj/myapp-id7', branch: process.env.APPS_BRANCH || 'test' },
     { name: 'myapp-cluster', repo: 'akakingj/myapp-cluster', branch: process.env.CLUSTER_BRANCH || 'test' },
     // MGU Styles: shown when it can be fetched; while the repository is private, a git clone in src\ (made with a GitHub login) is updated with git pull
-    { name: 'myapp-cluster-high', repo: 'akakingj/myapp-cluster-high', branch: process.env.STYLES_BRANCH || 'main', optional: true },
+    { name: 'myapp-cluster-high', repo: 'akakingj/myapp-cluster-high', branch: process.env.STYLES_BRANCH || 'ak', optional: true },
 ];
 const say = (s) => console.log(s);
 
@@ -44,6 +44,14 @@ async function update(r) {
     const dir = path.join(SRC, r.name), mark = path.join(dir, '.demo-source.json');
     // a clone made by hand: git pull
     if (fs.existsSync(path.join(dir, '.git')) && hasGit()) {
+        // on the branch asked for (a clone of another branch: fetched and switched to it, local changes kept or refused)
+        const cur = spawnSync('git', ['-C', dir, 'rev-parse', '--abbrev-ref', 'HEAD'], { encoding: 'utf8', windowsHide: true });
+        if (cur.status === 0 && cur.stdout.trim() !== r.branch) {
+            say('  ' + r.name + ': ' + r.branch + ' 브랜치로');
+            spawnSync('git', ['-C', dir, 'fetch', 'origin', r.branch], { stdio: 'inherit', windowsHide: true });
+            const co = spawnSync('git', ['-C', dir, 'checkout', r.branch], { stdio: 'inherit', windowsHide: true });
+            if (co.status !== 0) say('  ' + r.name + ': ' + r.branch + ' 브랜치로 바꾸지 못했습니다 - 지금 브랜치로 실행합니다');
+        }
         say('  ' + r.name + ': git pull');
         const p = spawnSync('git', ['-C', dir, 'pull', '--ff-only'], { stdio: 'inherit', windowsHide: true });
         if (p.status !== 0) say('  ' + r.name + ': git pull 실패 - 지금 있는 코드로 실행합니다');
