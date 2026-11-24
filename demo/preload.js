@@ -229,6 +229,39 @@ function snapshot() {
 }
 setInterval(snapshot, 33).unref();
 
+/* ---------------- AK Cluster ID8's engine unit ---------------- */
+// (its readings the bus does not carry are asked of the engine unit, UDS 22, through the kit's read-only link:
+// src/car/engine.js. Here the panel answers the first identifier of each, as the car's DME would; every other
+// one, and anything but a read, is refused. Only in AK Cluster ID8's process: other apps keep their own demo.)
+const ID8 = process.argv.some((a) => /akakingj_cluster_id8/.test(a));
+const AMB_HPA = 1013;
+function dmeReply(did) {
+    const v = fresh() ? VEH : {}, on = (typeof v.rpm === 'number' ? v.rpm : 800) > 400;
+    const bytes = (n, raw) => { raw = Math.max(0, Math.min(Math.pow(256, n) - 1, Math.round(raw))); const b = []; for (let i = n - 1; i >= 0; i--) b.push((raw >> (8 * i)) & 0xff); return b; };
+    switch (did) {
+        case 0x580F: return bytes(1, ((typeof v.iat === 'number' ? v.iat : 31) + 48) / 0.75);                 // intake air, C
+        case 0x5853: return bytes(2, (on ? 14.2 : 12.4) * 1000);                                              // battery, mV
+        case 0x4436: return bytes(2, AMB_HPA + (on ? 1500 + Math.min(3000, (v.rpm || 0) * 0.6) : 0));        // oil, hPa absolute
+        case 0x4201: return bytes(2, AMB_HPA / 0.0390625);                                                    // ambient, hPa
+        default: return null;
+    }
+}
+function demoDiag(mod) {
+    class DemoDiag {
+        constructor() { this.misses = {}; }
+        async init() { return this; }
+        get available() { return true; }
+        wake() { this.misses = {}; }
+        cancel() {}
+        async physical(ecu, sid, data) {
+            const did = sid === 0x22 && data && data.length >= 2 ? (data[0] << 8) | data[1] : -1;
+            const r = ecu === 0x12 && did >= 0 ? dmeReply(did) : null;
+            return r ? [0x62, data[0], data[1]].concat(r) : [0x7F, sid, 0x31];
+        }
+    }
+    return Object.assign({}, mod, { ReadOnlyDiag: DemoDiag });
+}
+
 /* ---------------- the hooks, by the module's file ---------------- */
 // (marks are own properties: a class's static is inherited - ClusterRender extends EventEmitter)
 function own(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
@@ -249,5 +282,6 @@ Module._load = function (request, parent, isMain) {
     if (base === 'sim.js' && dir === 'kit' && typeof mod === 'function') return swap(mod, panelSim);
     if (base === 'cluster_render_client.js' && mod && typeof mod.ClusterRender === 'function') return swap(mod, demoRender);
     if (base === 'data.js' && mod && typeof mod.startData === 'function') return swap(mod, wrapData);
+    if (base === 'readonly-diag.js' && ID8 && mod && typeof mod.ReadOnlyDiag === 'function') return swap(mod, demoDiag);
     return mod;
 };
