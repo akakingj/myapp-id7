@@ -4,25 +4,25 @@ One place for the car's engine values and units. Set them here once and the othe
 
 | Setting | Followed by |
 |---|---|
-| Engine (Auto / Diesel / Petrol / Plug-in hybrid) | M Vitals, Redline, Warm-Up, Virtual Dyno, AK Cluster Layouts and Centre (their Vehicle; the others take a plug-in hybrid as their own setting says) |
-| Yellow light at | Redline (*Lights from*), AK Cluster Layouts (the amber zone of ID6 M and ID7 M, Track's and GT3's tach turning yellow, Simple's rpm), AK Cluster Centre (*Shift light: starts at*) |
-| Red light at (Auto: the redline) | AK Cluster Layouts (the red zone, Simple's rpm red) |
-| Shift now warning at (the shift point; Auto: the redline less 300) | Redline (its fixed one), Warm-Up, AK Cluster Layouts, AK Cluster Centre (*Shift light: flashes at*) |
-| Gauge goes up to (the end of the rev scale) | M Vitals, Redline, Virtual Dyno (*Graph up to*), AK Cluster |
-| Engine's top rpm (redline: the limiter) | M Vitals, Redline, Warm-Up, AK Cluster |
-| Cold rev limit | Redline, Warm-Up, AK Cluster |
+| Engine (Auto / Diesel / Petrol / Plug-in hybrid) | M Vitals, Redline, Warm-Up, Virtual Dyno, AK Cluster Layouts and Centre (their Vehicle; the others take a plug-in hybrid as their own setting says), AK Cluster ID8 (*Engine*) |
+| Yellow light at | Redline (*Lights from*), AK Cluster Layouts (the amber zone of ID6 M and ID7 M, Track's and GT3's tach turning yellow, Simple's rpm), AK Cluster Centre (*Shift light: starts at*), AK Cluster ID8 (*Shift lights from*) |
+| Red light at (Auto: the redline) | AK Cluster Layouts (the red zone, Simple's rpm red), AK Cluster ID8 (*Redline*: the red zone) |
+| Shift now warning at (the shift point; Auto: the redline less 300) | Redline (its fixed one), Warm-Up, AK Cluster Layouts, AK Cluster Centre (*Shift light: flashes at*), AK Cluster ID8 (*Shift now at*: the shift lights flash, the speed and the gear blink red) |
+| Gauge goes up to (the end of the rev scale) | M Vitals, Redline, Virtual Dyno (*Graph up to*), AK Cluster, AK Cluster ID8 (*Tach scale*) |
+| Engine's top rpm (redline: the limiter) | M Vitals, Redline, Warm-Up, AK Cluster, AK Cluster ID8 (*Limiter*) |
+| Cold rev limit | Redline, Warm-Up, AK Cluster, AK Cluster ID8 |
 | Redline app: light style (shift point / rev bar) | Redline |
-| Cold-engine rev guard (On / Off) | Redline, Warm-Up, AK Cluster |
-| Oil is warm at | Redline, Warm-Up, AK Cluster |
+| Cold-engine rev guard (On / Off) | Redline, Warm-Up, AK Cluster, AK Cluster ID8 (*Cold engine*) |
+| Oil is warm at | Redline, Warm-Up, AK Cluster, AK Cluster ID8 |
 | Coolant is warm at | Warm-Up |
 | Oil is too hot at | M Vitals (*Oil temp warning*), Redline (HUD and page), Warm-Up (*OIL HOT*), AK Cluster |
 | Coolant is too hot at | M Vitals (*Coolant temp warning*), Redline (HUD and page), Warm-Up (the coolant gauge's red), AK Cluster |
 | Gearbox is too hot at | M Vitals (*Gearbox temp warning*), Redline HUD, Warm-Up (*GEARBOX HOT*), AK Cluster |
-| Speed unit | M Vitals, Redline, Drag Timer, Brake Test, G-Force, AK Cluster |
+| Speed unit | M Vitals, Redline, Drag Timer, Brake Test, G-Force, AK Cluster, AK Cluster ID8 |
 | Distance unit | Brake Test (km -> metres, miles -> feet), eDrive |
-| Temperature unit | M Vitals, Redline HUD, Warm-Up, eDrive, Transmission Config, Live Data, AK Cluster |
-| Pressure unit | M Vitals, Redline HUD (boost and tyres), Live Data, AK Cluster |
-| Fuel use unit | Redline HUD, AK Cluster Layouts (*Fuel economy unit*; mpg (UK): each its own) |
+| Temperature unit | M Vitals, Redline HUD, Warm-Up, eDrive, Transmission Config, Live Data, AK Cluster, AK Cluster ID8 |
+| Pressure unit | M Vitals, Redline HUD (boost and tyres), Live Data, AK Cluster, AK Cluster ID8 |
+| Fuel use unit | Redline HUD, AK Cluster Layouts (*Fuel economy unit*; mpg (UK): each its own), AK Cluster ID8 |
 | Torque unit, Power unit | M Vitals, Redline HUD, Virtual Dyno, AK Cluster |
 | G-force circle up to (1, 1.2, 1.5, 2 g) | G-Force (*Circle size*), M Vitals (*G-force circle size*), AK Cluster Layouts (JDM 2's G meter) |
 

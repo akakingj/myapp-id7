@@ -18,29 +18,29 @@ const KEYS = ['engine', 'lightStart', 'lightRed', 'shiftAt', 'rpmScale', 'redlin
     'skin', 'theme', 'layout', 'renderer', 'demo', 'clock', 'timeZone', 'tankLitres', 'eFull', 'gMax'];
 const FOLLOW = {
     // (Plug-in hybrid: the AK clusters' Vehicle; the other apps take a plug-in hybrid as their own setting says: Auto, petrol)
-    engine: ['M Vitals', 'Redline', 'Warm-Up', 'Virtual Dyno', 'AK Cluster', 'AK Cluster Centre'],
+    engine: ['M Vitals', 'Redline', 'Warm-Up', 'Virtual Dyno', 'AK Cluster', 'AK Cluster Centre', 'AK Cluster ID8'],
     // the shift lights: yellow from, red from (0: Auto, the redline), the warning at the shift point (0: Auto, each
     // app's redline less 300; 0.3.x: was "so many before the redline"), the rev scale's end; the redline (the limiter)
-    lightStart: ['Redline', 'AK Cluster', 'AK Cluster Centre'],
-    lightRed: ['Redline', 'AK Cluster'],
-    shiftAt: ['Redline', 'Warm-Up', 'AK Cluster', 'AK Cluster Centre'],
-    rpmScale: ['M Vitals', 'Redline', 'Virtual Dyno', 'AK Cluster'],
-    redline: ['M Vitals', 'Redline', 'Warm-Up', 'AK Cluster'],
-    coldLimit: ['Redline', 'Warm-Up', 'AK Cluster'],
+    lightStart: ['Redline', 'AK Cluster', 'AK Cluster Centre', 'AK Cluster ID8'],
+    lightRed: ['Redline', 'AK Cluster', 'AK Cluster ID8'],
+    shiftAt: ['Redline', 'Warm-Up', 'AK Cluster', 'AK Cluster Centre', 'AK Cluster ID8'],
+    rpmScale: ['M Vitals', 'Redline', 'Virtual Dyno', 'AK Cluster', 'AK Cluster ID8'],
+    redline: ['M Vitals', 'Redline', 'Warm-Up', 'AK Cluster', 'AK Cluster ID8'],
+    coldLimit: ['Redline', 'Warm-Up', 'AK Cluster', 'AK Cluster ID8'],
     lightMode: ['Redline'],
-    coldGuard: ['Redline', 'Warm-Up', 'AK Cluster'],
-    warmOil: ['Redline', 'Warm-Up', 'AK Cluster'],
+    coldGuard: ['Redline', 'Warm-Up', 'AK Cluster', 'AK Cluster ID8'],
+    warmOil: ['Redline', 'Warm-Up', 'AK Cluster', 'AK Cluster ID8'],
     warmCoolant: ['Warm-Up'],
     warmGearbox: ['Warm-Up'],
     // too hot (red) from: each one at that temperature and above
     hotOil: ['M Vitals', 'Redline', 'Warm-Up', 'AK Cluster'],
     hotCoolant: ['M Vitals', 'Redline', 'Warm-Up', 'AK Cluster'],
     hotGearbox: ['M Vitals', 'Redline', 'Warm-Up', 'AK Cluster'],
-    speedUnit: ['M Vitals', 'Redline', 'Drag Timer', 'Brake Test', 'G-Force', 'AK Cluster'],
+    speedUnit: ['M Vitals', 'Redline', 'Drag Timer', 'Brake Test', 'G-Force', 'AK Cluster', 'AK Cluster ID8'],
     distUnit: ['Brake Test', 'eDrive'],
-    tempUnit: ['M Vitals', 'Redline HUD', 'Warm-Up', 'eDrive', 'Transmission Config', 'Live Data', 'AK Cluster'],
-    pressUnit: ['M Vitals', 'Redline HUD', 'Live Data', 'AK Cluster'],
-    fuelUnit: ['Redline HUD', 'AK Cluster'],
+    tempUnit: ['M Vitals', 'Redline HUD', 'Warm-Up', 'eDrive', 'Transmission Config', 'Live Data', 'AK Cluster', 'AK Cluster ID8'],
+    pressUnit: ['M Vitals', 'Redline HUD', 'Live Data', 'AK Cluster', 'AK Cluster ID8'],
+    fuelUnit: ['Redline HUD', 'AK Cluster', 'AK Cluster ID8'],
     torqueUnit: ['M Vitals', 'Redline HUD', 'Virtual Dyno', 'AK Cluster'],
     powerUnit: ['M Vitals', 'Redline HUD', 'Virtual Dyno', 'AK Cluster'],
     // the look of every app with a Skin setting (kit/runtime/themes.js SKINS): these apps and the AK Cluster apps
@@ -51,14 +51,15 @@ const FOLLOW = {
     renderer: ['All apps with a renderer setting, AK Cluster Info too'],
     demo: ['All apps with demo data, AK Cluster too'],
     // the AK clusters' clock, and their fuel and battery figures
-    clock: ['AK Cluster', 'AK Cluster Centre'],
+    clock: ['AK Cluster', 'AK Cluster Centre', 'AK Cluster ID8'],
     timeZone: ['AK Cluster', 'AK Cluster Centre'],
     tankLitres: ['Water Cup', 'AK Cluster', 'AK Cluster Centre'],
     eFull: ['AK Cluster', 'AK Cluster Centre'],
     // the G-force circles' size (g), where the dot goes in a bend (out: as the driver feels it), braking up or down
     gMax: ['G-Force', 'M Vitals', 'AK Cluster'],
 };
-// ('AK Cluster': the cluster apps of akakingj/idrive7-cluster-info, Layouts / Centre / Info, which read this file too)
+// ('AK Cluster': the cluster apps of akakingj/idrive7-cluster-info, Layouts / Centre / Info, which read this file too;
+// 'AK Cluster ID8': akakingj/myapp-cluster-high's, the same way)
 
 const file = () => process.env.MGU_CAR_PROFILE || '/dev/shm/car-profile.json';
 const isSet = (v) => v !== undefined && v !== null && v !== 'app' && v !== -1;
