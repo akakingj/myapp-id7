@@ -57,6 +57,9 @@ jobs:
       - run: node kit/tools/test_dids.js
       - run: node kit/tools/test_engine.js
       - run: node kit/tools/test_car_profile.js
+      - run: node kit/tools/test_car_profile_page.js
+      - run: node kit/tools/test_g_direction.js
+      - run: node kit/tools/test_redline_call.js
       - run: node kit/tools/test_parked_diag.js
       - run: node kit/tools/test_ambient_boot.js
       - run: node kit/tools/test_redline_intake.js
