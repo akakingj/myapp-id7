@@ -20,6 +20,7 @@ let gfx = null, gfxErr = null, gfxMod = null, gfxApp = null, gfxGen = 0, errSeen
 let pending = null;         // bytes that come while a new renderer is being made wait for it
 let awaitReset = false;     // a replay was asked for: bytes before its 'reset' are dropped
 const gfxLog = (l) => (s) => addLog([[l, 'renderer: ' + s]]);
+const gfxTries = { app: null, n: 0 };
 async function newGfx(app, replayAfter) {
   const gen = ++gfxGen;
   gfxApp = app; errSeen = 0;
@@ -28,9 +29,12 @@ async function newGfx(app, replayAfter) {
   const c = el('canvas', { id: 'screen', width: W, height: H });
   canvas.replaceWith(c); canvas = c;
   let g = null;
+  const t0 = performance.now();
   try { g = await gfxMod.createGfx(c, { log: gfxLog('debug'), warn: gfxLog('warn'), onLost: () => { if (gen === gfxGen) renew('WebGL context lost'); } }); } catch (e) { gfxErr = e; console.warn('renderer:', e); }
   if (gen !== gfxGen) { if (g) g.destroy(); return; }    // a newer one was asked for meanwhile
-  gfx = g;
+  const ms = Math.round(performance.now() - t0);
+  if (ms > 1500) addLog([['warn', 'renderer: made in ' + ms + ' ms']]);
+  gfx = g; if (g) gfxErr = null;
   const q = pending; pending = null;
   if (replayAfter) { awaitReset = true; send({ t: 'replay' }); } else q.forEach(onBinary);
 }
@@ -152,6 +156,8 @@ function raf(now) {
     $('#rconn').textContent = c.on ? `${c.app} · ${c.dialect}${c.shown ? ' · shown' : ' · hidden'}${c.grab ? ' · controller held' : ''}${c.claims ? ' · ' + c.claims + ' claims' : ''}${c.fps ? ' · app cap ' + c.fps : ''}` +
       (c.place ? `\nplace ${c.place.x},${c.place.y} ${c.place.w}x${c.place.h} ×${(+c.place.s).toFixed(3)}` : '') : 'no app connected';
     shown = 0; draws.n = draws.sum = draws.max = 0; lastStat = now; rx0 = { frames: rx.frames, msgs: rx.msgs, bytes: rx.bytes };
+    // (no renderer and none being made, e.g. WebGL busy for a moment: try again, three times for an app)
+    if (!gfx && pending === null && gfxMod && c.on) { if (gfxTries.app !== c.app) { gfxTries.app = c.app; gfxTries.n = 0; } if (gfxTries.n++ < 3) renew('none made'); }
     overlay();
   }
   requestAnimationFrame(raf);
@@ -166,7 +172,7 @@ function overlay() {
   if (S.status === 'disconnected') html = '<div>데모가 꺼져 있습니다</div><div class="mono">mgu_demo.bat 을 다시 실행하세요</div>';
   else if (S.status === 'exited') html = '<div>앱이 종료됐습니다</div><div class="mono">로그를 보고, 패널의 [다시 빌드]를 누르세요</div>';
   else if (S.closed) html = null;                // (the HMI's app list shows)
-  else if (S.status === 'building' || S.status === 'starting') html = '<div>' + esc(S.titles[S.app] || S.app || '') + '</div><div class="mono">' + (S.status === 'building' ? '빌드 중…' : '시작 중…') + '</div>';
+  else if (S.status === 'building' || S.status === 'starting') html = '<div>' + esc(S.titles[S.next || S.app] || S.next || S.app || '') + '</div><div class="mono">' + (S.status === 'building' ? '빌드 중…' : '시작 중…') + '</div>';
   else if (!gfx) {
     const top = Object.entries(rx.types).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([t, n]) => `${NAMES[t] || t} ${n}`).join(' · ');
     html = '<div>렌더러를 만들지 못했습니다 (WebGL 2 필요)</div><div class="mono">' + esc(gfxErr ? String(gfxErr.message || gfxErr).slice(0, 140) : '') +
@@ -256,7 +262,7 @@ const STATUS_KO = { idle: '대기', connecting: '연결 중', building: '빌드 
 function setStatus(s, text, app) {
   S.status = s;
   const p = $('#status'); p.textContent = STATUS_KO[s] || s; p.className = 'pill ' + s;
-  if (app && (s === 'building' || s === 'starting')) $('#appname').textContent = S.titles[app] || app;
+  if (app && (s === 'building' || s === 'starting')) { $('#appname').textContent = S.titles[app] || app; S.next = app; }
   const b = $('#builderr');
   if (s === 'build-error') { b.textContent = text || ''; b.hidden = false; toast('빌드 실패: 로그를 보세요 (이전에 빌드된 앱이 있으면 그대로 실행)'); } else if (s === 'running') { b.hidden = true; toast(null); }
   if (s === 'build-error' && P.busy) { P.busy = null; picker(); }

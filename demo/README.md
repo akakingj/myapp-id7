@@ -1,9 +1,10 @@
 # MGU 데모
 
-이 저장소(akakingj/myapp-id7)와 akakingj/myapp-cluster의 **모든 앱**을 PC에서 차처럼 돌려 보는 데모입니다.
+이 저장소(akakingj/myapp-id7), akakingj/myapp-cluster, akakingj/myapp-cluster-high(AK Cluster ID8)의 **모든 앱**을
+PC에서 차처럼 돌려 보는 데모입니다.
 브라우저 창 하나에 다음이 함께 나옵니다.
 
-- **계기판** (1920×720): AK Cluster Layouts · Centre · Info가 그리는 것. 앱의 GLSL을 WebGL로, KOMBI처럼 그립니다.
+- **계기판** (1920×720): AK Cluster Layouts · Centre · Info · ID8이 그리는 것. 앱의 GLSL을 WebGL로, KOMBI처럼 그립니다.
   위쪽 **실차 모습**에서 실차 유리 모양(운전자 카메라 덮개, 위쪽 사선 코너)과 안내선(순정 경고등, 기어 · eDrive · M 박스,
   순정 하단 줄, 지도 자리)을 겹쳐 볼 수 있습니다. 치수는 Cluster Layouts의 `layout_common.js` 실측값을 그대로 씁니다.
 - **중앙 디스플레이 (MGU)**: HMI의 "설치된 앱" 목록. 아이콘을 누르면 그 앱이 열립니다. 차의 그리기 엔진
@@ -13,11 +14,13 @@
 ## 실행 (Windows)
 
 1. `mgu_demo_<버전>.zip`을 풀고 (예: `C:\BMW\mgu-demo`) `mgu_demo.bat`을 실행합니다.
-2. 실행할 때마다 두 저장소의 **최신 코드**를 GitHub에서 받아 `src\`에 둡니다 (이미 최신이면 그대로).
+2. 실행할 때마다 세 저장소의 **최신 코드**를 GitHub에서 받아 `src\`에 둡니다 (이미 최신이면 그대로).
+   런처(`mgu_demo_update.js`)도 받은 myapp-id7의 것으로 스스로 바뀌므로, zip을 다시 받을 일은 거의 없습니다.
 3. 브라우저가 열립니다 (`http://127.0.0.1:8077/`). 창을 닫으면 데모가 꺼집니다.
 
 필요한 것: Node.js (LTS), Python 3 (설치할 때 "Add python.exe to PATH"). Python이 없으면 이 저장소의 앱은 빌드되지 않고
-계기판 앱만 돕니다. 보는 브랜치는 `mgu_demo.bat` 위쪽의 `APPS_BRANCH` / `CLUSTER_BRANCH` (기본: 두 저장소 모두 `test`).
+계기판 앱만 돕니다. 보는 브랜치는 `mgu_demo.bat` 위쪽의 `APPS_BRANCH` / `CLUSTER_BRANCH` / `STYLES_BRANCH`
+(기본: 세 저장소 모두 `test`. 예전 bat의 `ak`는 지워진 브랜치라 `test`로 받습니다).
 
 직접 실행: `node demo/server.js --cluster ../myapp-cluster [--styles ../myapp-cluster-high] [--data 폴더] [--port 8077] [--no-open]`
 
@@ -27,11 +30,12 @@
 AK Cluster ID8(`akakingj_cluster_id8`)도 앱 목록에 나오고, 그 저장소의 `kit/tools/build.py`로 빌드해 실행합니다.
 그 저장소의 앱은 AK Cluster ID8 하나만 실행합니다.
 
-- 런처가 `test` 브랜치(`STYLES_BRANCH`)를 받습니다. 저장소가 비공개인 동안에는 GitHub에 로그인한 git으로
-  `src\myapp-cluster-high`에 받아 두면, 그다음부터 런처가 `git pull`로 최신을 받습니다. 받지 못하면 이 앱 없이 실행합니다.
+- 런처가 `test` 브랜치(`STYLES_BRANCH`)를 받습니다. 저장소를 비공개로 바꾸면 런처가 받지 못하니, GitHub에 로그인한 git으로
+  `src\myapp-cluster-high`에 한 번 받아 두세요. 그다음부터 런처가 `git pull`로 최신을 받습니다. 받지 못하면 이 앱 없이 실행합니다.
 - 스토어처럼 한글로 빌드합니다.
 - 계기판은 앱의 켜기로 그립니다. AK Cluster Layouts가 계기판에 켜져 있으면 ID8은 기다립니다("Waiting: AK Cluster
-  Layouts is on the cluster"): Layouts를 끄고 봅니다.
+  Layouts is on the cluster"): Layouts의 "계기판에 표시"를 끄고, ID8 화면의 **꺼짐 - 누르면 계기판에 표시**를 누릅니다
+  (ID8은 처음에 꺼져 있습니다).
 - 원작자의 허락으로 개인용으로만 씁니다: 이 저장소(공개)에는 그 코드·그림을 넣지 않습니다.
 
 ## 업데이트 방식: 앱 코드만 고치면 된다
@@ -46,7 +50,7 @@ AK Cluster ID8(`akakingj_cluster_id8`)도 앱 목록에 나오고, 그 저장소
 
 ## 차처럼 도는 것
 
-- **시동과 함께 켜지는 앱** (app.json `autostart` / `startType: autostart`: 차량 프로필, AK Cluster 3종, 엔진 예열,
+- **시동과 함께 켜지는 앱** (app.json `autostart` / `startType: autostart`: 차량 프로필, AK Cluster 앱들, 엔진 예열,
   앰비언트 설정)은 처음부터 백그라운드에서 계속 돕니다. 그래서 중앙 화면에 어떤 앱을 열어도 계기판은 그대로입니다.
   이런 앱의 아이콘을 누르면 그 앱이 앞으로 나옵니다 (한 번 재시작).
 - **차량 값 하나를 모든 앱이 받습니다**: rpm, 속도, 기어, 온도, G, 토크는 차의 신호(SOME/IP)로 들어가서 앱은
@@ -62,7 +66,8 @@ AK Cluster ID8(`akakingj_cluster_id8`)도 앱 목록에 나오고, 그 저장소
 - UDS(진단)로 읽는 값 중 계기판 앱 외의 것(레드라인의 흡기·부스트 로그, 실시간 정보, 고장 진단 등)은 각 앱의
   응답 없음 상태나 자체 데모 값입니다.
 - 측후방 경고(BDC 진단으로 읽음)와 계기판 바늘 스윕 애니메이션은 없습니다. Waze 지도와 순정 계기판(방향지시등 화살표 포함)은 모형입니다.
-- HMI가 직접 그리는 메뉴 화면은 그려지지 않습니다 (패널의 "고급: HMI 버튼"으로 누름).
+- HMI가 직접 그리는 메뉴 화면은 그려지지 않습니다 (패널의 "고급: HMI 버튼"으로 누름). Doom의 첫 화면이 이것입니다.
+- 앱을 아주 빠르게 바꾸면 WebGL이 잠깐 렌더러를 만들지 못할 수 있습니다: 데모가 1초 뒤 다시 만듭니다 (3번까지).
 
 ## 파일
 

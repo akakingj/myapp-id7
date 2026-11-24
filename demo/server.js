@@ -34,7 +34,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { spawn, spawnSync, fork, exec } = require('child_process');
 
-const DEMO_VERSION = '1.6.6';
+const DEMO_VERSION = '1.6.7';
 const A = path.resolve(__dirname, '..');                       // this repository (akakingj/myapp-id7)
 const WEB = path.join(__dirname, 'web');
 const GFX = path.join(A, 'kit', 'emu', 'web', 'gfx');            // the car's draw engine as WebAssembly (GPL-3.0-or-later)
@@ -1025,6 +1025,14 @@ function clusterReplay(ws) {
 
 /* ---------------- live reload: a save under apps/ or a kit rebuilds the apps it touches ---------------- */
 let watchers = [];
+/** a file app.json's assets name (the build downloads it into the app's folder) */
+function assetOf(root, id, rel) {
+    try {
+        const a = JSON.parse(fs.readFileSync(path.join(root, 'apps', id, 'app.json'), 'utf8')).assets;
+        const f = rel.split(/[/\\]/).slice(1).join('/');
+        return Array.isArray(a) && a.some((x) => x && x.file && (f === x.file || f.indexOf(x.file + '.') === 0));
+    } catch (e) { return false; }
+}
 function watchAll() {
     watchers.forEach((w) => w.close());
     const dirs = [[A, 'apps'], [A, 'kit/runtime'], [B, 'apps'], [B, 'shared'], [B, 'kit/runtime'], [C, 'apps'], [C, 'kit/runtime']].filter(([r]) => r).map(([r, d]) => [r, path.join(r, d)]);
@@ -1034,6 +1042,7 @@ function watchAll() {
         const rel = String(f || '');
         if (path.basename(dir) === 'apps') {
             const id = rel.split(/[/\\]/)[0];
+            if (REG[id] && assetOf(root, id, rel)) return;                        // (a file the build downloads, as Doom's WAD: not a change)
             if (!REG[id] || /app\.json$/.test(rel)) rescan = true;
             if (id) hit.add(id);
         } else listApps().filter((id) => REG[id].root === root).forEach((id) => hit.add(id));
