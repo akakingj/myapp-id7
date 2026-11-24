@@ -90,7 +90,7 @@ function headUnit(stage, o) {
         sheet: (sh) => display.openSheet(sh),
         // as mgu.js: the app's own rows at the bottom of the drawn settings
         settingsRow(row) { if (row && row.label) hu.settingsRows.push(row); },
-        hideButton(id) { display.hideButton(id); },
+        hideButton(id, hide) { display.hideButton(id, hide); },
         onScroll(fn) { display.onScroll = fn; },
         onLayout(fn) { display.onLayout(fn); },
         controller: { grab(on) { display.grab(on); }, onInput(fn) { display.onCcu = fn; } },
@@ -105,6 +105,14 @@ function headUnit(stage, o) {
                 loop: (fps, fn) => { hu.widgetFn = fn; },
             } : null,
     };
+
+    // as mgu.js, where the app's kit has them (its display.focusPage): back by the controller, the controller
+    // onto a place, and which place it is on (a page scrolls that row into view)
+    if (typeof display.focusPage === 'function') Object.assign(ctx, {
+        onBack(fn) { display.onBack = fn; },
+        focus(key) { display.focusPage(key); },
+        onPageFocus(fn) { display.onPageFocus = fn; },
+    });
 
     hu.start = () => {
         const realLoad = Module._load;

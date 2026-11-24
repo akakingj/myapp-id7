@@ -82,7 +82,34 @@ process.on('message', (m) => {
             feed('de.bmw.infotainment.vehicle.Vehicle', 'statusDayNightChangeOver', { dayNightChangeOver: VEH.night ? 'NACHT' : 'TAG' });
         }
     } catch (e) { /* an app without it */ }
+    try { if (Date.now() - slowAt >= 1000) { slowAt = Date.now(); slowSignals(feed, VEH); } } catch (e) { /* an app without them */ }
 });
+/* The car's slower signals, as the car hands them over (raw values, as kit/runtime/car.js and AK Cluster ID8's
+   src/car/vehicle.js read them), once a second from the panel: the cluster's time and trip computer, the outside
+   temperature, the drive mode, the selected gear, the drive battery. (Apps on data.js have them from the panel already.) */
+let slowAt = 0;
+const SELECT = { P: 3, R: 2, N: 1 };
+// (the panel's drive modes, as the car names them)
+const MODE_NAMES = { COMFORT: 'COMFORT', SPORT: 'SPORT_DYNAMIC', 'SPORT+': 'SPORT_EXPERT', SPORT_PLUS: 'SPORT_EXPERT', 'ECO PRO': 'ECO_PRO_EFFICIENT', ECO_PRO: 'ECO_PRO_EFFICIENT' };
+const TANK_L = 59, ODO_KM = 12345, AVG_L100 = 8.4;
+function slowSignals(feed, v) {
+    const num = (x) => typeof x === 'number' && isFinite(x);
+    const d = new Date();
+    feed('de.bmw.infotainment.KombiIF', 'statusShowTimeDate', { statusDisplayClockTimeDate: 1, displayHour: d.getHours(), displayMinute: d.getMinutes(), displaySecond: d.getSeconds() });
+    feed('de.bmw.infotainment.KombiIF', 'statusRangeTankStatus', {
+        range: num(v.frange) ? Math.max(0, Math.min(4094, Math.round(v.frange))) : 4095,
+        fluidLevelFuelTank: num(v.fuelPct) ? Math.max(0, Math.min(254, Math.round(TANK_L * v.fuelPct / 100))) : 255,
+        mileageKilometre: ODO_KM,
+    });
+    feed('de.bmw.infotainment.KombiIF', 'statusBordcomputerAverage', { consumptionAverage1BC1: Math.round(AVG_L100 * 10), statusUnitOfMeasurementConsumptionBC: 'VERBRAUCH_IN_L_S_100KM' });
+    if (num(v.erange)) feed('de.bmw.infotainment.KombiIF', 'displayRangeElectricVehicle', { displayRangeElectricVehicle: Math.max(0, Math.round(v.erange)) });
+    if (num(v.outside)) feed('de.bmw.infrastructure.EnvironmentalInformation', 'ExteriorTemperature', { temperatureExterior: Math.max(0, Math.min(254, Math.round((v.outside + 40) / 0.5))) });
+    const mode = MODE_NAMES[String(v.driveMode || '').toUpperCase()];
+    if (mode) feed('de.bmw.infotainment.drivingexcitement.FES', 'statusFESVehicleDynamicSwitchHMI', { actualValueModeDrivingExperience: mode });
+    const sel = SELECT[v.stage] || (/^[DSM]$/.test(v.stage) && v.gear >= 1 && v.gear <= 9 ? 4 + (v.gear | 0) : 0);
+    if (sel) feed('de.bmw.infrastructure.VehicleInformation', 'DataPowerTrain2', { statusGearSelectionDrive: sel });
+    if (num(v.soc)) feed('de.bmw.infotainment.drivingexcitement.Efficiencytainment2', 'statusChargeOfBatteryHybrid', { displayChargingConditionHighVoltageStorage: Math.max(0, Math.min(100, Math.round(v.soc))) });
+}
 const fresh = () => VEH && Date.now() - vehAt < 3000;
 const CORE = ['rpm', 'speed', 'gear', 'gLong', 'gLat', 'coolant', 'oil', 'torque', 'throttle'];
 
