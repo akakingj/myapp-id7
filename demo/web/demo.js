@@ -569,7 +569,7 @@ const Cluster = (() => {
     const note = $('#clusterNote');
     if (!panelOn) { note.style.display = 'flex'; note.innerHTML = '순정 계기판 (모형)<small>' + (vis.length ? '계기판 앱이 지도 자리 · HUD에만 그리는 중' : 'AK Cluster Layouts · Centre가 꺼져 있습니다 (각 앱 설정의 "계기판에 표시")') + '</small>'; }
     else note.style.display = 'none';
-    $('#mock').style.display = panelOn ? 'none' : '';
+    $('#mock').style.display = $('#mockTop').style.display = panelOn ? 'none' : '';
     const used = new Set([...px.keys()]);
     Object.values(R).forEach((r) => r && r.forget(used));
     imgCache.forEach((e, k) => { if (!used.has(k)) imgCache.delete(k); });
@@ -664,20 +664,94 @@ function glassView(g) {
 }
 $('#carView').onchange = (e) => { carView = e.target.value; try { localStorage.setItem(CV_KEY, carView); } catch (x) { /* this visit only */ } glassView(); };
 
-/* the stock cluster's dials (a sketch: while no layout draws the whole panel), its bottom strip, the Waze map's place */
-function drawMock() {
-  const c = $('#mock').getContext('2d');
-  c.fillStyle = '#000'; c.fillRect(0, 0, 1920, 720);
-  const dial = (cx, label, max, step) => {
-    c.save(); c.translate(cx, 345);
-    c.strokeStyle = '#26323f'; c.lineWidth = 5; c.beginPath(); c.arc(0, 0, 178, Math.PI * 0.75, Math.PI * 2.25); c.stroke();
-    c.fillStyle = '#556678'; c.font = '600 24px Segoe UI, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
-    for (let v = 0; v <= max; v += step) { const a = Math.PI * 0.75 + (v / max) * Math.PI * 1.5; c.fillText(String(v), Math.cos(a) * 142, Math.sin(a) * 142); }
-    c.fillStyle = '#3a4757'; c.font = '17px Segoe UI, Malgun Gothic, sans-serif'; c.fillText(label, 0, 110);
-    c.restore();
+/* the stock cluster (while no layout draws the whole panel): the car's own ID7 cluster as AK Cluster Layouts' Stock card
+ * draws it (myapp-cluster tools/stock_preview.py, line by line: no BMW picture), here with the car's values: the two
+ * framed scales (their band in the drive mode's colour, a mark at the speed and the rpm), the map between them, the
+ * speed, the drive mode and the gear; its bottom row is the strip's (#strip). Two canvases: under the map (#mock: the
+ * glass, a map of its own) and over it (#mockTop: the frames and the readings), so a map on the cluster (Waze, an
+ * app's map layers) sits between the scales as the car's does */
+const Mock = (() => {
+  const OUTER = [[697, 30], [295, 88], [112, 248], [90, 356], [200, 596], [510, 630], [760, 646]];
+  const INNER = OUTER.map(([x, y], i) => [x + [0, 14, 19, 20, 15, 0, 0][i], y + [20, 17, 9, 0, -14, -18, -18][i]]);
+  const NUMP = OUTER.map(([x, y], i) => [x + [0, 40, 60, 66, 52, 0, 0][i], y + [62, 54, 34, 0, -42, -52, -52][i]]);
+  const SPEED = { n: [0, 20, 40, 60, 100, 140, 200, 260], t: [0.84, 0.74, 0.62, 0.5, 0.36, 0.23, 0.12, 0.02] };
+  const RPM = { n: [0, 1, 2, 3, 4, 5, 6, 7], t: [0.84, 0.74, 0.62, 0.5, 0.38, 0.26, 0.14, 0.03] };
+  const BAND = { SPORT: '#be1418', 'SPORT+': '#be1418', 'ECO PRO': '#1c7fd6', COMFORT: '#8a96a8' };
+  const FONT = 'Segoe UI, Arial, sans-serif';
+  const at = (pts, t) => {          // the point a share t along a polyline
+    const seg = []; let all = 0;
+    for (let i = 0; i < pts.length - 1; i++) { const L = Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]); seg.push(L); all += L; }
+    let d = t * all;
+    for (let i = 0; i < seg.length; i++) { if (d <= seg[i] || i === seg.length - 1) { const u = seg[i] ? d / seg[i] : 0; return [pts[i][0] + (pts[i + 1][0] - pts[i][0]) * u, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * u]; } d -= seg[i]; }
+    return pts[pts.length - 1];
   };
-  dial(208, '순정 속도계 (모형)', 260, 40); dial(1712, '순정 rpm (모형)', 8, 1);
-}
+  const tOf = (sc, v) => { const n = sc.n, t = sc.t; if (!(v > n[0])) return t[0]; for (let i = 1; i < n.length; i++) if (v <= n[i]) return t[i - 1] + (t[i] - t[i - 1]) * (v - n[i - 1]) / (n[i] - n[i - 1]); return t[t.length - 1]; };
+  const mir = (pts, m) => pts.map(([x, y]) => [m ? 1920 - x : x, y]);
+  const poly = (c, pts) => { c.beginPath(); pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); };
+  const cache = {};                 // the still parts: under the map once, over it for each band colour
+  const canvas = () => { const cv = document.createElement('canvas'); cv.width = 1920; cv.height = 720; return cv; };
+  function under() {
+    if (cache.under) return cache.under;
+    const cv = canvas(), c = cv.getContext('2d');
+    c.fillStyle = '#000'; c.fillRect(0, 0, 1920, 720);
+    // the map in the middle: dark, a few streets, the route; faded out at its edges
+    const mp = document.createElement('canvas'); mp.width = 1920; mp.height = 720;
+    const m = mp.getContext('2d');
+    m.fillStyle = '#10131a'; m.fillRect(0, 0, 1920, 720);
+    m.strokeStyle = '#3a4458'; m.lineWidth = 3;
+    let seed = 7; const rnd = (a) => { seed = (seed * 16807) % 2147483647; return Math.round((seed / 2147483647 * 2 - 1) * a); };
+    for (let x = 380; x < 1560; x += 74) { m.beginPath(); m.moveTo(x + rnd(20), 0); m.lineTo(x + rnd(30), 720); m.stroke(); }
+    for (let y = 60; y < 720; y += 66) { m.beginPath(); m.moveTo(0, y + rnd(10)); m.lineTo(1920, y + rnd(14)); m.stroke(); }
+    m.strokeStyle = '#5676aa'; m.lineWidth = 14; m.beginPath(); m.moveTo(952, 0); m.lineTo(958, 720); m.stroke();
+    m.globalCompositeOperation = 'destination-in'; m.filter = 'blur(60px)'; m.fillStyle = '#fff';
+    poly(m, [[600, 150], [1320, 150], [1250, 590], [670, 590]]); m.fill();
+    c.drawImage(mp, 0, 0);
+    for (const mr of [false, true]) { c.save(); c.filter = 'blur(30px)'; c.fillStyle = 'rgba(40,44,52,.6)'; poly(c, mir(OUTER.slice(0, 6).concat([[640, 360]]), mr)); c.fill(); c.restore(); }
+    c.fillStyle = '#ff7828'; poly(c, [[960, 470], [940, 515], [960, 505], [980, 515]]); c.fill();      // (the car on its map)
+    return (cache.under = cv);
+  }
+  function over(band) {
+    if (cache[band]) return cache[band];
+    const cv = canvas(), c = cv.getContext('2d');
+    // each frame: the band (glowing), its white outer line, the scale's numerals
+    for (const mr of [false, true]) {
+      const bandPts = mir(OUTER.slice(0, 6), mr).concat(mir(INNER.slice(0, 6), mr).reverse());
+      c.save(); c.filter = 'blur(22px)'; c.fillStyle = band; poly(c, bandPts); c.fill(); c.restore();
+      c.save(); c.filter = 'blur(3px)'; c.fillStyle = band; poly(c, bandPts); c.fill(); c.restore();
+      c.save(); c.lineJoin = 'round'; c.strokeStyle = '#e8ecf2'; c.lineWidth = 5; poly(c, mir(OUTER, mr)); c.stroke();
+      c.strokeStyle = 'rgba(0,0,0,.45)'; c.lineWidth = 2; poly(c, mir(INNER.slice(0, 6).map(([x, y]) => [x + 4, y + 4]), mr)); c.stroke(); c.restore();
+      const sc = mr ? RPM : SPEED;
+      c.fillStyle = '#f0f2f6'; c.font = '700 34px ' + FONT; c.textAlign = 'center'; c.textBaseline = 'middle';
+      sc.n.forEach((n, i) => { const [x, y] = at(NUMP, sc.t[i]); c.fillText(String(n), mr ? 1920 - x : x, y); });
+    }
+    c.fillStyle = '#d2d6dc'; c.fillRect(250, 379, 310, 3); c.fillRect(1360, 379, 310, 3);
+    return (cache[band] = cv);
+  }
+  let drawnUnder = false;
+  function draw(v) {
+    if (!drawnUnder) { $('#mock').getContext('2d').drawImage(under(), 0, 0); drawnUnder = true; }
+    const c = $('#mockTop').getContext('2d'), mode = String(v.driveMode || 'COMFORT');
+    c.clearRect(0, 0, 1920, 720);
+    c.drawImage(over(BAND[mode] || BAND.COMFORT), 0, 0);
+    // the marks at the speed and the rpm: a white bar across each band
+    const mark = (sc, val, mr) => {
+      const t = tOf(sc, val), [ox, oy] = at(OUTER, t), [ix, iy] = at(INNER, t), dx = ix - ox, dy = iy - oy;
+      const f = (x) => (mr ? 1920 - x : x);
+      c.save(); c.strokeStyle = '#fff'; c.lineWidth = 7; c.lineCap = 'round'; c.shadowColor = '#fff'; c.shadowBlur = 14;
+      c.beginPath(); c.moveTo(f(ox - dx * 0.3), oy - dy * 0.3); c.lineTo(f(ix + dx * 0.9), iy + dy * 0.9); c.stroke(); c.restore();
+    };
+    mark(SPEED, Number(v.speed) || 0, false); mark(RPM, (Number(v.rpm) || 0) / 1000, true);
+    // the readings: speed left; the drive mode and the gear right
+    c.textBaseline = 'alphabetic';
+    c.fillStyle = '#fff'; c.font = '700 84px ' + FONT; c.textAlign = 'right'; c.fillText(String(Math.round(Number(v.speed) || 0)), 430, 360);
+    c.fillStyle = '#c8ccd2'; c.font = '28px ' + FONT; c.textAlign = 'left'; c.fillText('km/h', 442, 360);
+    const st = String(v.stage || 'P');
+    c.fillStyle = '#fff'; c.font = '700 84px ' + FONT; c.textAlign = 'left'; c.fillText(st === 'M' || st === 'S' ? st + (v.gear || '') : st, 1490, 360);
+    c.fillStyle = '#dce0e6'; c.font = '700 28px ' + FONT; c.textAlign = 'right'; c.fillText(mode === 'SPORT+' ? 'SPORT+' : mode, 1470, 360);
+  }
+  return { draw };
+})();
+function drawMock() { Mock.draw(Car.v || {}); }
 drawMock();
 let stripLast = 0;
 function strip() {
@@ -686,6 +760,7 @@ function strip() {
   stripLast = now;
   const d = Car.v, x = Car.extra || {};
   if (d.speed === undefined) return;
+  if ($('#mock').style.display !== 'none') Mock.draw(d);
   const n = new Date(), hh = n.getHours(), mm = String(n.getMinutes()).padStart(2, '0');
   $('#sRange').querySelector('b').textContent = String(Math.round(d.frange));
   $('#sTime').textContent = hh + ':' + mm;
@@ -700,7 +775,7 @@ $('#carlook').onchange = (e) => $('#cluster').classList.toggle('car', e.target.c
 $('#shotCluster').onclick = () => {
   const out = el('canvas', { width: 1920, height: 720 }), g = out.getContext('2d');
   g.fillStyle = '#000'; g.fillRect(0, 0, 1920, 720);
-  ['#mock', '#glPanel', '#ovl'].forEach((s) => { const c = $(s); if (c.style.display !== 'none') g.drawImage(c, 0, 0); });
+  ['#mock', '#glPanel', '#mockTop', '#ovl'].forEach((s) => { const c = $(s); if (c.style.display !== 'none') g.drawImage(c, 0, 0); });
   const m = $('#glMap'), r = m.getBoundingClientRect(), cr = $('#cluster').getBoundingClientRect();
   g.drawImage(m, (r.left - cr.left) * 1920 / cr.width, (r.top - cr.top) * 720 / cr.height, r.width * 1920 / cr.width, r.height * 720 / cr.height);
   out.toBlob((b) => { const a = el('a', { href: URL.createObjectURL(b), download: 'cluster-' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-') + '.png' }); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }, 'image/png');

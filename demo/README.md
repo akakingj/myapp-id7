@@ -4,7 +4,10 @@
 PC에서 차처럼 돌려 보는 데모입니다.
 브라우저 창 하나에 다음이 함께 나옵니다.
 
-- **계기판** (1920×720): AK Cluster Layouts · Centre · Info · ID8이 그리는 것. 앱의 GLSL을 WebGL로, KOMBI처럼 그립니다.
+- **계기판** (1920×720): AK Cluster Layouts · Centre · Info · ID8이 그리는 것.
+  레이아웃이 계기판 전체를 그리지 않을 때(Layouts · Centre를 끈 때)는 **순정 계기판**을 Cluster Layouts의 "Stock" 카드
+  그림처럼 그립니다: 양쪽 틀과 눈금(띠 색: COMFORT 회색 · SPORT 빨강 · ECO PRO 파랑), 속도·rpm 자리 표시, 가운데 지도,
+  속도 · 주행 모드 · 기어가 차량 값대로 바뀝니다. Waze나 앱의 지도는 차처럼 두 틀 사이에 보입니다 (1.8.1). 앱의 GLSL을 WebGL로, KOMBI처럼 그립니다.
   위쪽 **실차 모습**에서 실차 유리 모양(운전자 카메라 덮개, 위쪽 사선 코너)과 안내선(순정 경고등, 기어 · eDrive · M 박스,
   순정 하단 줄, 지도 자리)을 겹쳐 볼 수 있습니다. 치수는 Cluster Layouts의 `layout_common.js` 실측값을 그대로 씁니다.
 - **중앙 디스플레이 (MGU)**: HMI의 "설치된 앱" 목록. 아이콘을 누르면 그 앱이 열립니다. 차의 그리기 엔진
