@@ -81,14 +81,22 @@ process.on('message', (m) => {
             feed('de.bmw.body.Light', 'StatusFunctionsIndicators2', v);
             feed('de.bmw.infotainment.vehicle.Vehicle', 'statusDayNightChangeOver', { dayNightChangeOver: VEH.night ? 'NACHT' : 'TAG' });
         }
+        // the selected gear (AK Cluster ID8's gear): when it changes, as the car sends it, and every second
+        const sel = selectOf(VEH);
+        if (sel && (sel !== selSent || now - selAt > 1000)) {
+            selSent = sel; selAt = now;
+            feed('de.bmw.infrastructure.VehicleInformation', 'DataPowerTrain2', { statusGearSelectionDrive: sel });
+        }
     } catch (e) { /* an app without it */ }
     try { if (Date.now() - slowAt >= 1000) { slowAt = Date.now(); slowSignals(feed, VEH); } } catch (e) { /* an app without them */ }
 });
 /* The car's slower signals, as the car hands them over (raw values, as kit/runtime/car.js and AK Cluster ID8's
    src/car/vehicle.js read them), once a second from the panel: the cluster's time and trip computer, the outside
-   temperature, the drive mode, the selected gear, the drive battery. (Apps on data.js have them from the panel already.) */
-let slowAt = 0;
+   temperature, the drive mode, the drive battery (the selected gear: above, when it changes). (Apps on data.js have them from the panel already.) */
+let slowAt = 0, selSent = 0, selAt = 0;
 const SELECT = { P: 3, R: 2, N: 1 };
+/** The selected gear as DataPowerTrain2.statusGearSelectionDrive: N 1, R 2, P 3, D / S / M with gear n: 4 + n. */
+const selectOf = (v) => SELECT[v.stage] || (/^[DSM]$/.test(v.stage) && v.gear >= 1 && v.gear <= 9 ? 4 + (v.gear | 0) : 0);
 // (the panel's drive modes, as the car names them)
 const MODE_NAMES = { COMFORT: 'COMFORT', SPORT: 'SPORT_DYNAMIC', 'SPORT+': 'SPORT_EXPERT', SPORT_PLUS: 'SPORT_EXPERT', 'ECO PRO': 'ECO_PRO_EFFICIENT', ECO_PRO: 'ECO_PRO_EFFICIENT' };
 const TANK_L = 59, ODO_KM = 12345, AVG_L100 = 8.4;
@@ -106,8 +114,6 @@ function slowSignals(feed, v) {
     if (num(v.outside)) feed('de.bmw.infrastructure.EnvironmentalInformation', 'ExteriorTemperature', { temperatureExterior: Math.max(0, Math.min(254, Math.round((v.outside + 40) / 0.5))) });
     const mode = MODE_NAMES[String(v.driveMode || '').toUpperCase()];
     if (mode) feed('de.bmw.infotainment.drivingexcitement.FES', 'statusFESVehicleDynamicSwitchHMI', { actualValueModeDrivingExperience: mode });
-    const sel = SELECT[v.stage] || (/^[DSM]$/.test(v.stage) && v.gear >= 1 && v.gear <= 9 ? 4 + (v.gear | 0) : 0);
-    if (sel) feed('de.bmw.infrastructure.VehicleInformation', 'DataPowerTrain2', { statusGearSelectionDrive: sel });
     if (num(v.soc)) feed('de.bmw.infotainment.drivingexcitement.Efficiencytainment2', 'statusChargeOfBatteryHybrid', { displayChargingConditionHighVoltageStorage: Math.max(0, Math.min(100, Math.round(v.soc))) });
 }
 const fresh = () => VEH && Date.now() - vehAt < 3000;
