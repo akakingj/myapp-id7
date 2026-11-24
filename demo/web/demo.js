@@ -234,7 +234,7 @@ const Ctl = {
   press(on) { if (Cockpit) Cockpit.press(on); if (S.closed) { if (on) pickOpen(P.focus); } else send({ t: 'ccu', press: on }); },
   tilt(d) { if (Cockpit) Cockpit.tilt(d); if (S.closed) { if (d) pickMove({ N: -5, S: 5, E: 1, W: -1 }[d]); } else send({ t: 'ccu', tilt: d }); },
   back() { if (Cockpit) Cockpit.btn('back'); if (!S.closed) send({ t: 'hmi', a: 'back' }); },
-  home() { if (Cockpit) Cockpit.btn('menu'); if (!S.closed) send({ t: 'hmi', a: 'home' }); },
+  home() { if (Cockpit) Cockpit.btn('home'); if (!S.closed) send({ t: 'hmi', a: 'home' }); },
 };
 // keys belong to the panel's controls while one has the focus (and to the browser with a modifier)
 const held = new Set();

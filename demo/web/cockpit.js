@@ -1,8 +1,9 @@
-// cockpit.js - the MGU demo's driver's seat: the steering wheel, the pedals and the iDrive controller, drawn as the
-// car has them (original drawings: no maker's marks). They show what the car's values say (the steering angle, the
-// accelerator, braking, the indicators) and what the controller does (turns, pushes, presses), whoever does it: the
-// mouse wheel or keys over the centre display, or these drawings themselves. Each can be used too: drag the wheel,
-// press the pedals, turn, push and press the controller, its MENU and BACK.
+// cockpit.js - the MGU demo's driver's seat: the steering wheel, the pedals and the centre console (the gear selector
+// with its buttons, the iDrive controller), drawn as the car has them laid out (original drawings: no maker's marks).
+// They show what the car's values say (the steering angle, the accelerator, braking, the indicators, the gear, the
+// drive mode, the engine) and what the controller does (turns, pushes, presses), whoever does it: the mouse wheel or
+// keys over the centre display, or these drawings themselves. Each can be used too: drag the wheel, press the pedals,
+// move the lever, press P, the drive modes and START/STOP, turn, push and press the controller, its HOME and BACK.
 const NS = 'http://www.w3.org/2000/svg';
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
@@ -40,46 +41,6 @@ const WHEEL = `
   </g>
 </svg>`;
 
-const CONTROLLER = `
-<svg class="ck-svg" viewBox="-120 -92 240 184" aria-label="iDrive 컨트롤러">
-  <defs>
-    <radialGradient id="ckTouch" cx="45%" cy="35%" r="75%"><stop offset="0" stop-color="#2a2f37"/><stop offset="1" stop-color="#0b0d10"/></radialGradient>
-    <linearGradient id="ckChrome" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9ced6"/><stop offset=".5" stop-color="#6d737c"/><stop offset="1" stop-color="#d3d7de"/></linearGradient>
-    <linearGradient id="ckBase" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b1e23"/><stop offset="1" stop-color="#0f1114"/></linearGradient>
-  </defs>
-  <rect x="-116" y="-88" width="232" height="176" rx="26" fill="url(#ckBase)" stroke="#2b3038"/>
-  <!-- the buttons: media, phone, map above; menu, back, option below -->
-  <g class="ck-btns" font-family="system-ui, sans-serif" font-size="10" font-weight="600" text-anchor="middle">
-    <g class="ck-btn off" data-btn="media" transform="translate(-74 -66)"><rect x="-26" y="-11" width="52" height="22" rx="7"/><text y="3.5">MEDIA</text></g>
-    <g class="ck-btn off" data-btn="com" transform="translate(-86 -24)"><rect x="-22" y="-11" width="44" height="22" rx="7"/><text y="3.5">COM</text></g>
-    <g class="ck-btn off" data-btn="map" transform="translate(-86 18)"><rect x="-22" y="-11" width="44" height="22" rx="7"/><text y="3.5">MAP</text></g>
-    <g class="ck-btn" data-btn="menu" transform="translate(74 -66)"><rect x="-26" y="-11" width="52" height="22" rx="7"/><text y="3.5">MENU</text></g>
-    <g class="ck-btn" data-btn="back" transform="translate(86 -24)"><rect x="-22" y="-11" width="44" height="22" rx="7"/><text y="3.5">BACK</text></g>
-    <g class="ck-btn off" data-btn="option" transform="translate(86 18)"><rect x="-22" y="-11" width="44" height="22" rx="7"/><text y="3.5">OPTION</text></g>
-  </g>
-  <!-- which way it was pushed -->
-  <g class="ck-arrows" fill="#3d9cff">
-    <path data-dir="N" d="M 0 -76 L 7 -67 L -7 -67 Z"/><path data-dir="S" d="M 0 76 L 7 67 L -7 67 Z"/>
-    <path data-dir="W" d="M -66 0 L -57 -7 L -57 7 Z"/><path data-dir="E" d="M 66 0 L 57 -7 L 57 7 Z"/>
-  </g>
-  <!-- which way it was turned: an arc that shows for a moment -->
-  <g class="ck-turn">
-    <path class="cw" d="M 24 -56 A 61 61 0 0 1 58 -22" fill="none" stroke="#3d9cff" stroke-width="3.5" stroke-linecap="round"/><path class="cw" d="M 60 -14 L 63 -27 L 51 -24 Z" fill="#3d9cff"/>
-    <path class="ccw" d="M -24 -56 A 61 61 0 0 0 -58 -22" fill="none" stroke="#3d9cff" stroke-width="3.5" stroke-linecap="round"/><path class="ccw" d="M -60 -14 L -63 -27 L -51 -24 Z" fill="#3d9cff"/>
-  </g>
-  <g class="ck-knob">
-    <circle r="50" fill="#07080a"/>
-    <g class="ck-rot" data-part="knob">
-      <circle r="47" fill="url(#ckChrome)"/>
-      <circle r="47" fill="none" stroke="#3a3f46" stroke-width="6" stroke-dasharray="1.6 2.5" opacity=".75"/>
-      <rect x="-1.5" y="-47" width="3" height="7" fill="#ff8a3d"/>
-    </g>
-    <circle r="38" fill="#101215" stroke="#565c65" stroke-width="1"/>
-    <circle class="ck-pad" r="34" fill="url(#ckTouch)"/>
-    <circle class="ck-dot" r="5" fill="#3a4049"/>
-  </g>
-</svg>`;
-
 const PEDALS = `
 <svg class="ck-svg" viewBox="0 0 200 180" aria-label="페달">
   <defs>
@@ -105,20 +66,108 @@ const PEDALS = `
   </g>
 </svg>`;
 
+// the centre console: the gear selector and its buttons (left), the iDrive controller (right), as the car's are laid
+// out (an original drawing: the layout and the labels only)
+const KX = 452, KY = 172;                     // (the controller's middle)
+const CONSOLE = `
+<svg class="ck-svg" viewBox="0 0 620 300" aria-label="센터 콘솔: 기어와 iDrive 컨트롤러">
+  <defs>
+    <radialGradient id="ckTouch" cx="45%" cy="35%" r="75%"><stop offset="0" stop-color="#262b32"/><stop offset="1" stop-color="#090a0c"/></radialGradient>
+    <linearGradient id="ckChrome" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2e6eb"/><stop offset=".45" stop-color="#8b929b"/><stop offset=".55" stop-color="#6c727b"/><stop offset="1" stop-color="#d9dde3"/></linearGradient>
+    <linearGradient id="ckPanel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d2025"/><stop offset="1" stop-color="#121417"/></linearGradient>
+    <linearGradient id="ckGlass" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#05060a"/><stop offset=".35" stop-color="#3a414c"/><stop offset=".5" stop-color="#1b1f26"/><stop offset="1" stop-color="#07080b"/></linearGradient>
+  </defs>
+  <!-- the panel and its trim -->
+  <path d="M 30 4 L 590 4 Q 616 4 616 30 L 616 270 Q 616 296 590 296 L 46 296 Q 4 296 4 254 L 4 30 Q 4 4 30 4 Z" fill="url(#ckPanel)" stroke="url(#ckChrome)" stroke-width="3"/>
+  <!-- left: the small buttons, start/stop, the drive modes, auto hold -->
+  <g class="ck-btns" font-family="system-ui, sans-serif" font-size="10" font-weight="600" text-anchor="middle">
+    <g class="ck-btn off" data-btn="dsc" transform="translate(56 26)"><rect x="-40" y="-12" width="80" height="24" rx="5"/><text y="3.5">DSC OFF</text></g>
+    <g class="ck-btn off" data-btn="park" transform="translate(56 56)"><rect x="-40" y="-12" width="80" height="24" rx="5"/><text y="3.5">PARK ASSIST</text></g>
+    <g class="ck-btn off" data-btn="cam" transform="translate(56 86)"><rect x="-40" y="-12" width="80" height="24" rx="5"/><text y="3.5">CAMERA</text></g>
+    <g class="ck-btn ck-start" data-btn="start" transform="translate(56 138)">
+      <circle r="27" fill="url(#ckChrome)"/><circle class="ck-lamp" r="23" fill="#15181c"/>
+      <text y="-5" font-size="8">START</text><text y="4" font-size="8">ENGINE</text><text y="13" font-size="8">STOP</text>
+    </g>
+    <g class="ck-btn ck-mode" data-btn="SPORT" transform="translate(56 190)"><rect x="-40" y="-13" width="80" height="26" rx="5"/><rect class="ck-led" x="-36" y="-2" width="4" height="4" rx="1"/><text x="4" y="3.5">SPORT</text></g>
+    <g class="ck-btn ck-mode" data-btn="COMFORT" transform="translate(56 220)"><rect x="-40" y="-13" width="80" height="26" rx="5"/><rect class="ck-led" x="-36" y="-2" width="4" height="4" rx="1"/><text x="4" y="3.5">COMFORT</text></g>
+    <g class="ck-btn ck-mode" data-btn="ECO PRO" transform="translate(56 250)"><rect x="-40" y="-13" width="80" height="26" rx="5"/><rect class="ck-led" x="-36" y="-2" width="4" height="4" rx="1"/><text x="4" y="3.5">ECO PRO</text></g>
+    <g class="ck-btn ck-hold" data-btn="autoh" transform="translate(56 279)"><rect x="-40" y="-11" width="80" height="22" rx="5"/><rect class="ck-led" x="-36" y="-2" width="4" height="4" rx="1"/><text x="4" y="3.5">AUTO H</text></g>
+  </g>
+  <!-- the gear selector: its tray, the marks, the lever (monostable: it comes back), the parking brake -->
+  <rect x="108" y="14" width="168" height="214" rx="14" fill="#0a0b0d" stroke="#2a2e35"/>
+  <g class="ck-gears" font-family="system-ui, sans-serif" font-weight="700" text-anchor="middle">
+    <text class="ck-g" data-g="R" x="252" y="86" font-size="15">R</text>
+    <text class="ck-g" data-g="N" x="252" y="116" font-size="15">N</text>
+    <text class="ck-g" data-g="D" x="252" y="146" font-size="15">D</text>
+    <path d="M 240 92 L 264 92 M 240 122 L 264 122" stroke="#3a4049" stroke-width="1.2"/>
+    <text class="ck-g" data-g="S" x="138" y="182" font-size="12">M/S</text>
+    <text class="ck-g ck-gm" data-g="-" x="138" y="160" font-size="15">−</text>
+    <text class="ck-g ck-gm" data-g="+" x="138" y="206" font-size="15">+</text>
+  </g>
+  <g class="ck-lever">
+    <path d="M 168 52 C 168 40 176 32 192 32 C 208 32 216 40 216 52 L 222 176 C 222 196 210 206 192 206 C 174 206 162 196 162 176 Z" fill="url(#ckGlass)" stroke="#0a0b0d" stroke-width="1.5"/>
+    <path d="M 178 46 C 182 40 188 38 194 38" stroke="#9aa4b1" stroke-width="2" fill="none" opacity=".6"/>
+    <g class="ck-pbtn"><rect x="178" y="58" width="28" height="22" rx="4" fill="#15181c" stroke="#4a515b"/><text x="192" y="74" font-family="system-ui, sans-serif" font-size="13" font-weight="700" text-anchor="middle">P</text></g>
+  </g>
+  <g class="ck-btn ck-epb" data-btn="epb">
+    <rect x="108" y="238" width="168" height="54" rx="12" fill="#16191d" stroke="#2a2e35"/>
+    <circle cx="192" cy="265" r="15" fill="none" stroke-width="2"/><text x="192" y="270.5" font-family="system-ui, sans-serif" font-size="14" font-weight="700" text-anchor="middle">P</text>
+  </g>
+  <!-- right: the controller's own panel -->
+  <rect x="290" y="14" width="314" height="278" rx="24" fill="#16191d" stroke="#2a2e35"/>
+  <g fill="none" stroke="#0a0b0d" stroke-width="2.2" stroke-linecap="round">
+    <path d="M 404 30 Q 412 70 414 100"/><path d="M 500 30 Q 492 70 490 100"/>
+    <path d="M 330 62 L 380 62"/><path d="M 524 62 L 574 62"/>
+    <path d="M 384 268 Q 384 248 400 236"/><path d="M 520 268 Q 520 248 504 236"/>
+  </g>
+  <g class="ck-btns" font-family="system-ui, sans-serif" font-size="11" font-weight="600" text-anchor="middle">
+    <g class="ck-btn off" data-btn="media" transform="translate(355 44)"><rect x="-34" y="-13" width="68" height="26" rx="6"/><text y="4">MEDIA</text></g>
+    <g class="ck-btn" data-btn="home" transform="translate(452 36)"><rect x="-34" y="-13" width="68" height="26" rx="6"/><text y="4">HOME</text></g>
+    <g class="ck-btn off" data-btn="map" transform="translate(549 44)"><rect x="-34" y="-13" width="68" height="26" rx="6"/><text y="4">MAP</text></g>
+    <g class="ck-btn off" data-btn="tel" transform="translate(355 82)"><rect x="-34" y="-13" width="68" height="26" rx="6"/><text y="4">TEL</text></g>
+    <g class="ck-btn off" data-btn="nav" transform="translate(549 82)"><rect x="-34" y="-13" width="68" height="26" rx="6"/><text y="4">NAV</text></g>
+    <g class="ck-btn" data-btn="back" transform="translate(350 274)"><rect x="-34" y="-13" width="68" height="26" rx="6"/><text y="4">BACK</text></g>
+    <g class="ck-btn off" data-btn="option" transform="translate(554 274)"><rect x="-38" y="-13" width="76" height="26" rx="6"/><text y="4">OPTION</text></g>
+  </g>
+  <!-- which way it was turned: an arc that shows for a moment -->
+  <g class="ck-turn" transform="translate(${KX} ${KY})">
+    <path class="cw" d="M 30 -76 A 82 82 0 0 1 76 -30" fill="none" stroke="#3d9cff" stroke-width="4" stroke-linecap="round"/><path class="cw" d="M 79 -19 L 82 -35 L 68 -31 Z" fill="#3d9cff"/>
+    <path class="ccw" d="M -30 -76 A 82 82 0 0 0 -76 -30" fill="none" stroke="#3d9cff" stroke-width="4" stroke-linecap="round"/><path class="ccw" d="M -79 -19 L -82 -35 L -68 -31 Z" fill="#3d9cff"/>
+  </g>
+  <g transform="translate(${KX} ${KY})">
+    <g class="ck-knob">
+      <circle r="72" fill="#060708"/>
+      <g class="ck-rot" data-part="knob">
+        <circle r="69" fill="url(#ckChrome)"/>
+        <circle r="66" fill="none" stroke="#3a3f46" stroke-width="7" stroke-dasharray="1.5 2.4" opacity=".8"/>
+      </g>
+      <circle r="58" fill="#0d0f12" stroke="#4d535c" stroke-width="1"/>
+      <circle class="ck-pad" r="56" fill="url(#ckTouch)"/>
+      <!-- the arrows printed on the touchpad: the one pushed lights -->
+      <g class="ck-arrows">
+        <path data-dir="N" d="M -9 -33 L 0 -42 L 9 -33"/><path data-dir="S" d="M -9 33 L 0 42 L 9 33"/>
+        <path data-dir="W" d="M -33 -9 L -42 0 L -33 9"/><path data-dir="E" d="M 33 -9 L 42 0 L 33 9"/>
+      </g>
+      <circle class="ck-dot" r="4" fill="#2c3139"/>
+    </g>
+  </g>
+</svg>`;
+
 export function makeCockpit({ $, el, ctl, manualSet, send, car }) {
   const box = $('#cockpit');
   const card = (cls, title, svg, foot) => el('div', { className: 'ck-card ' + cls }, el('div', { className: 'ck-title', textContent: title }), el('div', { className: 'ck-draw', innerHTML: svg }), foot);
-  const wheelOut = el('span', { className: 'ck-val' }), pedalOut = el('span', { className: 'ck-val' }), ctlOut = el('span', { className: 'ck-val' });
+  const wheelOut = el('span', { className: 'ck-val' }), pedalOut = el('span', { className: 'ck-val' }), ctlOut = el('span', { className: 'ck-val' }), gearOut = el('span', { className: 'ck-val ck-gearout' });
   const indL = el('button', { className: 'ck-ind l', textContent: '◀', title: '왼쪽 방향지시등' }), indR = el('button', { className: 'ck-ind r', textContent: '▶', title: '오른쪽 방향지시등' });
   const wheelCard = card('ck-wheel', '핸들', WHEEL, el('div', { className: 'ck-foot' }, wheelOut));
   wheelCard.querySelector('.ck-draw').append(indL, indR);
   const pedalCard = card('ck-pedals', '페달', PEDALS, el('div', { className: 'ck-foot' }, pedalOut));
-  const ctlCard = card('ck-ctl', 'iDrive 컨트롤러', CONTROLLER, el('div', { className: 'ck-foot' }, ctlOut));
+  const ctlCard = card('ck-ctl', '센터 콘솔 · 기어 · iDrive 컨트롤러', CONSOLE, el('div', { className: 'ck-foot' }, gearOut, el('span', { className: 'ck-sep', textContent: '|' }), ctlOut));
   box.replaceChildren(wheelCard, pedalCard, ctlCard);
 
-  const wheelRot = wheelCard.querySelector('.ck-rot'), knob = ctlCard.querySelector('.ck-knob'), knobRot = ctlCard.querySelector('.ck-rot');
+  const wheelRot = wheelCard.querySelector('.ck-rot'), knob = ctlCard.querySelector('.ck-knob'), knobRot = ctlCard.querySelector('.ck-knob .ck-rot');
+  const lever = ctlCard.querySelector('.ck-lever');
   const accel = pedalCard.querySelector('.ck-accel .ck-mv'), brake = pedalCard.querySelector('.ck-brake .ck-mv');
-  const K = { angle: 0, tilt: null, press: false, turnT: null, hand: { steer: null, pedal: null, brake: null } };
+  const K = { angle: 0, tilt: null, press: false, turnT: null, autoH: false, hand: { steer: null, pedal: null, brake: null } };
 
   /* ---------------- what the car says ---------------- */
   function veh() {
@@ -136,6 +185,15 @@ export function makeCockpit({ $, el, ctl, manualSet, send, car }) {
     brake.style.transform = `translateY(${b * 22}px) scale(${1 - 0.06 * b})`;
     brake.style.filter = `brightness(${1 - 0.35 * b})`;
     pedalOut.textContent = '가속 ' + Math.round(p) + '%' + (b > 0.05 ? ' · 브레이크' : '') + (car.mode === 'auto' ? ' · 자동 주행' : '');
+    // the console: the gear lit, the drive mode's light, the engine (running: START/STOP lit), the parking brake (in P)
+    const st = String(v.stage || 'P'), mode = String(v.driveMode || 'COMFORT'), on = (Number(v.rpm) || 0) > 300;
+    ctlCard.querySelectorAll('.ck-g').forEach((g) => g.classList.toggle('on', g.dataset.g === st || (g.dataset.g === 'S' && (st === 'S' || st === 'M')) || (/[-+]/.test(g.dataset.g) && st === 'M')));
+    ctlCard.querySelector('.ck-pbtn').classList.toggle('on', st === 'P');
+    ctlCard.querySelectorAll('.ck-mode').forEach((m) => m.classList.toggle('on', m.dataset.btn === mode || (m.dataset.btn === 'SPORT' && mode === 'SPORT+')));
+    ctlCard.querySelector('.ck-start').classList.toggle('on', on);
+    ctlCard.querySelector('.ck-epb').classList.toggle('on', st === 'P');
+    ctlCard.querySelector('.ck-hold').classList.toggle('on', K.autoH);
+    gearOut.textContent = '기어 ' + (/^[DSM]$/.test(st) ? st + (v.gear || '') : st) + ' · ' + (mode === 'SPORT+' ? 'SPORT+' : mode) + (on ? '' : ' · 시동 꺼짐');
   }
 
   /* ---------------- what the controller did (from here, the keys or the mouse wheel over the screen) ---------------- */
@@ -156,10 +214,10 @@ export function makeCockpit({ $, el, ctl, manualSet, send, car }) {
     ctlCard.querySelectorAll('.ck-arrows path').forEach((a) => a.classList.toggle('on', a.dataset.dir === d));
     if (d) say('밀기: ' + DIR_KO[d]);
   }
-  function btn(name) {
+  function btn(name, text) {
     const b = ctlCard.querySelector('[data-btn="' + name + '"]');
     if (b) { b.classList.add('hit'); setTimeout(() => b.classList.remove('hit'), 220); }
-    say(name.toUpperCase());
+    say(text || name.toUpperCase());
   }
   say('휠·키·마우스로 조작');
 
@@ -215,7 +273,7 @@ export function makeCockpit({ $, el, ctl, manualSet, send, car }) {
     pedal('accel'); pedal('brake');
   }
   // the controller: the mouse wheel over it turns it; the ring dragged round turns it; the middle pressed presses it,
-  // pushed off the middle (a drag past its edge) pushes it that way; MENU and BACK
+  // pushed off the middle (a drag past its edge) pushes it that way; the arrows on it push it too
   {
     const svg = svgOf(ctlCard);
     let acc = 0;
@@ -225,13 +283,16 @@ export function makeCockpit({ $, el, ctl, manualSet, send, car }) {
       const n = Math.trunc(acc);
       if (n) { acc -= n; ctl.turn(n); }
     }, { passive: false });
+    const atKnob = (e) => { const p = local(svg, e); return { x: p.x - KX, y: p.y - KY }; };
     drag(knob, (e) => {
-      const p0 = local(svg, e), r = Math.hypot(p0.x, p0.y);
-      if (r > 52) return null;
-      if (r > 36) {                                // the ring: turned, a detent every 15 degrees
+      const p0 = atKnob(e), r = Math.hypot(p0.x, p0.y);
+      if (r > 74) return null;
+      const arrow = e.target.closest && e.target.closest('[data-dir]');
+      if (arrow) { ctl.tilt(arrow.dataset.dir); return { move: () => {}, end: () => ctl.tilt(null) }; }
+      if (r > 57) {                                // the ring: turned, a detent every 15 degrees
         let prev = Math.atan2(p0.y, p0.x), acc2 = 0;
         return {
-          move: (ev) => { const p = local(svg, ev), a = Math.atan2(p.y, p.x); let d = a - prev; if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI; prev = a; acc2 += d * 180 / Math.PI; while (Math.abs(acc2) >= 15) { const s = Math.sign(acc2); acc2 -= s * 15; ctl.turn(s); } },
+          move: (ev) => { const p = atKnob(ev), a = Math.atan2(p.y, p.x); let d = a - prev; if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI; prev = a; acc2 += d * 180 / Math.PI; while (Math.abs(acc2) >= 15) { const sg = Math.sign(acc2); acc2 -= sg * 15; ctl.turn(sg); } },
           end: () => {},
         };
       }
@@ -241,8 +302,8 @@ export function makeCockpit({ $, el, ctl, manualSet, send, car }) {
       return {
         move: (ev) => {
           if (pressed) return;
-          const p = local(svg, ev), dx = p.x - p0.x, dy = p.y - p0.y;
-          const want = Math.hypot(dx, dy) < 14 ? null : Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'E' : 'W') : (dy > 0 ? 'S' : 'N');
+          const p = atKnob(ev), dx = p.x - p0.x, dy = p.y - p0.y;
+          const want = Math.hypot(dx, dy) < 16 ? null : Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'E' : 'W') : (dy > 0 ? 'S' : 'N');
           if (want === dir) return;
           clearTimeout(t);
           if (dir) ctl.tilt(null);
@@ -252,13 +313,57 @@ export function makeCockpit({ $, el, ctl, manualSet, send, car }) {
         end: () => { clearTimeout(t); if (pressed) ctl.press(false); else if (dir) ctl.tilt(null); else { ctl.press(true); setTimeout(() => ctl.press(false), 90); } },
       };
     });
-    ctlCard.querySelectorAll('.ck-arrows path').forEach((a) => drag(a, () => { ctl.tilt(a.dataset.dir); return { move: () => {}, end: () => ctl.tilt(null) }; }));
+    // the buttons: HOME and BACK the controller's; the drive modes (SPORT again: SPORT+); START/STOP the engine;
+    // AUTO H a light only; the rest are there to look at
+    const TIP = { home: 'HOME: 홈 (앱 목록), H 키', back: 'BACK: 뒤로, Backspace 키', start: 'START/STOP: 시동 켜기 · 끄기 (직접 조절로 바뀜)', SPORT: 'SPORT (한 번 더: SPORT+)', COMFORT: 'COMFORT', 'ECO PRO': 'ECO PRO',
+      autoh: 'AUTO H: 표시만', epb: '주차 브레이크: P에서 켜짐 (표시만)' };
     ctlCard.querySelectorAll('.ck-btn').forEach((b) => {
       const name = b.dataset.btn;
-      if (b.classList.contains('off')) { b.append(Object.assign(document.createElementNS(NS, 'title'), { textContent: name.toUpperCase() + ': 데모에는 없는 버튼' })); b.onclick = () => btn(name); return; }
-      b.append(Object.assign(document.createElementNS(NS, 'title'), { textContent: name === 'menu' ? 'MENU: 홈 (앱 목록), H 키' : 'BACK: 뒤로, Backspace 키' }));
-      b.onclick = () => (name === 'menu' ? ctl.home() : ctl.back());
+      b.append(Object.assign(document.createElementNS(NS, 'title'), { textContent: TIP[name] || name.toUpperCase() + ': 데모에는 없는 버튼' }));
+      b.addEventListener('click', () => {
+        if (name === 'home') ctl.home();
+        else if (name === 'back') ctl.back();
+        else if (name === 'SPORT' || name === 'COMFORT' || name === 'ECO PRO') { const m = name === 'SPORT' && car.v.driveMode === 'SPORT' ? 'SPORT+' : name; manualSet({ driveMode: m }, true); btn(name, m); }
+        else if (name === 'start') { const was = (Number(car.v.rpm) || 0) > 300; engine(); btn(name, was ? '시동 끔' : '시동 켬'); }
+        else if (name === 'autoh') { K.autoH = !K.autoH; veh(); btn(name, 'AUTO H ' + (K.autoH ? '켬' : '끔')); }
+        else btn(name);
+      });
     });
+    // the lever: pushed forward or pulled back and let go (R, N, D, as the car's: once a step), to the left for S and
+    // there forward / back for M − / +, to the right from S back to D; P on its top; the marks too
+    const gearTo = (stage, gear) => manualSet({ stage, gear: /^[DSM]$/.test(stage) ? Math.max(1, Math.min(8, gear || Number(car.v.gear) || 1)) : 0 });
+    function shift(d) {
+      const st = String(car.v.stage || 'P'), g = Number(car.v.gear) || 1;
+      if (st === 'S' || st === 'M') {
+        if (d === 'N') gearTo('M', g - 1); else if (d === 'S') gearTo('M', g + 1); else if (d === 'E') gearTo('D');
+      } else if (d === 'N') gearTo(st === 'D' ? 'N' : 'R');
+      else if (d === 'S') gearTo(st === 'R' ? 'N' : 'D');
+      else if (d === 'W' && st === 'D') gearTo('S');
+      say({ N: '레버 앞으로', S: '레버 뒤로', W: '레버 왼쪽', E: '레버 오른쪽' }[d]);
+    }
+    drag(lever, (e) => {
+      const p0 = local(svg, e), onP = e.target.closest && e.target.closest('.ck-pbtn');
+      let dir = null;
+      return {
+        move: (ev) => {
+          const p = local(svg, ev), dx = p.x - p0.x, dy = p.y - p0.y;
+          dir = Math.hypot(dx, dy) < 12 ? null : Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'E' : 'W') : (dy > 0 ? 'S' : 'N');
+          const o = { N: [0, -16], S: [0, 16], E: [12, 0], W: [-14, 0] }[dir] || [0, 0];
+          lever.style.transform = `translate(${o[0]}px, ${o[1]}px)`;
+        },
+        end: () => { lever.style.transform = ''; if (dir) shift(dir); else if (onP) { gearTo('P'); say('P'); } },
+      };
+    });
+    ctlCard.querySelectorAll('.ck-g').forEach((g) => g.addEventListener('click', () => {
+      const k = g.dataset.g, gr = Number(car.v.gear) || 1;
+      if (k === '-' || k === '+') gearTo('M', gr + (k === '+' ? 1 : -1)); else gearTo(k);
+    }));
+    ctlCard.querySelector('.ck-epb').addEventListener('click', () => { if ((Number(car.v.speed) || 0) < 3) gearTo('P'); });
+  }
+  /** START/STOP: running, the engine stops (standing, in P); stopped, it starts (idling) */
+  function engine() {
+    if ((Number(car.v.rpm) || 0) > 300) manualSet({ rpm: 0, speed: 0, stage: 'P', gear: 0, pedal: 0, throttle: 0, torque: 0, gLong: 0 });
+    else manualSet({ rpm: 750, throttle: 3 });
   }
   return { veh, turn, press, tilt, btn };
 }

@@ -209,7 +209,7 @@ details.adv[open] > summary { color: var(--text); }
 .cap label.cv select { font-size: 11px; padding: 1px 4px; }
 
 /* ---- the driver's seat (cockpit.js): the wheel, the pedals, the iDrive controller, under the centre display ---- */
-#cockpit { flex: none; height: clamp(120px, 19vh, 190px); display: grid; grid-template-columns: 1fr .8fr 1.15fr; gap: 10px; max-width: 100%; }
+#cockpit { flex: none; height: clamp(140px, 24vh, 250px); display: grid; grid-template-columns: .9fr .6fr 1.5fr; gap: 10px; max-width: 100%; }
 .ck-card { position: relative; min-width: 0; display: flex; flex-direction: column; background: linear-gradient(#15181d, #0e1013); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
 .ck-title { flex: none; padding: 4px 9px 0; font-size: 11px; line-height: 14px; color: var(--dim); pointer-events: none; }
 .ck-draw { position: relative; flex: 1; min-height: 0; display: flex; justify-content: center; }
@@ -231,8 +231,8 @@ details.adv[open] > summary { color: var(--text); }
 .ck-knob .ck-pad { transition: filter .08s; }
 .ck-knob.pressed .ck-pad { filter: brightness(2.2); }
 .ck-knob.pressed .ck-dot { fill: #3d9cff; }
-.ck-arrows path { opacity: .16; transition: opacity .08s; cursor: pointer; }
-.ck-arrows path.on { opacity: 1; }
+.ck-arrows path { fill: none; stroke: #7d8692; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; transition: stroke .08s; cursor: pointer; }
+.ck-arrows path.on { stroke: #3d9cff; stroke-width: 4; }
 .ck-turn path { opacity: 0; transition: opacity .25s; }
 .ck-ctl.cw .ck-turn .cw, .ck-ctl.ccw .ck-turn .ccw { opacity: 1; transition: none; }
 .ck-btn rect { fill: #1f2329; stroke: #3a4049; transition: fill .1s; }
@@ -244,4 +244,17 @@ details.adv[open] > summary { color: var(--text); }
 .ck-btn.hit text { fill: #fff; }
 #capStage .on#ckBtn { background: #1f3550; border-color: var(--accent); color: #fff; }
 body.short #cockpit { height: 110px; }
-body.narrow #cockpit { grid-template-columns: 1fr 1fr; height: auto; } body.narrow .ck-card { height: 150px; } body.narrow .ck-ctl { grid-column: 1 / -1; }
+body.narrow #cockpit { grid-template-columns: 1fr 1fr; height: auto; } body.narrow .ck-card { height: 150px; } body.narrow .ck-ctl { grid-column: 1 / -1; height: 210px; }
+/* the console: the gear marks (lit: the gear), the lever (comes back), P, the lights of the drive modes, START/STOP, the parking brake */
+.ck-g { fill: #4a515b; cursor: pointer; transition: fill .1s; }
+.ck-g.on { fill: #f2f4f7; }
+.ck-lever { transition: transform .12s ease-out; cursor: grab; }
+.ck-lever:active { cursor: grabbing; }
+.ck-pbtn text { fill: #59616c; } .ck-pbtn.on text { fill: #ff8a3d; } .ck-pbtn { cursor: pointer; }
+.ck-btn .ck-led { fill: #2b3037; stroke: none; } .ck-btn.on .ck-led { fill: #ff8a3d; }
+.ck-mode.on text { fill: #fff; }
+.ck-start text { fill: #c9ced6; font-weight: 700; } .ck-start .ck-lamp { transition: fill .2s; } .ck-start.on .ck-lamp { fill: #2a2014; } .ck-start.on text { fill: #ffb45e; }
+.ck-epb circle, .ck-epb text { stroke: #4a515b; fill: none; } .ck-epb text { fill: #4a515b; stroke: none; }
+.ck-epb.on circle { stroke: #ff4d42; } .ck-epb.on text { fill: #ff4d42; }
+.ck-epb rect { fill: #16191d; }
+.ck-foot .ck-sep { color: var(--line); margin: 0 8px; }
