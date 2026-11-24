@@ -37,7 +37,7 @@
     <pre id="clusterErr"></pre>
   </div>
 
-  <div class="cap" id="capStage"><b>중앙 디스플레이 (MGU)</b><span id="stageInfo">앱 아이콘을 누르면 열립니다 · 왼쪽 위 집 모양: 앱 목록</span><span class="sp"></span><button id="shot" title="중앙 디스플레이를 1920×720 PNG로 저장">📷 저장</button></div>
+  <div class="cap" id="capStage"><b>중앙 디스플레이 (MGU)</b><span id="stageInfo">앱 아이콘을 누르면 열립니다 · 왼쪽 위 집 모양: 앱 목록</span><span class="sp"></span><button id="ckBtn" title="핸들 · 페달 · iDrive 컨트롤러를 보이거나 숨깁니다">🚗 운전석</button><button id="shot" title="중앙 디스플레이를 1920×720 PNG로 저장">📷 저장</button></div>
   <div id="stage" tabindex="0" aria-label="중앙 디스플레이, 1920 x 720">
     <!-- from kit/emu/web/index.html: the HMI around the app's surface, and its app list -->
     <div id="hmi" aria-hidden="true">
@@ -71,6 +71,7 @@
     <div id="overlay" hidden></div>
     <div id="toast" hidden></div>
   </div>
+  <div id="cockpit" aria-label="운전석: 핸들, 페달, iDrive 컨트롤러"></div>
   <div id="legend">
     <span>마우스 = 터치</span>
     <span><kbd>휠</kbd> <kbd>[</kbd> <kbd>]</kbd> 다이얼 돌리기</span>

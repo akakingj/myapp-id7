@@ -207,3 +207,41 @@ details.adv[open] > summary { color: var(--text); }
 #glassView { pointer-events: none; }
 .cap label.cv { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; }
 .cap label.cv select { font-size: 11px; padding: 1px 4px; }
+
+/* ---- the driver's seat (cockpit.js): the wheel, the pedals, the iDrive controller, under the centre display ---- */
+#cockpit { flex: none; height: clamp(120px, 19vh, 190px); display: grid; grid-template-columns: 1fr .8fr 1.15fr; gap: 10px; max-width: 100%; }
+.ck-card { position: relative; min-width: 0; display: flex; flex-direction: column; background: linear-gradient(#15181d, #0e1013); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.ck-title { flex: none; padding: 4px 9px 0; font-size: 11px; line-height: 14px; color: var(--dim); pointer-events: none; }
+.ck-draw { position: relative; flex: 1; min-height: 0; display: flex; justify-content: center; }
+.ck-svg { height: 100%; width: 100%; display: block; touch-action: none; user-select: none; -webkit-user-select: none; }
+.ck-foot { flex: none; text-align: center; font-size: 11px; color: var(--text); padding: 0 6px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ck-val { font-variant-numeric: tabular-nums; }
+/* (turning and moving parts: about their own middle, or the pedals' hinges; a little easing between the car's values) */
+.ck-rot { transform-box: fill-box; transform-origin: center; transition: transform .12s linear; }
+.ck-wheel .ck-rot { cursor: grab; }
+.ck-wheel .ck-rot:active { cursor: grabbing; }
+.ck-accel .ck-mv { transform-box: fill-box; transform-origin: 50% 100%; transition: transform .1s linear, filter .1s; }
+.ck-brake .ck-mv { transform-box: fill-box; transform-origin: 50% 0; transition: transform .1s linear, filter .1s; }
+.ck-accel, .ck-brake { cursor: ns-resize; }
+.ck-ind { position: absolute; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; padding: 0; border-radius: 50%; font-size: 13px; color: #5d4a22; background: #16191d; border: 1px solid var(--line); cursor: pointer; z-index: 1; }
+.ck-ind.l { left: 8px; } .ck-ind.r { right: 8px; }
+.ck-ind.on { color: #ffb02e; border-color: #8a6a24; animation: ck-blink .75s steps(1) infinite; }
+@keyframes ck-blink { 50% { color: #5d4a22; border-color: var(--line); } }
+.ck-knob { transition: transform .08s ease-out; cursor: pointer; }
+.ck-knob .ck-pad { transition: filter .08s; }
+.ck-knob.pressed .ck-pad { filter: brightness(2.2); }
+.ck-knob.pressed .ck-dot { fill: #3d9cff; }
+.ck-arrows path { opacity: .16; transition: opacity .08s; cursor: pointer; }
+.ck-arrows path.on { opacity: 1; }
+.ck-turn path { opacity: 0; transition: opacity .25s; }
+.ck-ctl.cw .ck-turn .cw, .ck-ctl.ccw .ck-turn .ccw { opacity: 1; transition: none; }
+.ck-btn rect { fill: #1f2329; stroke: #3a4049; transition: fill .1s; }
+.ck-btn text { fill: #c9ced6; pointer-events: none; }
+.ck-btn { cursor: pointer; }
+.ck-btn:hover rect { fill: #2a3038; }
+.ck-btn.off text { fill: #5f6773; }
+.ck-btn.hit rect { fill: #3d9cff; }
+.ck-btn.hit text { fill: #fff; }
+#capStage .on#ckBtn { background: #1f3550; border-color: var(--accent); color: #fff; }
+body.short #cockpit { height: 110px; }
+body.narrow #cockpit { grid-template-columns: 1fr 1fr; height: auto; } body.narrow .ck-card { height: 150px; } body.narrow .ck-ctl { grid-column: 1 / -1; }

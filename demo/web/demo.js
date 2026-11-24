@@ -2,6 +2,7 @@
 // renderer stream through the car's draw engine, gfx/mgu-gfx.js as WebAssembly; mouse = touchscreen, keyboard / wheel =
 // iDrive controller; the HMI's app list), the cluster and the HUD the AK Cluster apps draw (WebGL), and the panel: one
 // car for every app, the open app's settings. Sections marked "from kit/emu/web/emu-app.js" are that file's.
+import { makeCockpit } from './cockpit.js';
 const W = 1920, H = 720;
 const $ = (s) => document.querySelector(s);
 const el = (tag, attrs, ...kids) => {
@@ -222,9 +223,19 @@ stage.addEventListener('wheel', (e) => {
   e.preventDefault();
   wheel += e.deltaMode === 1 ? e.deltaY / 3 : e.deltaMode === 2 ? e.deltaY * 3 : e.deltaY / 60;
   const n = Math.trunc(wheel);
-  if (n) { wheel -= n; if (S.closed) pickMove(n); else send({ t: 'ccu', turn: n }); }
+  if (n) { wheel -= n; Ctl.turn(n); }
 }, { passive: false });
 const TILT = { ArrowUp: 'N', ArrowRight: 'E', ArrowDown: 'S', ArrowLeft: 'W' };
+/** the controller, whoever uses it (the mouse wheel, the keys, the drawn one): the app picker has it while it shows
+ * (the app is not on screen; BACK and HOME leave it there), the app otherwise; the drawn controller shows each move */
+let Cockpit = null;
+const Ctl = {
+  turn(n) { if (Cockpit) Cockpit.turn(n); if (S.closed) pickMove(n); else send({ t: 'ccu', turn: n }); },
+  press(on) { if (Cockpit) Cockpit.press(on); if (S.closed) { if (on) pickOpen(P.focus); } else send({ t: 'ccu', press: on }); },
+  tilt(d) { if (Cockpit) Cockpit.tilt(d); if (S.closed) { if (d) pickMove({ N: -5, S: 5, E: 1, W: -1 }[d]); } else send({ t: 'ccu', tilt: d }); },
+  back() { if (Cockpit) Cockpit.btn('back'); if (!S.closed) send({ t: 'hmi', a: 'back' }); },
+  home() { if (Cockpit) Cockpit.btn('menu'); if (!S.closed) send({ t: 'hmi', a: 'home' }); },
+};
 // keys belong to the panel's controls while one has the focus (and to the browser with a modifier)
 const held = new Set();
 const typing = (e) => !!(e.target.closest && e.target.closest('#panel, input, select, textarea, button')) || e.metaKey || e.ctrlKey || e.altKey;
@@ -232,30 +243,21 @@ document.addEventListener('keydown', (e) => {
   if (typing(e)) return;
   const k = e.key;
   // the app picker has the controller while it shows (the app is not on screen); BACK and HOME leave it there
-  if (S.closed) {
-    if (k === '[' || k === ']') pickMove(k === ']' ? 1 : -1);
-    else if (TILT[k]) pickMove({ N: -5, S: 5, E: 1, W: -1 }[TILT[k]]);
-    else if (k === 'Enter') { if (!e.repeat) pickOpen(P.focus); }
-    else if (k === 'o' || k === 'O') pickOpen(P.tiles.findIndex((t) => t.id === S.app));
-    else if (!(k === 'Backspace' || k === 'h' || k === 'H' || k === 'Home')) return;
-    e.preventDefault();
-    return;
-  }
-  if (k === '[' || k === ']') send({ t: 'ccu', turn: k === ']' ? 1 : -1 });
-  else if (k === 'Enter') { if (!e.repeat) { held.add(k); send({ t: 'ccu', press: true }); } }
-  else if (TILT[k]) { if (!e.repeat) { held.add(k); send({ t: 'ccu', tilt: TILT[k] }); } }
-  else if (k === 'Backspace') send({ t: 'hmi', a: 'back' });
-  else if (k === 'h' || k === 'H' || k === 'Home') send({ t: 'hmi', a: 'home' });
-  else if (k === 'o' || k === 'O') send({ t: 'hmi', a: 'open' });
+  if (k === '[' || k === ']') Ctl.turn(k === ']' ? 1 : -1);
+  else if (k === 'Enter') { if (!e.repeat) { held.add(k); Ctl.press(true); } }
+  else if (TILT[k]) { if (!e.repeat) { held.add(k); Ctl.tilt(TILT[k]); } }
+  else if (k === 'Backspace') Ctl.back();
+  else if (k === 'h' || k === 'H' || k === 'Home') Ctl.home();
+  else if (k === 'o' || k === 'O') { if (S.closed) pickOpen(P.tiles.findIndex((t) => t.id === S.app)); else send({ t: 'hmi', a: 'open' }); }
   else return;
   e.preventDefault();
 });
 document.addEventListener('keyup', (e) => {
   if (!held.delete(e.key)) return;              // (only a press or push this page sent)
-  if (e.key === 'Enter') send({ t: 'ccu', press: false });
-  else if (TILT[e.key]) send({ t: 'ccu', tilt: null });
+  if (e.key === 'Enter') Ctl.press(false);
+  else if (TILT[e.key]) Ctl.tilt(null);
 });
-window.addEventListener('blur', () => { send({ t: 'ccu', press: false }); send({ t: 'ccu', tilt: null }); });
+window.addEventListener('blur', () => { if (held.size) { held.clear(); Ctl.press(false); Ctl.tilt(null); } else { send({ t: 'ccu', press: false }); send({ t: 'ccu', tilt: null }); } });
 
 /* ---------------- panel: app, HMI ---------------- */
 const STATUS_KO = { idle: '대기', connecting: '연결 중', building: '빌드 중', starting: '시작 중', running: '실행 중', exited: '종료됨', 'build-error': '빌드 실패', disconnected: '데모 꺼짐' };
@@ -434,6 +436,7 @@ function syncCar() {
   segSync($('#indSeg'), Car.extra.indicator || 'off'); segSync($('#nightSeg'), !!Car.extra.night);
   $('#sliders').classList.toggle('auto', Car.mode === 'auto');
   Object.keys(Car.els).forEach(show);
+  if (Cockpit) Cockpit.veh();
 }
 
 /* ---------------- the cluster and the HUD: what the AK Cluster apps make (demo/preload.js), drawn as the KOMBI would ----------------
@@ -802,11 +805,11 @@ function layout() {
   document.body.classList.toggle('narrow', narrow);
   const m = $('#main'), cs = getComputedStyle(m), px = (k) => parseFloat(cs[k]) || 0;
   const aw = m.getBoundingClientRect().width - px('paddingLeft') - px('paddingRight');
-  const fixed = ['#capCluster', '#capStage', '#legend'].reduce((n, s) => n + ($(s).offsetHeight || 0), 0) + 5 * px('rowGap');
+  const fixed = ['#capCluster', '#capStage', '#cockpit', '#legend'].reduce((n, s) => n + ($(s).offsetHeight || 0), 0) + ($('#cockpit').hidden ? 5 : 6) * px('rowGap');
   const ah = (narrow ? window.innerHeight * 0.9 : m.clientHeight) - px('paddingTop') - px('paddingBottom') - fixed;
   const w = Math.max(240, Math.floor(Math.min(aw, ah / 2 * W / H)));
   [stage, $('#cluster')].forEach((e) => { if (e.style.width !== w + 'px') e.style.width = w + 'px'; });
-  ['#capCluster', '#capStage'].forEach((s) => { $(s).style.width = w + 'px'; $(s).style.alignSelf = 'center'; });
+  ['#capCluster', '#capStage', '#cockpit'].forEach((s) => { $(s).style.width = w + 'px'; $(s).style.alignSelf = 'center'; });
 }
 const ro = new ResizeObserver(() => layout());
 ro.observe($('#main'));
@@ -814,6 +817,17 @@ window.addEventListener('resize', layout);
 const clock = () => { $('#hmi-clock').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }); };   // (24 h, as the car)
 setInterval(clock, 10000); clock();
 
+// the driver's seat under the centre display (the wheel, the pedals, the controller); its button hides it
+{
+  const CK_KEY = 'mguDemo.cockpit';
+  let on = true;
+  try { on = localStorage.getItem(CK_KEY) !== 'off'; } catch (e) { /* shown */ }
+  Cockpit = makeCockpit({ $, el, ctl: Ctl, manualSet, send, car: Car });
+  const b = $('#ckBtn');
+  const put = () => { $('#cockpit').hidden = !on; b.classList.toggle('on', on); b.textContent = on ? '🚗 운전석 숨기기' : '🚗 운전석'; layout(); };
+  b.onclick = () => { on = !on; try { localStorage.setItem(CK_KEY, on ? 'on' : 'off'); } catch (e) { /* this visit */ } put(); };
+  put();
+}
 buildCar();
 layout();
 connect();
