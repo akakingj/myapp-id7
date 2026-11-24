@@ -20,7 +20,7 @@
  * Settings: Slosh strength (x the G, 2.2 as Layouts), Water level, Fuel tofu, Fuel tank size, skin, colour theme, layout, renderer, demo data (the Car profile's).
  */
 const mgu = require('./kit/mgu');
-const { withAlpha } = require('./kit/canvas');
+const { withAlpha, mix } = require('./kit/canvas');
 const G = require('./kit/gauges');
 const Car = require('./kit/car');
 const C = require('./cup');
@@ -91,10 +91,7 @@ mgu.run({
             cv.fill(ellipse(cx, by, aB, e * aB, Math.PI, 2 * Math.PI), withAlpha(GLASS, 0.05));
             cv.stroke(ellipse(cx, by, aB, e * aB, Math.PI, 2 * Math.PI), 2, withAlpha(GLASS, 0.25));
             cv.stroke(ellipse(cx, ry, aR, e * aR, Math.PI, 2 * Math.PI), 3, withAlpha(GLASS, 0.55));
-            // the water, its surface (lighter), the far edge's glint where it rides up the glass
-            if (s.water.length >= 3) cv.fill(s.water, withAlpha(WATER, 0.85));
-            cv.fill(s.surface, FOAM);
-            cv.stroke(s.far, 3, withAlpha('#ffffff', 0.55));
+            water(cv, geo, s, a, b);
             // the glass in front: a veil, two sheens down the walls, the outline, the rim's near half, the bottom's
             cv.fill(s.body, withAlpha('#ffffff', 0.04));
             sheen(cv, geo, -0.62, 14, 0.2);
@@ -113,6 +110,67 @@ mgu.run({
     },
 });
 
+/*
+ * The water as water (as Cluster Layouts' JDM 1 cup: shaders.js CUP_FS): deeper and denser towards the bottom (layers
+ * of a gradient), the light bent bright along the walls under it, a glow gathered on the bottom, a few bubbles on the wall;
+ * its surface the sky's reflection to the far side and see-through to the near (layers along its tilt), a highlight, rings
+ * of ripples while it sloshes, the meniscus along the near edge and the far edge's glint where it rides up the glass.
+ */
+function water(cv, geo, s, lat, lon) {
+    const { cx, ry, aB, H, e } = geo, by = ry + H, tn = Math.tan(lat), line = (x) => s.yw - (x - cx) * tn;
+    const slosh = Math.min(1, Math.abs(lat) / 0.3 + Math.abs(lon) * 3);
+    if (s.water.length >= 3) {
+        // one fill, then layers from ever lower down over it (nested, so no seams): denser towards the bottom
+        const ys = s.water.map((p) => p[1]), top = Math.min.apply(null, ys), bottom = Math.max.apply(null, ys), N = 20;
+        cv.fill(s.water, withAlpha(mix(WATER, '#ffffff', 0.18), 0.62));
+        for (let i = 1; i < N; i++) {
+            const band = C.between(s.water, cx, top + (bottom - top) * i / N, bottom + 1, 0);
+            if (band.length >= 3) cv.fill(band, withAlpha(mix(WATER, '#000000', 0.45), 0.09));
+        }
+        // the light bent along the walls: a strip down each inner wall, under the surface
+        [-1, 1].forEach((side) => {
+            const inset = Math.max(3, geo.aR * 0.035), wT = geo.aR - inset, wB = aB - inset;
+            const strip = [[cx + side * (wT - 14), ry], [cx + side * (wT - 4), ry], [cx + side * (wB - 4), by], [cx + side * (wB - 14), by]];
+            const under = C.below(strip, cx, s.yw + 2, lat);
+            if (under.length >= 3) cv.fill(under, withAlpha(mix(FOAM, '#ffffff', 0.3), 0.22));
+        });
+        // the light gathered on the bottom, soft
+        [1, 0.75, 0.5].forEach((k) => {
+            const glow = C.below(C.ellipsePts(cx, by - 0.15 * e * aB, 0.75 * aB * k, 0.75 * e * aB * k, 32), cx, s.yw + 4, lat);
+            if (glow.length >= 3) cv.fill(glow, withAlpha(mix(FOAM, '#ffffff', 0.4), 0.08));
+        });
+        // bubbles on the wall, well under the surface
+        [[0.5, 0.74, 3.2], [-0.34, 0.88, 2.4], [-0.6, 0.62, 2.8], [0.12, 0.95, 2.0]].forEach(([fx, fy, r]) => {
+            const y = ry + fy * H, w = geo.aR + (aB - geo.aR) * fy, x = cx + fx * w;
+            if (y < line(x) + s.bw + r + 3) return;
+            cv.arc(x, y, r - 0.8, r + 0.8, 0, 360, withAlpha('#ffffff', 0.45));
+            cv.circle(x - 0.35 * r, y - 0.35 * r, Math.max(1, 0.4 * r), withAlpha('#ffffff', 0.6));
+        });
+    }
+    // the surface: far (the sky in it) to near (the water through it), layered along its tilt
+    cv.fill(s.surface, withAlpha(mix(WATER, FOAM, 0.5), 0.92));
+    for (let i = 1; i < 16; i++) {
+        const band = C.between(s.surface, cx, s.yw - s.bw - 1, s.yw + s.bw * (1 - i / 8), lat);
+        if (band.length >= 3) cv.fill(band, withAlpha(mix(FOAM, '#ffffff', 0.45), 0.065));
+    }
+    // ripples, more while it sloshes: rings round the middle of the surface
+    if (slosh > 0.05) [0.45, 0.72].forEach((k) => cv.stroke(tilted(cx, s.yw, s.aw * k, s.bw * k, tn), 2, withAlpha('#ffffff', 0.1 + 0.12 * slosh)));
+    // the highlight, a soft patch towards the far left, lying on the tilted surface
+    const hx = cx - 0.38 * s.aw, hy = line(hx) - 0.3 * s.bw;
+    cv.fill(tilted(hx, hy, 0.3 * s.aw, 0.24 * s.bw, tn), withAlpha('#ffffff', 0.18));
+    cv.fill(tilted(hx, hy, 0.16 * s.aw, 0.12 * s.bw, tn), withAlpha('#ffffff', 0.28));
+    // the meniscus along the near edge (a bright line, a shade inside it), the far edge's glint
+    const nearHalf = s.surface.filter((p) => p[1] >= line(p[0]) - 0.01).sort((p, q) => p[0] - q[0]);
+    cv.stroke(nearHalf, 2, withAlpha('#ffffff', 0.55));
+    cv.stroke(nearHalf.map((p) => [p[0] + (cx - p[0]) * 0.03, p[1] - 3]), 2, withAlpha(mix(WATER, '#000000', 0.5), 0.3));
+    cv.stroke(s.far, 3, withAlpha(mix(FOAM, '#ffffff', 0.6), 0.75));
+}
+/** An ellipse round (cx, cy) sheared by the surface's tilt (tn, its tan), as the surface is. */
+function tilted(cx, cy, a, b, tn) {
+    const pts = [];
+    for (let i = 0; i <= 40; i++) { const t = (i / 40) * 2 * Math.PI, x = a * Math.cos(t); pts.push([cx + x, cy - x * tn + b * Math.sin(t)]); }
+    return pts;
+}
 /** The fuel tofu: the trays, the empty places' outlines, the blocks left (n; null: no fuel signal yet, all empty),
  * leaning with the water's tilt (lat, radians: a few px). One block left: its edges amber. */
 function drawTofu(cv, geo, n, lat) {

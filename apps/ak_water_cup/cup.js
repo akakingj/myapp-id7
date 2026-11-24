@@ -16,6 +16,8 @@
  *   spring(lo, hi) -> step(target, dtMs) -> where it is, rounded to 0.004; step.reset(to)
  *   targets(g, gain, sx) -> { lat, lon }
  *   shapes(geo, lat, lon, level) -> { body, water, surface, far } (polygons in px; see the bottom)
+ *   between(poly, cx, ya, yb, t) -> the polygon's part between two parallel lines of tilt t (a band of a gradient)
+ *   ellipsePts(cx, cy, a, b, n) -> a closed ellipse's points
  *   demoG(tMs) -> { gLat, gLong }: the demo's drive (a 14 s round: weaving, still, a stop, still)
  */
 const MAX_TILT = 0.6, LON_MIN = -0.22, LON_MAX = 0.32, E = 0.42;
@@ -111,6 +113,23 @@ function shapes(geo, lat, lon, level) {
     far.sort((p, q) => p[0] - q[0]);
     return { body, inner, water, surface, far, aw, bw, yw, rimY: ry, topOf: (x) => yw - (x - cx) * tn - bw * Math.sqrt(Math.max(0, 1 - ((x - cx) / aw) ** 2)) };
 }
+/** The polygon's part between two lines of tilt t through (cx, ya) and (cx, yb), ya above yb (a band for a gradient). */
+function between(poly, cx, ya, yb, t) {
+    const lower = below(poly, cx, ya, t), tn = Math.tan(t), f = (p) => (yb - (p[0] - cx) * tn) - p[1], out = [];
+    for (let i = 0; i < lower.length; i++) {
+        const a = lower[i], b = lower[(i + 1) % lower.length], fa = f(a), fb = f(b);
+        if (fa >= 0) out.push(a);
+        if ((fa >= 0) !== (fb >= 0)) { const k = fa / (fa - fb); out.push([a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k]); }
+    }
+    return out;
+}
+/** Points round an ellipse (n of them; a closed polygon). */
+function ellipsePts(cx, cy, a, b, n) {
+    const pts = [];
+    for (let i = 0; i < (n || 32); i++) { const t = (i / (n || 32)) * 2 * Math.PI; pts.push([cx + a * Math.cos(t), cy + b * Math.sin(t)]); }
+    return pts;
+}
+
 /** The highest the water reaches (px; smaller is higher): the surface's top and the water's. */
 function highest(geo, lat, lon, level) {
     const s = shapes(geo, lat, lon, level);
@@ -125,4 +144,4 @@ function demoG(t) {
     return { gLat: 0, gLong: 0 };
 }
 
-module.exports = { MAX_TILT, LON_MIN, LON_MAX, E, zeroer, spring, targets, shapes, highest, below, demoG };
+module.exports = { MAX_TILT, LON_MIN, LON_MAX, E, zeroer, spring, targets, shapes, highest, below, between, ellipsePts, demoG };
