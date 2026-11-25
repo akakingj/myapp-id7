@@ -3,6 +3,8 @@
 // iDrive controller; the HMI's app list), the cluster and the HUD the AK Cluster apps draw (WebGL), and the panel: one
 // car for every app, the open app's settings. Sections marked "from kit/emu/web/emu-app.js" are that file's.
 import { makeCockpit } from './cockpit.js';
+import { makeLights } from './lights.js';
+import { makeHud } from './hud.js';
 const W = 1920, H = 720;
 const $ = (s) => document.querySelector(s);
 const el = (tag, attrs, ...kids) => {
@@ -228,7 +230,7 @@ stage.addEventListener('wheel', (e) => {
 const TILT = { ArrowUp: 'N', ArrowRight: 'E', ArrowDown: 'S', ArrowLeft: 'W' };
 /** the controller, whoever uses it (the mouse wheel, the keys, the drawn one): the app picker has it while it shows
  * (the app is not on screen; BACK and HOME leave it there), the app otherwise; the drawn controller shows each move */
-let Cockpit = null;
+let Cockpit = null, Lights = null, Hud = null;
 const Ctl = {
   turn(n) { if (Cockpit) Cockpit.turn(n); if (S.closed) pickMove(n); else send({ t: 'ccu', turn: n }); },
   press(on) { if (Cockpit) Cockpit.press(on); if (S.closed) { if (on) pickOpen(P.focus); } else send({ t: 'ccu', press: on }); },
@@ -394,6 +396,10 @@ function buildCar() {
   seg($('#stageSeg'), STAGES.map((s) => [s, s]), (v) => manualSet({ stage: v, gear: /^[DSM]$/.test(v) ? Math.max(1, Car.v.gear || 1) : 0 }));
   seg($('#modeSeg'), MODES, (v) => manualSet({ driveMode: v }, true));
   seg($('#kindSeg'), KINDS, (v) => send({ t: 'vtype', v }));
+  seg($('#hudSizeSeg'), [['full', '전체 보기'], ['low', '줄여 보기']], (v) => send({ t: 'extra', k: 'hudSize', v }));
+  seg($('#limitSeg'), [[0, '없음'], [30, '30'], [50, '50'], [60, '60'], [80, '80'], [100, '100'], [120, '120']], (v) => send({ t: 'extra', k: 'limit', v }));
+  seg($('#hudNavSeg'), [[true, '켬'], [false, '끔']], (v) => send({ t: 'extra', k: 'hudNav', v }));
+  seg($('#accSeg'), [[0, '끔'], [60, '60'], [90, '90'], [120, '120']], (v) => send({ t: 'extra', k: 'acc', v }));
   seg($('#wazeSeg'), WAZE, (v) => send({ t: 'extra', k: 'waze', v }));
   seg($('#indSeg'), INDS, (v) => send({ t: 'extra', k: 'indicator', v }));
   seg($('#nightSeg'), NIGHTS, (v) => send({ t: 'extra', k: 'night', v }));
@@ -438,6 +444,7 @@ function syncCar() {
   segSync($('#stageSeg'), Car.v.stage); segSync($('#modeSeg'), Car.v.driveMode); segSync($('#wazeSeg'), Car.extra.waze);
   segSync($('#indSeg'), Car.extra.indicator || 'off'); segSync($('#nightSeg'), !!Car.extra.night);
   segSync($('#kindSeg'), Car.kind || 'petrol');
+  segSync($('#hudSizeSeg'), Car.extra.hudSize || 'full'); segSync($('#limitSeg'), Car.extra.limit === undefined ? 60 : Car.extra.limit); segSync($('#hudNavSeg'), Car.extra.hudNav !== false); segSync($('#accSeg'), Car.extra.acc === undefined ? 90 : Car.extra.acc);
   $('#kindNote').textContent = Car.kindFrom === 'profile' ? '카프로필 엔진 설정대로' : '카프로필 엔진: 자동 (데모 차량 신호로 감지)';
   // (the drive battery's values: a plug-in hybrid's only; the ignition timing: not a diesel's)
   const pg = document.getElementById('vg-PHEV'); if (pg) pg.style.display = Car.kind === 'phev' ? '' : 'none';
@@ -599,6 +606,7 @@ const Cluster = (() => {
   }
   function frame() {
     blink();
+    if (Lights) Lights.frame();
     if (dirty || timeUsed) { dirty = false; try { draw(); } catch (e) { console.warn('cluster:', e); } }
     strip();
     requestAnimationFrame(frame);
@@ -777,7 +785,8 @@ function strip() {
   $('#sTemp').textContent = (d.outside >= 0 ? '+' : '') + Number(d.outside).toFixed(1) + '°C';
   $('#map').style.display = x.waze === 'cluster' ? 'flex' : 'none';
   $('#hudMap').style.display = x.waze === 'hud' ? 'block' : 'none';
-  $('#hudSpeed').innerHTML = Math.round(d.speed) + '<small>km/h</small>';
+  $('#hudBox').classList.toggle('low', x.hudSize === 'low');
+  if (Hud) Hud.draw(d, x, x.waze === 'hud');
 }
 $('#carlook').onchange = (e) => $('#cluster').classList.toggle('car', e.target.checked);
 $('#shotCluster').onclick = () => {
@@ -886,6 +895,7 @@ function pickOpen(i) {
  * the driver's seat (right); the cluster and the centre display at their 1920 x 720, the HUD at 800 x 480 as tall as
  * the centre display, the driver's seat the cluster's height (taller when there is room). Narrow: one column (the
  * cluster, the centre display, the driver's seat, the HUD). */
+const CHAMBER = 0.045;          // (a chamber lights' column: this much of the cluster's width)
 function layout() {
   const vw = document.documentElement.clientWidth;
   const narrow = vw < 1000;
@@ -903,6 +913,7 @@ function layout() {
     g.style.gridTemplateColumns = ''; g.style.gridTemplateRows = '';
     g.style.width = Math.floor(1600 * k) + 'px'; g.style.height = Math.floor(1000 * k) + 'px'; g.style.setProperty('--k', k);
     $('#cluster').style.width = Math.round(640 * k) + 'px'; stage.style.width = Math.round(590 * k) + 'px';
+    document.querySelectorAll('.chamber').forEach((e) => { e.style.width = Math.round(640 * k * CHAMBER) + 'px'; });
     $('#hudBox').style.width = Math.round(300 * k) + 'px'; $('#cockpit').style.height = '';
     return;
   }
@@ -911,7 +922,8 @@ function layout() {
   if (narrow) {
     const w = Math.floor(aw);
     g.style.gridTemplateColumns = ''; g.style.gridTemplateRows = '';
-    [stage, $('#cluster')].forEach((e) => { e.style.width = w + 'px'; });
+    stage.style.width = w + 'px'; $('#cluster').style.width = Math.round(w / (1 + 2.3 * CHAMBER)) + 'px';
+    document.querySelectorAll('.chamber').forEach((e) => { e.style.width = Math.round(w / (1 + 2.3 * CHAMBER) * CHAMBER) + 'px'; });
     $('#hudBox').style.width = Math.min(w, 420) + 'px'; $('#cockpit').style.height = '';
     return;
   }
@@ -923,7 +935,11 @@ function layout() {
   const seatH = Math.round(Math.max(h, Math.min(h + spare, w * 0.5)));
   g.style.gridTemplateColumns = w + 'px ' + w + 'px';
   g.style.gridTemplateRows = (cap + 4 + h) + 'px ' + (cap + 4 + seatH) + 'px';
-  [stage, $('#cluster')].forEach((e) => { if (e.style.width !== w + 'px') e.style.width = w + 'px'; });
+  // (the cluster in its housing: the chamber lights' columns beside it, all in the column's width)
+  if (stage.style.width !== w + 'px') stage.style.width = w + 'px';
+  const cw = Math.round(w / (1 + 2.3 * CHAMBER));
+  $('#cluster').style.width = cw + 'px';
+  document.querySelectorAll('.chamber').forEach((e) => { e.style.width = Math.round(cw * CHAMBER) + 'px'; });
   $('#hudBox').style.width = Math.round(h * 800 / 480) + 'px';
   $('#cockpit').style.height = seatH + 'px';
 }
@@ -954,8 +970,10 @@ window.addEventListener('resize', layout);
 const clock = () => { $('#hmi-clock').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }); };   // (24 h, as the car)
 setInterval(clock, 10000); clock();
 
-// the driver's seat beside the cluster (the wheel, the pedals, the centre console)
+// the driver's seat beside the cluster (the wheel, the pedals, the centre console); the cluster's lights; the HUD's picture
 Cockpit = makeCockpit({ $, el, ctl: Ctl, manualSet, send, car: Car });
+Lights = makeLights({ $, el, send, car: Car });
+Hud = makeHud({ $ });
 buildCar();
 layout();
 connect();

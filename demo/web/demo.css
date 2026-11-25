@@ -174,8 +174,10 @@ body.narrow #panel { width: auto; border-left: 0; border-top: 1px solid var(--li
 #hudBox { position: relative; flex: none; width: 100%; aspect-ratio: 800 / 480; background: radial-gradient(ellipse at 50% 60%, #0d1621, #000 70%); border-radius: 6px; overflow: hidden; container-type: inline-size; }
 #hudBox > * { position: absolute; }
 #hudMap { display: none; left: 3%; bottom: 4%; color: #6f7f92; font: 600 3.4cqw "Segoe UI", "Malgun Gothic", sans-serif; }
-#hudSpeed { left: 16%; top: 36%; font: 600 9cqw "Segoe UI", sans-serif; color: #e9f3ff; opacity: 0.85; text-align: center; }
-#hudSpeed small { display: block; font-size: 0.35em; color: #9fb2c8; }
+#hudMock, #hud2d { left: 0; top: 0; width: 100%; height: 100%; }
+/* (reduced height: the car's HUD setting; the picture lower and shorter, an app's layers their lower part) */
+#hudBox.low { aspect-ratio: 800 / 264; }
+#hudBox.low #hud2d { top: auto; bottom: 0; height: 181.8%; }
 
 /* the panel */
 section h2 { text-transform: none; letter-spacing: 0; font-size: 13px; color: var(--text); }
@@ -298,3 +300,23 @@ body.real .ck-pedals { left: calc(var(--k) * 18px); top: calc(var(--k) * 790px);
 body.real .ck-pedals .ck-foot { font-size: max(9px, calc(var(--k) * 12px)); }
 body.real .ck-ctl { left: calc(var(--k) * 880px); top: calc(var(--k) * 690px); width: calc(var(--k) * 600px); height: calc(var(--k) * 305px); z-index: 1; }
 body.real .ck-foot { font-size: max(10px, calc(var(--k) * 15px)); color: var(--dim); }
+
+/* ---- the cluster's housing and its lights (lights.js): the chamber lights beside the screen, those on it ---- */
+#kombi { display: flex; align-items: stretch; gap: 0; flex: none; }
+.chamber { flex: none; display: flex; flex-direction: column; justify-content: center; gap: 2%; padding: 3% 0; background: linear-gradient(90deg, #08090b, #121418 50%, #08090b); }
+#chamberL { border-radius: 10px 0 0 10px; } #chamberR { border-radius: 0 10px 10px 0; }
+.ch-slot { flex: 0 0 13%; display: flex; align-items: center; justify-content: center; }
+.ch-slot svg { width: 72%; height: auto; opacity: .08; filter: grayscale(1); transition: opacity .05s; }
+.ch-slot.lit svg { opacity: 1; filter: drop-shadow(0 0 4px currentColor); }
+#telltaleView g { opacity: 0; }
+#telltaleView g.lit { opacity: 1; filter: drop-shadow(0 0 5px currentColor); }
+#telltaleView { pointer-events: none; }
+body.real #cCluster { left: calc(var(--k) * 131px); }
+body.real .chamber { background: linear-gradient(90deg, #050607, #0c0d10 50%, #050607); }
+/* the panel's switches */
+#ttList { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 4px; margin-top: 4px; }
+#ttList .tt { display: flex; align-items: center; gap: 6px; padding: 3px 6px; font-size: 11px; text-align: left; }
+#ttList .tt svg { flex: none; opacity: .45; }
+#ttList .tt.on { background: #1f3550; border-color: var(--accent); color: #fff; }
+#ttList .tt.on svg { opacity: 1; }
+#ttList .tt i { font-style: normal; font-size: 9px; color: var(--accent); }

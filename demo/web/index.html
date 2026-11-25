@@ -50,9 +50,10 @@
     <div class="cell" id="cHud">
       <div class="cap" id="capHud"><b>HUD</b><span>800×480 · 앞유리에 비치는 화면</span></div>
       <div id="hudBox">
+        <!-- the HUD's own picture (hud.js), the apps' HUD layers over it, Waze's place -->
+        <canvas id="hudMock" width="800" height="480"></canvas>
+        <canvas id="hud2d" width="800" height="480"></canvas>
         <div id="hudMap">Waze 지도: HUD</div>
-        <canvas id="hud2d" width="800" height="480" style="left:0;top:0;width:100%;height:100%"></canvas>
-        <div id="hudSpeed">0<small>km/h</small></div>
       </div>
     </div>
     <div class="cell" id="cStage">
@@ -96,6 +97,9 @@
       <label class="cv" title="실차 계기판 유리에서 보이는 모양 (Cluster Layouts의 layout_common.js 실측값)">실차 모습
         <select id="carView"><option value="off">끔</option><option value="glass">유리 모양</option><option value="guides">유리 + 안내선</option></select></label>
       <button id="shotCluster" title="계기판을 1920×720 PNG로 저장">📷 저장</button></div>
+    <!-- the cluster's housing: its fixed chamber lights on each side of the screen -->
+    <div id="kombi">
+    <div class="chamber" id="chamberL" aria-label="계기판 왼쪽 경고등"></div>
     <div id="cluster" class="car" aria-label="계기판, 1920 x 720">
       <canvas id="mock" class="full" width="1920" height="720"></canvas>
       <div id="map">지도 자리 (Waze)</div>
@@ -118,8 +122,12 @@
       <div class="glass"></div>
       <!-- (over the LCD look: the cowl and the corners are not the screen) -->
       <svg id="glassView" class="full" viewBox="0 0 1920 720" preserveAspectRatio="none" aria-hidden="true"></svg>
+      <!-- (the warning and indicator lights the cluster draws on its screen) -->
+      <svg id="telltaleView" class="full" viewBox="0 0 1920 720" preserveAspectRatio="none" aria-hidden="true"></svg>
       <div id="clusterNote"></div>
       <pre id="clusterErr"></pre>
+    </div>
+    <div class="chamber" id="chamberR" aria-label="계기판 오른쪽 경고등"></div>
     </div>
     </div>
     <div class="cell" id="cCockpit">
@@ -157,6 +165,17 @@
     <div id="sliders"></div>
   </section>
 
+
+  <section>
+    <h2>HUD · 계기판 경고등 <span class="sub">차의 설정과 표시등</span></h2>
+    <div class="lbl">HUD 보기 (차량 설정의 표시 크기)</div><div class="seg2" id="hudSizeSeg"></div>
+    <div class="lbl">제한 속도 (표지판)</div><div class="seg2" id="limitSeg"></div>
+    <div class="lbl">HUD 길 안내 (모형)</div><div class="seg2" id="hudNavSeg"></div>
+    <div class="lbl">HUD 주행 보조 (모형): 크루즈 설정 속도</div><div class="seg2" id="accSeg"></div>
+    <div class="lbl">경고등 · 표시등 <span class="dim" style="font-size:11px">누르면 켜짐 · <i>연동</i>은 차량 값으로도 켜짐</span></div>
+    <div class="row"><button id="ttAll" title="계기판의 전구 점검처럼 모두 켭니다">모두 켜기</button><button id="ttNone">모두 끄기</button></div>
+    <div id="ttList"></div>
+  </section>
 
   <section>
     <h2>앱 <span id="status" class="pill">대기</span></h2>

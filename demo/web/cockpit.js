@@ -81,7 +81,7 @@ const CONSOLE = `
   <path d="M 30 4 L 590 4 Q 616 4 616 30 L 616 270 Q 616 296 590 296 L 46 296 Q 4 296 4 254 L 4 30 Q 4 4 30 4 Z" fill="url(#ckPanel)" stroke="url(#ckChrome)" stroke-width="3"/>
   <!-- left: the small buttons, start/stop, the drive modes, auto hold -->
   <g class="ck-btns" font-family="system-ui, sans-serif" font-size="10" font-weight="600" text-anchor="middle">
-    <g class="ck-btn off" data-btn="dsc" transform="translate(56 26)"><rect x="-40" y="-12" width="80" height="24" rx="5"/><text y="3.5">DSC OFF</text></g>
+    <g class="ck-btn" data-btn="dsc" transform="translate(56 26)"><rect x="-40" y="-12" width="80" height="24" rx="5"/><text y="3.5">DSC OFF</text></g>
     <g class="ck-btn off" data-btn="park" transform="translate(56 56)"><rect x="-40" y="-12" width="80" height="24" rx="5"/><text y="3.5">PARK ASSIST</text></g>
     <g class="ck-btn off" data-btn="cam" transform="translate(56 86)"><rect x="-40" y="-12" width="80" height="24" rx="5"/><text y="3.5">CAMERA</text></g>
     <g class="ck-btn ck-start" data-btn="start" transform="translate(56 138)">
@@ -192,7 +192,9 @@ export function makeCockpit({ $, el, ctl, manualSet, send, car }) {
     ctlCard.querySelectorAll('.ck-mode').forEach((m) => m.classList.toggle('on', m.dataset.btn === mode || (m.dataset.btn === 'SPORT' && mode === 'SPORT+')));
     ctlCard.querySelector('.ck-start').classList.toggle('on', on);
     ctlCard.querySelector('.ck-epb').classList.toggle('on', st === 'P');
-    ctlCard.querySelector('.ck-hold').classList.toggle('on', K.autoH);
+    const tt = (car.extra && car.extra.tt) || {};
+    ctlCard.querySelector('.ck-hold').classList.toggle('on', !!tt.autoH);
+    ctlCard.querySelector('[data-btn="dsc"]').classList.toggle('on', !!tt.dscOff);
     gearOut.textContent = '기어 ' + (/^[DSM]$/.test(st) ? st + (v.gear || '') : st) + ' · ' + (mode === 'SPORT+' ? 'SPORT+' : mode) + (on ? '' : car.kind === 'phev' ? ' · 엔진 정지 (전기)' : ' · 시동 꺼짐');
   }
 
@@ -316,7 +318,7 @@ export function makeCockpit({ $, el, ctl, manualSet, send, car }) {
     // the buttons: HOME and BACK the controller's; the drive modes (SPORT again: SPORT+); START/STOP the engine;
     // AUTO H a light only; the rest are there to look at
     const TIP = { home: 'HOME: 홈 (앱 목록), H 키', back: 'BACK: 뒤로, Backspace 키', start: 'START/STOP: 시동 켜기 · 끄기 (직접 조절로 바뀜)', SPORT: 'SPORT (한 번 더: SPORT+)', COMFORT: 'COMFORT', 'ECO PRO': 'ECO PRO',
-      autoh: 'AUTO H: 표시만', epb: '주차 브레이크: P에서 켜짐 (표시만)' };
+      autoh: 'AUTO H: 계기판에 표시', dsc: 'DSC OFF: 계기판에 표시', epb: '주차 브레이크: P에서 켜짐 (표시만)' };
     ctlCard.querySelectorAll('.ck-btn').forEach((b) => {
       const name = b.dataset.btn;
       b.append(Object.assign(document.createElementNS(NS, 'title'), { textContent: TIP[name] || name.toUpperCase() + ': 데모에는 없는 버튼' }));
@@ -325,7 +327,11 @@ export function makeCockpit({ $, el, ctl, manualSet, send, car }) {
         else if (name === 'back') ctl.back();
         else if (name === 'SPORT' || name === 'COMFORT' || name === 'ECO PRO') { const m = name === 'SPORT' && car.v.driveMode === 'SPORT' ? 'SPORT+' : name; manualSet({ driveMode: m }, true); btn(name, m); }
         else if (name === 'start') { const was = (Number(car.v.rpm) || 0) > 300; engine(); btn(name, was ? '시동 끔' : '시동 켬'); }
-        else if (name === 'autoh') { K.autoH = !K.autoH; veh(); btn(name, 'AUTO H ' + (K.autoH ? '켬' : '끔')); }
+        else if (name === 'autoh' || name === 'dsc') {
+          // (AUTO H and DSC OFF: their lights on the cluster)
+          const k = name === 'autoh' ? 'autoH' : 'dscOff', was = !!((car.extra && car.extra.tt) || {})[k];
+          send({ t: 'tt', k, v: !was }); btn(name, (name === 'autoh' ? 'AUTO H ' : 'DSC OFF ') + (was ? '끔' : '켬'));
+        }
         else btn(name);
       });
     });
