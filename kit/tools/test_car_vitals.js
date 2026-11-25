@@ -114,12 +114,12 @@ async function boot(dir, over) {
                 shown[unit][name] = t;
             }
         }
-        // the boost scale: 0-2.5 bar, 0-35 psi, 0-250 kPa by default (Boost gauge max 2.5), numbered by its end: 0 150 250,
-        // 0.0 1.5 2.5, 0 15 25 35
+        // the boost scale: 0-2.0 bar, 0-30 psi, 0-200 kPa by default (until the car sends its own), numbered as the car's own
+        // gauge: 0 100 200, 0.0 1.0 2.0, 0 10 20 30
         const has = (t, nums) => nums.every((n) => t.includes(n));
-        assert(has(shown.kpa.engine, ['150', '250']) && !shown.kpa.engine.includes('125'), 'the kPa boost scale ends at 250: ' + shown.kpa.engine.join(' | '));
-        assert(has(shown.bar.engine, ['1.5', '2.5']) && !shown.bar.engine.includes('1.25'), 'the bar boost scale ends at 2.5: ' + shown.bar.engine.join(' | '));
-        assert(has(shown.psi.engine, ['15', '25', '35']) && !shown.psi.engine.includes('17.5'), 'the psi boost scale ends at 35: ' + shown.psi.engine.join(' | '));
+        assert(has(shown.kpa.engine, ['100', '200']), 'the kPa boost scale ends at 200: ' + shown.kpa.engine.join(' | '));
+        assert(has(shown.bar.engine, ['1.0', '2.0']), 'the bar boost scale ends at 2.0: ' + shown.bar.engine.join(' | '));
+        assert(has(shown.psi.engine, ['10', '20', '30']), 'the psi boost scale ends at 30: ' + shown.psi.engine.join(' | '));
         console.log('M Vitals pressure unit checks passed (bar, psi, kPa on the Engine, Fuel & ignition and Chassis pages).');
 
         // issue #154: the power and torque bars show the peak as a number too, beside the marker, only where it fits

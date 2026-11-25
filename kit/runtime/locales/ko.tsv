@@ -2731,6 +2731,6 @@ Petrol, M car	가솔린, M 차량
 Speedometer up to	속도계 최고값
 Where the speedometers end: 260 km/h for most BMWs, 330 km/h for an M car	속도계 끝 값: 일반 BMW는 260 km/h, M 차량은 330 km/h
 Boost gauge up to	부스트 게이지 최고값
-Where the boost gauges end, each a pair: 1.0 bar or 15 psi, 1.5 bar or 20 psi, 2.0 bar or 30 psi, 2.5 bar or 35 psi, 3.0 bar or 40 psi, 3.5 bar or 50 psi. Auto: where the car's own Sport Display's ends (the least pair at or over it, within 5 %)	부스트 게이지 끝 값. 짝으로: 1.0 bar 또는 15 psi, 1.5 bar 또는 20 psi, 2.0 bar 또는 30 psi, 2.5 bar 또는 35 psi, 3.0 bar 또는 40 psi, 3.5 bar 또는 50 psi. 자동: 차량 스포츠 디스플레이의 끝 값(그 이상인 가장 가까운 짝, 5% 이내는 그 짝)
+Where the boost gauges end, as the car's own: 15, 20 or 30 psi (in bar 2.0, in kPa 200), or 45 psi (3.0 bar, 300 kPa). Auto: where the car's own Sport Display's ends (the least at or over it, within 5 %)	부스트 게이지 끝 값, 순정 게이지 그대로: 15, 20, 30 psi(bar로는 2.0, kPa로는 200) 또는 45 psi(3.0 bar, 300 kPa). 자동: 차량 스포츠 디스플레이의 끝 값(그 이상인 가장 가까운 값, 5% 이내는 그 값)
 Auto (the car's Sport Display)	자동 (차량 스포츠 디스플레이)
 From the car's Sport Display	차량 스포츠 디스플레이 값

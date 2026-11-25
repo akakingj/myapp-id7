@@ -51,15 +51,14 @@ const RANGE = {
  * next start shows them straight away.
  */
 // (tyre temperatures are not doubtful any more: with the right scaling a car's "no data" is 65535)
-/** boostMax setting (its own, or the Car profile's Boost gauge up to) -> the boost dial's top in bar, in psi and in kPa:
- * pairs as the car's own gauge reads them (in psi 0 5 10 15, or 0 10 20 30) */
-const BOOST_MAX = { '1.0': [1, 15, 100], '1.5': [1.5, 20, 150], '2.0': [2, 30, 200], '2.5': [2.5, 35, 250], '3.0': [3, 40, 300],
-    '3.5': [3.5, 50, 350] };
-const BOOST_TICKS = { 10: [0, 5, 10], 15: [0, 5, 10, 15], 20: [0, 10, 20], 25: [0, 15, 25], 30: [0, 10, 20, 30], 35: [0, 15, 25, 35], 40: [0, 20, 40], 50: [0, 25, 50] };
+/** boostMax setting (the Car profile's Boost gauge up to) -> the boost dial's top in bar, in psi and in kPa: the car's own
+ * boost gauges, by their end in psi - in bar 2.0 up to 30 psi, 3.0 at 45 */
+const BOOST_MAX = { 15: [2, 15, 200], 20: [2, 20, 200], 30: [2, 30, 200], 45: [3, 45, 300] };
+const BOOST_TICKS = { 15: [0, 5, 10, 15], 20: [0, 10, 20], 30: [0, 10, 20, 30], 45: [0, 15, 30, 45] };
 /**
- * A boost scale's numbers by its end's figure (psi as it is, bar x 10, kPa / 10): 15 0 5 10 15, 20 0 10 20, 30 0 10 20 30,
- * 35 0 15 25 35, 40 0 20 40, 50 0 25 50; 10 0 5 10, 25 0 15 25 - in bar 0.0 1.5 2.5 3.5, in kPa 0 150 250 350. Any
- * other end: 0, its middle and it. end in the unit. (AK Cluster Layouts' the same.) The numbers.
+ * A boost scale's numbers as the car's own gauges number them, by the end's figure (psi as it is, bar x 10, kPa / 10):
+ * 0 5 10 15, 0 10 20, 0 10 20 30, 0 15 30 45 psi; 0.0 1.0 2.0, 0.0 1.0 2.0 3.0 bar; 0 100 200,
+ * 0 100 200 300 kPa. Any other end: 0, its middle and it. end in the unit. (AK Cluster Layouts' the same.) The numbers.
  */
 function boostTicks(end, unit) {
     const per = unit === 'bar' ? 10 : unit === 'kpa' ? 0.1 : 1, f = Math.round(end * per);
@@ -170,16 +169,16 @@ mgu.run({
         };
 
         /*
-         * Boost gauge max (set in the Car profile): a pair's, or From the car's Sport Display - its own gauge's end as
-         * the least pair at or over it (within 5 %), once the car has sent it (2.5 bar until then)
+         * Boost gauge max (set in the Car profile): a gauge's end (psi), or From the car's Sport Display - its own
+         * gauge's end as the least at or over it (within 5 %), once the car has sent it (30 psi / 2.0 bar until then)
          */
         let boostCarTop = null;
         const boostMaxNow = () => {
             const v = settings.get('boostMax');
-            if (v !== 'car') return v;
-            if (!G.isNum(boostCarTop)) return '2.5';
-            // (within 5 %: a car set to psi ends at 15 psi, 1.034 bar - the 1.0 bar / 15 psi pair)
-            return Object.keys(BOOST_MAX).find((k) => BOOST_MAX[k][0] * 1.05 >= boostCarTop) || '3.5';
+            if (BOOST_MAX[v]) return v;
+            if (!G.isNum(boostCarTop)) return '30';
+            // (within 5 %: 200 kPa, 29 psi - the 30 psi gauge)
+            return ['15', '20', '30', '45'].find((k) => BOOST_MAX[k][1] * 1.05 >= boostCarTop * 14.5038) || '45';
         };
 
         /* ---------- live data ---------- */
@@ -853,8 +852,8 @@ mgu.run({
             };
             if (shown('boost')) {
                 const pu = settings.get('pressUnit'), psi = pu === 'psi', kpa = pu === 'kpa';
-                const bmax = BOOST_MAX[boostMaxNow()] || BOOST_MAX['2.5'], pmax = psi ? bmax[1] : kpa ? bmax[2] : bmax[0];
-                // (its numbers by its end; one with a decimal more - 0.25 bar's end, 1.75 - on a finer grid)
+                const bmax = BOOST_MAX[boostMaxNow()], pmax = psi ? bmax[1] : kpa ? bmax[2] : bmax[0];
+                // (its numbers as the car's own gauge; one with a decimal more on a finer grid)
                 const ticks = boostTicks(pmax, psi ? 'psi' : kpa ? 'kpa' : 'bar'), more = ticks.some((v) => Math.abs(v * (psi || kpa ? 1 : 10) % 1) > 1e-6);
                 G.segBar(cv, t, 24, G.TOP + 242 + half, 1062, 226 - half, {
                     label: 'Boost', value: P(d.boost), unit: pU(), decimals: pressU()[2], min: 0, max: pmax,

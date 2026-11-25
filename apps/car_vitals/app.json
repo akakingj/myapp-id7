@@ -140,19 +140,17 @@
     },
     {
       "key": "boostMax",
-      "profile": "boostMax", "profileMap": {"0": "car", "1": "1.0", "2": "2.0", "3": "3.0"},
+      "profile": "boostMax", "profileMap": {"0": "car"},
       "label": "Boost gauge max",
       "type": "choice",
       "default": "car",
       "hidden": true,
       "options": [
         ["car", "From the car's Sport Display"],
-        ["1.0", "1.0 bar / 15 psi"],
-        ["1.5", "1.5 bar / 20 psi"],
-        ["2.0", "2.0 bar / 30 psi"],
-        ["2.5", "2.5 bar / 35 psi"],
-        ["3.0", "3.0 bar / 40 psi"],
-        ["3.5", "3.5 bar / 50 psi"]
+        ["15", "15 psi / 2.0 bar"],
+        ["20", "20 psi / 2.0 bar"],
+        ["30", "30 psi / 2.0 bar"],
+        ["45", "45 psi / 3.0 bar"]
       ]
     },
     {

@@ -179,30 +179,26 @@ const cases = {
         const s = settingsIn(schema, { scale: 1.5 });
         assert.strictEqual(s.get('scale'), 2);
     },
-    'the boost gauge\'s top: a number in bar, shown in the pressure unit set; M Vitals\' choice takes 2 bar as its 2.0'() {
+    'the boost gauge\'s top: the car\'s own gauges by their end in psi, each with its bar; M Vitals\' choice takes 30 as its "30"'() {
         clear();
         const read = (id) => JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', id, 'app.json'), 'utf8')).settings;
         const cp = read('car_profile');
-        const own = settingsIn(cp, { boostMax: 2.5, pressUnit: 'psi' });
-        assert.strictEqual(own.display('boostMax'), '35 psi', 'its pair in psi, as the car\'s own gauge reads');
-        own.set('boostMax', 2); assert.strictEqual(own.display('boostMax'), '30 psi');
-        own.set('boostMax', 1); assert.strictEqual(own.display('boostMax'), '15 psi');
-        own.set('boostMax', 2.5);
-        own.set('pressUnit', 'kpa'); assert.strictEqual(own.display('boostMax'), '250 kPa');
-        own.set('pressUnit', 'bar'); assert.strictEqual(own.display('boostMax'), '2.5 bar');
-        own.set('pressUnit', 'app'); assert.strictEqual(own.display('boostMax'), '2.5 bar');
+        const own = settingsIn(cp, { boostMax: 30, pressUnit: 'bar' });
+        assert.strictEqual(own.display('boostMax'), '30 psi / 2.0 bar', 'the same in every pressure unit');
+        own.set('boostMax', 45); assert.strictEqual(own.display('boostMax'), '45 psi / 3.0 bar');
+        assert.deepStrictEqual(cp.find((x) => x.key === 'boostMax').steps, [0, 15, 20, 30, 45]);
         const vit = read('car_vitals').filter((x) => x.key === 'boostMax');
-        P.publish(fakeProfile({ boostMax: 2 }), '1.7.5');
+        P.publish(fakeProfile({ boostMax: 30 }), '1.7.5');
         tick += 5; fs.utimesSync(FILE, tick, tick);
-        assert.strictEqual(settingsIn(vit, { boostMax: '2.5' }).get('boostMax'), '2.0');
-        P.publish(fakeProfile({ boostMax: 1.5 }), '1.7.5');
+        assert.strictEqual(settingsIn(vit, { boostMax: 'car' }).get('boostMax'), '30');
+        P.publish(fakeProfile({ boostMax: 15 }), '1.7.5');
         tick += 5; fs.utimesSync(FILE, tick, tick);
-        assert.strictEqual(settingsIn(vit, { boostMax: '2.5' }).get('boostMax'), '1.5');
+        assert.strictEqual(settingsIn(vit, { boostMax: 'car' }).get('boostMax'), '15');
         // Auto: the car's own sport display's end (M Vitals' "car"); the apps' own setting is the Car profile's alone
         own.set('boostMax', 0); assert.strictEqual(own.display('boostMax'), 'Auto (the car\'s Sport Display)');
         P.publish(fakeProfile({ boostMax: 0 }), '1.7.5');
         tick += 5; fs.utimesSync(FILE, tick, tick);
-        assert.strictEqual(settingsIn(vit, { boostMax: '2.5' }).get('boostMax'), 'car');
+        assert.strictEqual(settingsIn(vit, { boostMax: '20' }).get('boostMax'), 'car');
         assert.deepStrictEqual([vit[0].default, vit[0].hidden], ['car', true]);
     },
     'every app.json "profile" is one the Car profile sets, with values it can give'() {
@@ -213,7 +209,7 @@ const cases = {
         assert(cp.settings.every((s) => !s.profile), 'the Car profile follows no profile itself');
         // (Boost gauge up to is set here alone and starts at Auto, what the apps show without the profile)
         assert(cp.settings.every((s) => (s.type === 'choice' ? s.default === 'app' : s.default === (s.key === 'boostMax' ? 0 : -1))), 'everything starts at Each app');
-        assert.deepStrictEqual(byKey.boostMax.steps, [0, 1, 1.5, 2, 2.5, 3, 3.5], 'Boost gauge up to: Auto, or a pair from 1.0 bar / 15 psi');
+        assert.deepStrictEqual(byKey.boostMax.steps, [0, 15, 20, 30, 45], 'Boost gauge up to: Auto, or one of the car\'s own gauges');
         let followers = 0;
         fs.readdirSync(path.join(ROOT, 'apps')).forEach((app) => {
             const f = path.join(ROOT, 'apps', app, 'app.json');
