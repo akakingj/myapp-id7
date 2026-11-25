@@ -2723,3 +2723,7 @@ Outside air with each run	측정마다 외기 정보
 Show (pressure from the engine unit)	표시 (엔진 제어기의 대기압)
 Show, times corrected to standard air (SAE J1349)	표시, 표준 대기로 보정한 시간 (SAE J1349)
 Off (no engine unit requests)	꺼짐 (엔진 제어기 요청 없음)
+Fuel % from	연료 % 출처
+Engine unit (OBD tank level)	엔진 ECU (OBD 연료량)
+Litres / tank size	남은 리터 / 탱크 용량
+The AK clusters' fuel gauge: the engine unit's own level while the engine runs (the car's litres until then), or the litres over the tank's size always	AK 클러스터의 연료 게이지: 시동 중에는 엔진 ECU의 연료량(그 전에는 차가 보내는 남은 리터), 또는 언제나 남은 리터 / 탱크 용량

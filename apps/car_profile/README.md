@@ -24,6 +24,8 @@ One place for the car's engine values and units. Set them here once and the othe
 | Pressure unit | M Vitals, Redline HUD (boost and tyres), Live Data, AK Cluster, AK Cluster ID8 |
 | Fuel use unit | Redline HUD, AK Cluster Layouts (*Fuel economy unit*; mpg (UK): each its own), AK Cluster ID8 |
 | Torque unit, Power unit | M Vitals, Redline HUD, Virtual Dyno, AK Cluster |
+| Fuel tank size | Water Cup, AK Cluster Layouts and Centre, AK Cluster ID8 |
+| Fuel % from (Engine unit (OBD tank level) / Litres / tank size) | AK Cluster Layouts, AK Cluster ID8: the fuel gauge's figure |
 | G-force circle up to (1, 1.2, 1.5, 2 g) | G-Force (*Circle size*), M Vitals (*G-force circle size*), AK Cluster Layouts (JDM 2's G meter) |
 
 Every setting starts at **Each app**: until it is set here, each app keeps its own setting, so installing the app
