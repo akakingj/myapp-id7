@@ -34,7 +34,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { spawn, spawnSync, fork, exec } = require('child_process');
 
-const DEMO_VERSION = '1.12.2';
+const DEMO_VERSION = '1.13.0';
 const A = path.resolve(__dirname, '..');                       // this repository (akakingj/myapp-id7)
 const WEB = path.join(__dirname, 'web');
 const GFX = path.join(A, 'kit', 'emu', 'web', 'gfx');            // the car's draw engine as WebAssembly (GPL-3.0-or-later)
@@ -725,7 +725,7 @@ function onPage(ws, m) {
         break;
     // the cluster's warning and indicator lights switched on in the panel (all: the bulb check, or all off)
     case 'tt': {
-        const KEYS = ['turnL', 'turnR', 'high', 'highAssist', 'low', 'side', 'fogFront', 'fogRear', 'engine', 'dscOff', 'brakeRed', 'brake', 'lane', 'abs', 'dsc', 'autoH', 'park', 'steer', 'beltRear', 'belt'];
+        const KEYS = ['turnL', 'turnR', 'high', 'highAssist', 'low', 'side', 'fogFront', 'fogRear', 'engine', 'dscOff', 'brakeRed', 'tpms', 'lane', 'abs', 'dsc', 'autoH', 'park', 'steer', 'beltRear', 'belt', 'airbag'];
         const tt = Object.assign({}, Veh.extra.tt);
         if (typeof m.all === 'boolean') KEYS.forEach((k) => { if (m.all) tt[k] = true; else delete tt[k]; });
         else if (KEYS.indexOf(m.k) >= 0) { if (m.v) tt[m.k] = true; else delete tt[m.k]; }

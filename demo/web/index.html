@@ -94,7 +94,9 @@
     </div>
     <div class="cell" id="cCluster">
     <div class="cap" id="capCluster"><b>계기판</b><span id="clusterInfo"></span><span class="sp"></span>
-      <label class="cv" title="실차 계기판 유리에서 보이는 모양 (Cluster Layouts의 layout_common.js 실측값)">실차 모습
+      <label class="cv cv2" title="계기판 앱(Layouts · Centre)이 그리는 화면 대신 순정 계기판 모습으로 봅니다 (앱 설정은 그대로)">계기판
+      <select id="clusterSrc"><option value="apps">앱 화면</option><option value="stock">순정</option></select></label>
+    <label class="cv" title="실차 계기판 유리에서 보이는 모양 (Cluster Layouts의 layout_common.js 실측값)">실차 모습
         <select id="carView"><option value="off">끔</option><option value="glass">유리 모양</option><option value="guides">유리 + 안내선</option></select></label>
       <button id="shotCluster" title="계기판을 1920×720 PNG로 저장">📷 저장</button></div>
     <!-- the cluster's housing: its fixed chamber lights on each side of the screen -->

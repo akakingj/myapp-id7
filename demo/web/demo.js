@@ -459,6 +459,13 @@ function syncCar() {
  * place, 1088 x 480) and 'hud' (800 x 480). Effects: the app's own GLSL on a quad (WebGL); images: its RGBA pixels;
  * assets: textures the effects sample. Drawn in the service's order: class (ambient, content, overlay, alert), z, the
  * order they were made. */
+/** the cluster as stock (the caption's choice, kept in the browser): no app's whole-panel layout, the stock dials */
+const Stock = (() => {
+  const KEY = 'mguDemo.stock';
+  let on = false;
+  try { on = localStorage.getItem(KEY) === 'on'; } catch (e) { /* the apps' */ }
+  return { get on() { return on; }, set(v) { on = v; try { localStorage.setItem(KEY, v ? 'on' : 'off'); } catch (e) { /* this visit */ } } };
+})();
 const VS = '#version 100\nattribute vec2 a_position;\nuniform mat4 u_mvp;\nvarying vec2 v_uv;\nvoid main() {\n    v_uv = vec2(a_position.x, 1.0 - a_position.y);\n    gl_Position = u_mvp * vec4(a_position, 0.0, 1.0);\n}';
 const CLS = { ambient: 0, content: 1, overlay: 2, alert: 3 };
 const APP_ORDER = ['akakingj_cluster_layouts', 'akakingj_cluster_centre', 'akakingj_cluster_info'];
@@ -560,8 +567,10 @@ const Cluster = (() => {
     all.sort((a, b) => (CLS[a[1].cls] ?? 1) - (CLS[b[1].cls] ?? 1) || (a[1].z - b[1].z) || order(a[0]) - order(b[0]) || num(a[1].k) - num(b[1].k));
     const vis = all.filter(([, L]) => L.vis && L.w > 0 && L.h > 0);
     const on = (t, kind) => vis.filter(([, L]) => L.target === t && L.kind === kind);
-    if (R.panel) R.panel.draw(on('panel', 'effect'), assets, 1920, 720);
-    panelOn = on('panel', 'effect').length > 0;
+    // (the cluster as stock: the apps' whole-panel layers left out, their map layers kept, as the stock cluster shows them)
+    const panelFx = Stock.on ? [] : on('panel', 'effect');
+    if (R.panel) R.panel.draw(panelFx, assets, 1920, 720);
+    panelOn = panelFx.length > 0;
     const mr = mapRect();
     if (R.map) R.map.draw(mr ? on('map', 'effect') : [], assets, 1088, 480);
     const hudFx = on('hud', 'effect');
@@ -574,6 +583,7 @@ const Cluster = (() => {
     vis.filter(([, L]) => L.kind === 'image').forEach(([app, L]) => {
       const cv = imageOf(app + '/' + L.k, L);
       if (!cv) return;
+      if (Stock.on && L.target === 'panel') return;
       const g = L.target === 'hud' ? h : o;
       let x = L.x, y = L.y, w = L.w, hh = L.h;
       if (L.target === 'map') { if (!mr) return; const k = mr.w / 1088, ky = mr.h / 480; x = mr.x + L.x * k; y = mr.y + L.y * ky; w = L.w * k; hh = L.h * ky; }
@@ -582,7 +592,7 @@ const Cluster = (() => {
     // what shows of the stock cluster: nothing over the whole panel (no layout shown) -> the sketch of the stock dials
     placeMap(mr);
     const note = $('#clusterNote');
-    if (!panelOn) { note.style.display = 'flex'; note.innerHTML = '순정 계기판 (모형)<small>' + (vis.length ? '계기판 앱이 지도 자리 · HUD에만 그리는 중' : 'AK Cluster Layouts · Centre가 꺼져 있습니다 (각 앱 설정의 "계기판에 표시")') + '</small>'; }
+    if (!panelOn) { note.style.display = 'flex'; note.innerHTML = '순정 계기판 (모형)<small>' + (Stock.on ? '계기판 앱의 화면을 숨기고 순정 모습으로 보는 중' : vis.length ? '계기판 앱이 지도 자리 · HUD에만 그리는 중' : 'AK Cluster Layouts · Centre가 꺼져 있습니다 (각 앱 설정의 "계기판에 표시")') + '</small>'; }
     else note.style.display = 'none';
     $('#mock').style.display = $('#mockTop').style.display = panelOn ? 'none' : '';
     const used = new Set([...px.keys()]);
@@ -614,6 +624,7 @@ const Cluster = (() => {
   }
   requestAnimationFrame(frame);
   return {
+    redraw() { dirty = true; },
     geo(g) { geo = g; $('#strip').style.top = g.stripY / 7.2 + '%'; placed = ''; dirty = true; glassView(); },
     mapWin(r) { win = r || null; placed = ''; dirty = true; },
     reset(fs) { Object.keys(FS).forEach((k) => delete FS[k]); Object.assign(FS, fs || {}); apps.clear(); px.clear(); errors.clear(); dirty = true; },
@@ -679,6 +690,8 @@ function glassView(g) {
   }
   sv.innerHTML = out.join('');
 }
+$('#clusterSrc').value = Stock.on ? 'stock' : 'apps';
+$('#clusterSrc').onchange = (e) => { Stock.set(e.target.value === 'stock'); Cluster.redraw(); };
 $('#carView').onchange = (e) => { carView = e.target.value; try { localStorage.setItem(CV_KEY, carView); } catch (x) { /* this visit only */ } glassView(); };
 
 /* the stock cluster (while no layout draws the whole panel): the car's own ID7 cluster as AK Cluster Layouts' Stock card
@@ -745,7 +758,7 @@ const Mock = (() => {
     return (cache[band] = cv);
   }
   let drawnUnder = false;
-  function draw(v) {
+  function draw(v, x) {
     if (!drawnUnder) { $('#mock').getContext('2d').drawImage(under(), 0, 0); drawnUnder = true; }
     const c = $('#mockTop').getContext('2d'), mode = String(v.driveMode || 'COMFORT');
     c.clearRect(0, 0, 1920, 720);
@@ -765,10 +778,17 @@ const Mock = (() => {
     const st = String(v.stage || 'P');
     c.fillStyle = '#fff'; c.font = '700 84px ' + FONT; c.textAlign = 'left'; c.fillText(st === 'M' || st === 'S' ? st + (v.gear || '') : st, 1490, 360);
     c.fillStyle = '#dce0e6'; c.font = '700 28px ' + FONT; c.textAlign = 'right'; c.fillText(mode === 'SPORT+' ? 'SPORT+' : mode, 1470, 360);
+    // the speed limit's sign, at the end of the speed scale's bottom line (as the stock cluster has it)
+    const lim = x && Number(x.limit);
+    if (lim) {
+      c.fillStyle = '#fff'; c.beginPath(); c.arc(530, 628, 26, 0, 7); c.fill();
+      c.strokeStyle = '#d8191b'; c.lineWidth = 6; c.beginPath(); c.arc(530, 628, 22.5, 0, 7); c.stroke();
+      c.fillStyle = '#111'; c.font = '700 ' + (lim >= 100 ? 19 : 23) + 'px ' + FONT; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(String(lim), 530, 629); c.textBaseline = 'alphabetic';
+    }
   }
   return { draw };
 })();
-function drawMock() { Mock.draw(Car.v || {}); }
+function drawMock() { Mock.draw(Car.v || {}, Car.extra || {}); }
 drawMock();
 let stripLast = 0;
 function strip() {
@@ -777,12 +797,15 @@ function strip() {
   stripLast = now;
   const d = Car.v, x = Car.extra || {};
   if (d.speed === undefined) return;
-  if ($('#mock').style.display !== 'none') Mock.draw(d);
+  if ($('#mock').style.display !== 'none') Mock.draw(d, x);
   const n = new Date(), hh = n.getHours(), mm = String(n.getMinutes()).padStart(2, '0');
   $('#sRange').querySelector('b').textContent = String(Math.round(d.frange));
   $('#sTime').textContent = hh + ':' + mm;
   $('#sMode').textContent = d.driveMode === 'SPORT+' ? 'SPORT PLUS' : d.driveMode;
   $('#sGear').textContent = /^[DSM]$/.test(d.stage) ? d.stage + (d.gear || '') : d.stage;
+  // (the stock cluster's bottom row: range, time, place, outside temperature; its drive mode and gear are by the rev scale)
+  const stockRow = $('#mock').style.display !== 'none';
+  $('#sMode').style.visibility = $('#sGear').style.visibility = stockRow ? 'hidden' : '';
   $('#sTemp').textContent = (d.outside >= 0 ? '+' : '') + Number(d.outside).toFixed(1) + '°C';
   $('#map').style.display = x.waze === 'cluster' ? 'flex' : 'none';
   $('#hudMap').style.display = x.waze === 'hud' ? 'block' : 'none';
@@ -896,7 +919,7 @@ function pickOpen(i) {
  * the driver's seat (right); the cluster and the centre display at their 1920 x 720, the HUD at 800 x 480 as tall as
  * the centre display, the driver's seat the cluster's height (taller when there is room). Narrow: one column (the
  * cluster, the centre display, the driver's seat, the HUD). */
-const CHAMBER = 0.07;           // (the chamber lights on one side, two columns: this much of the screen's width, as the stock housing's)
+const CHAMBER = 0.06;           // (the housing's chamber lights on one side: this much of the screen's width, as the stock housing's)
 function layout() {
   const vw = document.documentElement.clientWidth;
   const narrow = vw < 1000;
@@ -949,7 +972,7 @@ const View = (() => {
   const KEY = 'mguDemo.view';
   let real = true;
   try { real = localStorage.getItem(KEY) !== 'grid'; } catch (e) { /* the driver's seat */ }
-  const TOOLS = [['label.cv', '#capCluster'], ['#shotCluster', '#capCluster', '📷 계기판'], ['#shot', '#capStage', '📷 MGU']];
+  const TOOLS = [['label.cv2', '#capCluster'], ['label.cv', '#capCluster'], ['#shotCluster', '#capCluster', '📷 계기판'], ['#shot', '#capStage', '📷 MGU']];
   const v = {
     get real() { return real; },
     tools(on) {

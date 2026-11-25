@@ -1,9 +1,11 @@
-// lights.js - the cluster's warning and indicator lights, as the car's ID7 cluster has them (the G20 owner's
-// display guide: "Displays in the instrument cluster"): the fixed chamber lights in the housing on each side of the
-// screen (the lights, fog, the brakes, ABS, DSC, lane departure, AUTO H, the parking brake, steering, the engine,
-// DSC OFF), the turn signals by the driver camera, the seat belts in the bottom strip. Original symbols, drawn simply.
-// Each is on when the car says so (the indicators, night: the low beam and side lights, the console's parking brake,
-// AUTO H and DSC OFF) or when switched on in the panel; "all on" is the cluster's bulb check.
+// lights.js - the cluster's warning and indicator lights, where the car's ID7 cluster has them (the G20 owner's
+// display guide, "Warning and indicator lights", its numbers in brackets): the fixed chamber lights in the housing
+// beside the screen (left: turn [5], high beam [4], its assistant [3], low beam [2], side lights [1]; right: turn [16],
+// fog [17], rear fog [18], engine [19], DSC OFF [20]) and those the cluster draws on its screen in their own places,
+// clear of its scales (brakes [9], tyre pressure [8], ABS [7], DSC [6], lane departure [10]; AUTO H [13], parking
+// brake [14], steering [15]; the turn signals by the driver camera's cowl [11, 12]; airbag [21], seat belts [22, 23]).
+// Original symbols, drawn simply. Each is on when the car says so (the indicators and hazard lights, night: low beam
+// and side lights, the console's parking brake, AUTO H and DSC OFF) or switched on in the panel; all on: the bulb check.
 const NS = 'http://www.w3.org/2000/svg';
 
 /* ---------------- the symbols (a 40 x 40 box each) ---------------- */
@@ -22,6 +24,8 @@ const SYM = {
   dsc: '<path d="M 9 15 L 12 8 H 28 L 31 15 V 21 H 9 Z" fill="currentColor"/><path d="M 8 26 Q 12 22 16 26 T 24 26 M 16 32 Q 20 28 24 32 T 32 32" fill="none" stroke="currentColor" stroke-width="2.2"/>',
   abs: '<circle cx="20" cy="20" r="11" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M 7 10 A 15 15 0 0 0 7 30 M 33 10 A 15 15 0 0 1 33 30" fill="none" stroke="currentColor" stroke-width="2.2"/><text x="20" y="23.5" font-size="8.5" font-weight="800" text-anchor="middle" fill="currentColor" font-family="system-ui, sans-serif">ABS</text>',
   brake: '<circle cx="20" cy="20" r="11" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M 7 10 A 15 15 0 0 0 7 30 M 33 10 A 15 15 0 0 1 33 30" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M 20 13 V 22" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="20" cy="27" r="1.8" fill="currentColor"/>',
+  tpms: '<path d="M 9 30 C 5 25 5 14 9 9 M 31 30 C 35 25 35 14 31 9 M 9 30 H 31 M 9 9 L 12 12 M 31 9 L 28 12" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M 12 34 H 28" stroke="currentColor" stroke-width="2.6" stroke-dasharray="3 2"/><path d="M 20 12 V 22" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="20" cy="26.5" r="1.8" fill="currentColor"/>',
+  airbag: '<circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M 8 14 L 16 14 L 20 26 L 30 26 L 30 31 L 16 31 Z" fill="currentColor"/><path d="M 22 13 L 21 21" stroke="currentColor" stroke-width="2.4"/><circle cx="29" cy="14" r="7" fill="currentColor"/>',
   lane: '<path d="M 6 6 L 3 34 M 34 6 L 37 34" stroke="currentColor" stroke-width="2.4" stroke-dasharray="5 4"/><path d="M 13 23 L 15 15 H 25 L 27 23 V 30 H 13 Z" fill="currentColor"/>',
   autoH: '<text x="20" y="25" font-size="13" font-weight="800" text-anchor="middle" fill="currentColor" font-family="system-ui, sans-serif">AUTO H</text>',
   park: '<circle cx="20" cy="20" r="11" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M 7 10 A 15 15 0 0 0 7 30 M 33 10 A 15 15 0 0 1 33 30" fill="none" stroke="currentColor" stroke-width="2.2"/><text x="20" y="25" font-size="14" font-weight="800" text-anchor="middle" fill="currentColor" font-family="system-ui, sans-serif">P</text>',
@@ -29,61 +33,59 @@ const SYM = {
   belt: '<circle cx="20" cy="8" r="4.5" fill="currentColor"/><path d="M 12 36 V 21 Q 12 14 20 14 Q 28 14 28 21 V 36" fill="currentColor"/><path d="M 13 15 L 30 34" stroke="#000" stroke-width="2.6"/><path d="M 13 15 L 30 34" stroke="currentColor" stroke-width="1.2"/>',
   beltRear: '<g fill="currentColor"><circle cx="9" cy="12" r="3.5"/><path d="M 4 34 V 22 Q 4 17 9 17 Q 14 17 14 22 V 34 Z"/><circle cx="20" cy="12" r="3.5"/><path d="M 15 34 V 22 Q 15 17 20 17 Q 25 17 25 22 V 34 Z"/><circle cx="31" cy="12" r="3.5"/><path d="M 26 34 V 22 Q 26 17 31 17 Q 36 17 36 22 V 34 Z"/></g>',
 };
-/* ---------------- the lights: where, colour, name ----------------
- * As the stock cluster (G20, its display guide) has them, none over the screen's content: the housing's chamber lights
- * in two columns a side (where: LO / LI left outer / inner, RI / RO right inner / outer; at: the row, top to bottom),
- * the turn signals (and the hazard lights: both) on the screen by the driver camera's cowl (where: cam), the seat
- * belts in the bottom strip's warning zone (x, y on the 1920 x 720 screen; Cluster Layouts' TELLTALES). */
+/* ---------------- the lights: where (the 1920 x 720 screen's coordinates, from the guide's picture), colour, name ----------------
+ * where L / R: the housing's chamber column beside the screen, y its height on the screen; cam: the turn signals by
+ * the camera's cowl (index.html #turnL / #turnR); otherwise on the screen at x, y. */
 const G = '#2fd27a', A = '#ffad1f', R = '#ff3b30', B = '#3d7bff';
 const LIGHTS = [
-  { k: 'turnL', where: 'cam', c: G, name: '왼쪽 방향지시등', link: '방향지시등' },
-  { k: 'turnR', where: 'cam', c: G, name: '오른쪽 방향지시등', link: '방향지시등' },
-  // left, outer: the lights
-  { k: 'high', where: 'LO', at: 1, c: B, name: '상향등' },
-  { k: 'highAssist', where: 'LO', at: 2, c: G, name: '상향등 보조' },
-  { k: 'low', where: 'LO', at: 4, c: G, name: '하향등', link: '밤' },
-  { k: 'side', where: 'LO', at: 5, c: G, name: '미등', link: '밤' },
-  // left, inner: lane departure, the brakes, ABS, DSC
-  { k: 'lane', where: 'LI', at: 0, c: G, name: '차선 이탈 경고' },
-  { k: 'brakeRed', where: 'LI', at: 1, c: R, sym: 'brake', name: '브레이크 (빨강)' },
-  { k: 'brake', where: 'LI', at: 2, c: A, name: '브레이크 (노랑)' },
-  { k: 'abs', where: 'LI', at: 3, c: A, name: 'ABS' },
-  { k: 'dsc', where: 'LI', at: 4, c: A, name: 'DSC' },
-  // right, inner: AUTO H, the parking brake, steering
-  { k: 'autoH', where: 'RI', at: 0, c: G, w: 74, name: 'AUTO H', link: '콘솔 AUTO H' },
-  { k: 'park', where: 'RI', at: 1, c: G, name: '주차 브레이크', link: '콘솔 주차 브레이크' },
-  { k: 'steer', where: 'RI', at: 2, c: A, name: '조향 경고' },
-  // right, outer: fog, the engine, DSC OFF
-  { k: 'fogFront', where: 'RO', at: 1, c: G, name: '앞 안개등' },
-  { k: 'fogRear', where: 'RO', at: 2, c: A, name: '뒤 안개등' },
-  { k: 'engine', where: 'RO', at: 4, c: A, name: '엔진 점검' },
-  { k: 'dscOff', where: 'RO', at: 5, c: A, name: 'DSC OFF', link: '콘솔 DSC OFF' },
-  // the bottom strip's warning zone
-  { k: 'beltRear', x: 600, y: 684, c: R, name: '뒷좌석 안전벨트' },
-  { k: 'belt', x: 652, y: 684, c: R, name: '안전벨트' },
+  { k: 'turnL', where: 'cam', c: G, name: '왼쪽 방향지시등 (화면 · 하우징)', link: '방향지시등 · 비상등' },
+  { k: 'turnR', where: 'cam', c: G, name: '오른쪽 방향지시등 (화면 · 하우징)', link: '방향지시등 · 비상등' },
+  // the housing, left [5 4 3 · 2 1]
+  { k: 'turnL', where: 'L', y: 310, c: G, name: '왼쪽 방향지시등 (하우징)', dup: true },
+  { k: 'high', where: 'L', y: 378, c: B, name: '상향등' },
+  { k: 'highAssist', where: 'L', y: 446, c: G, name: '상향등 보조' },
+  { k: 'low', where: 'L', y: 564, c: G, name: '하향등', link: '밤' },
+  { k: 'side', where: 'L', y: 622, c: G, name: '미등', link: '밤' },
+  // the housing, right [16 17 18 · 19 20]
+  { k: 'turnR', where: 'R', y: 310, c: G, name: '오른쪽 방향지시등 (하우징)', dup: true },
+  { k: 'fogFront', where: 'R', y: 378, c: G, name: '안개등' },
+  { k: 'fogRear', where: 'R', y: 436, c: A, name: '뒤 안개등' },
+  { k: 'engine', where: 'R', y: 526, c: A, name: '엔진 이상' },
+  { k: 'dscOff', where: 'R', y: 622, c: A, name: 'DSC OFF · DTC', link: '콘솔 DSC OFF' },
+  // the screen, left of the speed scale [10 9 8 7 6]
+  { k: 'lane', x: 104, y: 166, c: G, name: '차선 이탈 경고' },
+  { k: 'brakeRed', x: 40, y: 220, c: R, sym: 'brake', name: '브레이크 시스템' },
+  { k: 'tpms', x: 34, y: 282, c: A, name: '타이어 공기압' },
+  { k: 'abs', x: 28, y: 342, c: A, name: 'ABS' },
+  { k: 'dsc', x: 28, y: 400, c: A, name: 'DSC' },
+  // the screen, right of the rev scale [13 14 15]
+  { k: 'autoH', x: 1800, y: 182, c: G, w: 74, name: 'AUTO H', link: '콘솔 AUTO H' },
+  { k: 'park', x: 1866, y: 230, c: G, name: '주차 브레이크', link: '콘솔 주차 브레이크' },
+  { k: 'steer', x: 1866, y: 288, c: A, name: '조향 시스템' },
+  // the bottom row [23 22 21]
+  { k: 'beltRear', x: 556, y: 684, c: R, name: '뒷좌석 안전벨트' },
+  { k: 'belt', x: 606, y: 684, c: R, name: '안전벨트' },
+  { k: 'airbag', x: 650, y: 684, c: R, name: '에어백' },
 ];
 const NO_LINK = {};
 
 export function makeLights({ $, el, send, car }) {
   const icon = (L, size) => `<svg viewBox="0 0 ${L.w ? 80 : 40} 40" width="${size * (L.w ? 2 : 1)}" height="${size}" style="color:${L.c}" aria-hidden="true">${L.w ? `<g transform="translate(20 0)">${SYM[L.sym || L.k]}</g>` : SYM[L.sym || L.k]}</svg>`;
-  // the chamber lights: two columns on each side of the cluster's screen (outer, inner), six rows
+  // the chamber lights: in the housing beside the screen, each at its height
   ['L', 'R'].forEach((side) => {
-    const col = $('#chamber' + side), cols = side === 'L' ? ['LO', 'LI'] : ['RI', 'RO'];
-    const cells = [];
-    for (let row = 0; row < 6; row++) cols.forEach((w) => {
-      const L = LIGHTS.find((x) => x.where === w && x.at === row), cell = el('div', { className: 'ch-slot' + (L && L.w ? ' wide' : '') });
-      if (L) { cell.innerHTML = icon(L, 40); cell.dataset.k = L.k; cell.title = L.name; }
-      cells.push(cell);
-    });
-    col.replaceChildren(...cells);
+    $('#chamber' + side).replaceChildren(...LIGHTS.filter((L) => L.where === side).map((L) => {
+      const cell = el('div', { className: 'ch-slot', title: L.name, innerHTML: icon(L, 40) });
+      cell.dataset.k = L.k; cell.style.top = (L.y / 7.2) + '%';
+      return cell;
+    }));
   });
-  // those on the screen: the belts in the strip's zone
+  // those on the screen, at their places (half as big again as the symbols' box: about the car's own)
   const view = $('#telltaleView');
-  view.innerHTML = LIGHTS.filter((L) => L.x !== undefined).map((L) => `<g data-k="${L.k}" transform="translate(${L.x - 30} ${L.y - 30}) scale(1.5)" style="color:${L.c}"><title>${L.name}</title>${SYM[L.sym || L.k]}</g>`).join('');
+  view.innerHTML = LIGHTS.filter((L) => L.x !== undefined).map((L) => `<g data-k="${L.k}" transform="translate(${L.x - (L.w ? 60 : 30)} ${L.y - 30}) scale(1.5)" style="color:${L.c}"><title>${L.name}</title>${L.w ? `<g transform="translate(20 0)">${SYM[L.sym || L.k]}</g>` : SYM[L.sym || L.k]}</g>`).join('');
 
   /* the panel: a switch for each (lit while the car says so too), all on (the bulb check), all off */
   const box = $('#ttList');
-  box.replaceChildren(...LIGHTS.map((L) => el('button', { className: 'tt', 'data-k': L.k, title: L.name + (L.link ? ' (연동: ' + L.link + ')' : ''), innerHTML: icon(L, 18) + '<span>' + L.name + (L.link ? ' <i>연동</i>' : '') + '</span>', on: { click: () => send({ t: 'tt', k: L.k, v: !((car.extra.tt || NO_LINK)[L.k]) }) } })));
+  box.replaceChildren(...LIGHTS.filter((L) => !L.dup).map((L) => el('button', { className: 'tt', 'data-k': L.k, title: L.name + (L.link ? ' (연동: ' + L.link + ')' : ''), innerHTML: icon(L, 18) + '<span>' + L.name + (L.link ? ' <i>연동</i>' : '') + '</span>', on: { click: () => send({ t: 'tt', k: L.k, v: !((car.extra.tt || NO_LINK)[L.k]) }) } })));
   $('#ttAll').onclick = () => send({ t: 'tt', all: true });
   $('#ttNone').onclick = () => send({ t: 'tt', all: false });
 
@@ -98,13 +100,14 @@ export function makeLights({ $, el, send, car }) {
   let last = '';
   function frame() {
     const blinkOn = Math.floor(performance.now() / 400) % 2 === 0;
-    const on = LIGHTS.map((L) => (state(L.k, blinkOn) ? 1 : 0)).join(''), key = on + JSON.stringify((car.extra || {}).tt || NO_LINK);
+    const keys = Array.from(new Set(LIGHTS.map((L) => L.k)));
+    const on = keys.map((k) => (state(k, blinkOn) ? 1 : 0)).join(''), key = on + JSON.stringify((car.extra || {}).tt || NO_LINK);
     if (key === last) return;
     last = key;
-    LIGHTS.forEach((L, i) => {
+    keys.forEach((k, i) => {
       const lit = on[i] === '1';
-      document.querySelectorAll('[data-k="' + L.k + '"]').forEach((e) => {
-        if (e.classList.contains('tt')) e.classList.toggle('on', !!((car.extra.tt || NO_LINK)[L.k]) || (lit && !/^turn/.test(L.k)));
+      document.querySelectorAll('[data-k="' + k + '"]').forEach((e) => {
+        if (e.classList.contains('tt')) e.classList.toggle('on', !!((car.extra.tt || NO_LINK)[k]) || (lit && !/^turn/.test(k)));
         else e.classList.toggle('lit', lit);
       });
     });
