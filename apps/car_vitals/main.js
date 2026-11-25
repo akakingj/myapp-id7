@@ -56,6 +56,18 @@ const RANGE = {
 const BOOST_MAX = { '1.0': [1, 15, 100], '1.5': [1.5, 20, 150], '2.0': [2, 30, 200], '2.5': [2.5, 35, 250], '3.0': [3, 40, 300],
     '3.5': [3.5, 50, 350] };
 /**
+ * The boost scale's numbers, evenly apart: the end divided in 3 (four numbers) where the step is a whole figure (psi
+ * and kPa whole, bar to a tenth), else in 4, 2 or 5 - each number at least a quarter of the scale from the next (bar's
+ * and kPa's wider figures three tenths) - else in 2 with a decimal more: 0 5 10 15, 0 5 10 15 20, 0 10 20 30,
+ * 0 10 20 30 40, 0 25 50; 0.0 1.0 2.0 3.0. end in the unit. (AK Cluster Layouts' the same.) The numbers.
+ */
+function boostTicks(end, unit) {
+    const dec = unit === 'bar' ? 1 : 0, room = unit === 'psi' ? 0.25 : 0.3;
+    const whole = (v) => Math.abs(v * Math.pow(10, dec) - Math.round(v * Math.pow(10, dec))) < 1e-6;
+    const k = [3, 4, 2, 5].find((n) => whole(end / n) && 1 / n >= room - 1e-9) || 2;
+    return Array.from({ length: k + 1 }, (_, i) => i * end / k);
+}
+/**
  * Pressure units (values arrive in bar): [factor from bar, label, decimals for boost / LPFP / tyres].
  * kPa reads in whole numbers like psi (1 bar = 100 kPa = 14.5038 psi).
  */
@@ -827,9 +839,11 @@ mgu.run({
             if (shown('boost')) {
                 const pu = settings.get('pressUnit'), psi = pu === 'psi', kpa = pu === 'kpa';
                 const bmax = BOOST_MAX[settings.get('boostMax')] || BOOST_MAX['2.5'], pmax = psi ? bmax[1] : kpa ? bmax[2] : bmax[0];
+                // (its numbers evenly apart; one with a decimal more - 17.5 psi, 1.25 bar - on a finer grid)
+                const ticks = boostTicks(pmax, psi ? 'psi' : kpa ? 'kpa' : 'bar'), more = ticks.some((v) => Math.abs(v * (psi || kpa ? 1 : 10) % 1) > 1e-6);
                 G.segBar(cv, t, 24, G.TOP + 242 + half, 1062, 226 - half, {
                     label: 'Boost', value: P(d.boost), unit: pU(), decimals: pressU()[2], min: 0, max: pmax,
-                    step: psi ? (pmax > 20 ? 2 : 1) : kpa ? 12.5 : 0.125, scale: { every: psi ? (pmax > 20 ? 10 : 5) : kpa ? 50 : 0.5, decimals: psi || kpa ? 0 : 1 }, ramp: 'hot', limit: pmax * 0.85,
+                    step: psi ? (more ? 0.5 : 1) : kpa ? 12.5 : 0.125, scale: { at: ticks, decimals: (psi || kpa ? 0 : 1) + (more ? 1 : 0) }, ramp: 'hot', limit: pmax * 0.85,
                     marks: [{ value: pmax * 0.85, color: 'warn' }], peak: showPk ? P(pk.boost) : null,
                 });
                 if (!G.isNum(d.boost) && !usingDemo()) cv.text(boostWhy(), 48, G.pageBottom(cv) - 14, 22, t.dim);
