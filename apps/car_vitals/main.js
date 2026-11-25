@@ -51,8 +51,10 @@ const RANGE = {
  * next start shows them straight away.
  */
 // (tyre temperatures are not doubtful any more: with the right scaling a car's "no data" is 65535)
-/** boostMax setting -> the boost dial's top in bar, in psi and in kPa */
-const BOOST_MAX = { '2.0': [2, 30, 200], '2.5': [2.5, 36, 250], '3.0': [3, 44, 300], '3.5': [3.5, 50, 350] };
+/** boostMax setting (its own, or the Car profile's Boost gauge up to) -> the boost dial's top in bar, in psi and in kPa */
+const BOOST_MAX = { '1.0': [1, 15, 100], '1.2': [1.2, 17, 120], '1.4': [1.4, 20, 140], '1.5': [1.5, 22, 150], '1.6': [1.6, 23, 160],
+    '1.8': [1.8, 26, 180], '2.0': [2, 30, 200], '2.2': [2.2, 32, 220], '2.5': [2.5, 36, 250], '2.8': [2.8, 41, 280], '3.0': [3, 44, 300],
+    '3.5': [3.5, 50, 350] };
 /**
  * Pressure units (values arrive in bar): [factor from bar, label, decimals for boost / LPFP / tyres].
  * kPa reads in whole numbers like psi (1 bar = 100 kPa = 14.5038 psi).

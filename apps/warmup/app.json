@@ -129,7 +129,7 @@
     },
     {
       "key": "engine",
-      "profile": "engine", "profileMap": {"phev": "petrol"},
+      "profile": "engine", "profileMap": {"phev": "petrol", "m": "petrol"},
       "label": "Engine",
       "type": "choice",
       "default": "auto",

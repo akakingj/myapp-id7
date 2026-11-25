@@ -15,7 +15,7 @@ const fs = require('fs');
 // what the profile sets, in Settings order; FOLLOW: the apps that follow each (their app.json "profile")
 const KEYS = ['engine', 'lightStart', 'lightRed', 'shiftAt', 'rpmScale', 'redline', 'coldLimit', 'lightMode', 'coldGuard', 'warmOil',
     'warmCoolant', 'warmGearbox', 'hotOil', 'hotCoolant', 'hotGearbox', 'speedUnit', 'distUnit', 'tempUnit', 'pressUnit', 'fuelUnit', 'torqueUnit', 'powerUnit',
-    'skin', 'theme', 'layout', 'renderer', 'demo', 'clock', 'timeZone', 'tankLitres', 'fuelFrom', 'eFull', 'gMax'];
+    'skin', 'theme', 'layout', 'renderer', 'demo', 'clock', 'timeZone', 'tankLitres', 'fuelFrom', 'eFull', 'gMax', 'speedMax', 'boostMax'];
 const FOLLOW = {
     // (Plug-in hybrid: the AK clusters' Vehicle; the other apps take a plug-in hybrid as their own setting says: Auto, petrol)
     engine: ['M Vitals', 'Redline', 'Warm-Up', 'Virtual Dyno', 'AK Cluster', 'AK Cluster Centre', 'AK Cluster ID8'],
@@ -59,6 +59,9 @@ const FOLLOW = {
     eFull: ['AK Cluster', 'AK Cluster Centre'],
     // the G-force circles' size (g), where the dot goes in a bend (out: as the driver feels it), braking up or down
     gMax: ['G-Force', 'M Vitals', 'AK Cluster'],
+    // where the speedometers end (km/h), and the boost gauges (bar, each app showing it in its pressure unit)
+    speedMax: ['AK Cluster', 'AK Cluster ID8'],
+    boostMax: ['M Vitals', 'AK Cluster', 'AK Cluster Centre', 'AK Cluster ID8'],
 };
 // ('AK Cluster': the cluster apps of akakingj/idrive7-cluster-info, Layouts / Centre / Info, which read this file too;
 // 'AK Cluster ID8': akakingj/myapp-cluster-high's, the same way)

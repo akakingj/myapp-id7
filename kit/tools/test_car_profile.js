@@ -179,6 +179,23 @@ const cases = {
         const s = settingsIn(schema, { scale: 1.5 });
         assert.strictEqual(s.get('scale'), 2);
     },
+    'the boost gauge\'s top: a number in bar, shown in the pressure unit set; M Vitals\' choice takes 2 bar as its 2.0'() {
+        clear();
+        const read = (id) => JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', id, 'app.json'), 'utf8')).settings;
+        const cp = read('car_profile');
+        const own = settingsIn(cp, { boostMax: 2.5, pressUnit: 'psi' });
+        assert.strictEqual(own.display('boostMax'), '36 psi');
+        own.set('pressUnit', 'kpa'); assert.strictEqual(own.display('boostMax'), '250 kPa');
+        own.set('pressUnit', 'bar'); assert.strictEqual(own.display('boostMax'), '2.5 bar');
+        own.set('pressUnit', 'app'); assert.strictEqual(own.display('boostMax'), '2.5 bar');
+        const vit = read('car_vitals').filter((x) => x.key === 'boostMax');
+        P.publish(fakeProfile({ boostMax: 2 }), '1.7.5');
+        tick += 5; fs.utimesSync(FILE, tick, tick);
+        assert.strictEqual(settingsIn(vit, { boostMax: '2.5' }).get('boostMax'), '2.0');
+        P.publish(fakeProfile({ boostMax: 1.6 }), '1.7.5');
+        tick += 5; fs.utimesSync(FILE, tick, tick);
+        assert.strictEqual(settingsIn(vit, { boostMax: '2.5' }).get('boostMax'), '1.6');
+    },
     'every app.json "profile" is one the Car profile sets, with values it can give'() {
         const cp = JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', 'car_profile', 'app.json'), 'utf8'));
         const byKey = {};
@@ -196,7 +213,9 @@ const cases = {
                 assert(p, app + '.' + s.key + ': no Car profile setting "' + s.profile + '"');
                 if (s.type === 'choice') {
                     const own = s.options.map((o) => o[0]);
-                    const given = p.options.map((o) => o[0]).filter((v) => v !== 'app').map((v) => (s.profileMap && s.profileMap[v] !== undefined ? s.profileMap[v] : v));
+                    // (a number of the profile's to a choice's value: its figure as text, as mgu.js fromProfile)
+                    const all = p.options ? p.options.map((o) => o[0]).filter((v) => v !== 'app') : (p.steps || []).filter((v) => v !== -1);
+                    const given = all.map((v) => (s.profileMap && s.profileMap[v] !== undefined ? s.profileMap[v] : String(v)));
                     const lost = given.filter((v) => own.indexOf(v) < 0);
                     // a value the app can't show is left to the app (fromProfile), but every one should land
                     assert.deepStrictEqual(lost, [], app + '.' + s.key + ': the profile can give ' + lost.join(', ') + ', the app has no such option');

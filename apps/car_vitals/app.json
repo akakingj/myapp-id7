@@ -140,12 +140,21 @@
     },
     {
       "key": "boostMax",
+      "profile": "boostMax", "profileMap": {"1": "1.0", "2": "2.0", "3": "3.0"},
       "label": "Boost gauge max",
       "type": "choice",
       "default": "2.5",
       "options": [
+        ["1.0", "1.0 bar / 15 psi"],
+        ["1.2", "1.2 bar / 17 psi"],
+        ["1.4", "1.4 bar / 20 psi"],
+        ["1.5", "1.5 bar / 22 psi"],
+        ["1.6", "1.6 bar / 23 psi"],
+        ["1.8", "1.8 bar / 26 psi"],
         ["2.0", "2.0 bar / 30 psi"],
+        ["2.2", "2.2 bar / 32 psi"],
         ["2.5", "2.5 bar / 36 psi"],
+        ["2.8", "2.8 bar / 41 psi"],
         ["3.0", "3.0 bar / 44 psi"],
         ["3.5", "3.5 bar / 50 psi"]
       ]
@@ -169,7 +178,7 @@
     },
     {
       "key": "engine",
-      "profile": "engine", "profileMap": {"phev": "petrol"},
+      "profile": "engine", "profileMap": {"phev": "petrol", "m": "petrol"},
       "label": "Engine",
       "type": "choice",
       "default": "auto",

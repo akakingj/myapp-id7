@@ -206,6 +206,8 @@ class Settings {
         let v = this._prof[s.profile];
         if (v === undefined || v === null) return undefined;
         if (s.profileMap && Object.prototype.hasOwnProperty.call(s.profileMap, v)) v = s.profileMap[v];
+        // (a choice whose values are figures as text, e.g. "2.5": the profile's number as that text)
+        if (s.type === 'choice' && typeof v === 'number') v = String(v);
         if (s.type === 'choice') return (s.options || []).some((o) => o[0] === v) ? v : undefined;
         // (0, the profile's Auto, only where it is one of this setting's own values: its steps or a label for it; else
         // the app's own, as for any value it can't take)

@@ -2635,7 +2635,7 @@
   "Where the rev gauges end (e.g. 7000)": "회전수 게이지가 끝나는 곳 (예: 7000)",
   "The engine's real limit, where the fuel is cut; Auto is fine": "엔진의 실제 한계(연료 컷). 보통 자동이면 됩니다",
   "Shift point: lit only at the shift point; Rev bar: filling from the yellow": "변속 시점: 변속할 때만 켜짐 / 회전수 바: 노란불부터 차오름",
-  "Which engine the apps take the car to have: their gauges and limits follow it (Auto: read from the car)": "앱이 기준으로 삼을 엔진 종류. 게이지와 한계값이 이에 맞춰짐 (자동: 차에서 읽음)",
+  "Which engine the apps take the car to have: their gauges and limits follow it (Auto: read from the car; M car: the AK clusters keep clear of its M display's boxes, a plug-in hybrid's of its eDrive box)": "앱이 기준으로 삼을 엔진 종류. 게이지와 한계값이 이에 맞춰짐 (자동: 차에서 읽음. M 차량: AK 클러스터가 M 표시 상자를 피함, 플러그인 하이브리드는 eDrive 상자를 피함)",
   "The top rpm while the oil is still cold (30 °C); it climbs to the redline as the oil warms": "오일이 찰 때(30 °C)의 최고 rpm. 오일이 데워지면 레드라인까지 올라감",
   "On: the shift warning and the red zone come lower while the engine is cold": "켜면 엔진이 찰 때 변속 경고와 레드존을 낮춤",
   "From this oil temperature the engine counts as warmed up": "이 오일 온도부터 예열 완료로 봄",
@@ -2702,5 +2702,10 @@
   "Fuel % from": "연료 % 출처",
   "Engine unit (OBD tank level)": "엔진 ECU (OBD 연료량)",
   "Litres / tank size": "남은 리터 / 탱크 용량",
-  "The AK clusters' fuel gauge: the engine unit's own level while the engine runs (the car's litres until then), or the litres over the tank's size always": "AK 클러스터의 연료 게이지: 시동 중에는 엔진 ECU의 연료량(그 전에는 차가 보내는 남은 리터), 또는 언제나 남은 리터 / 탱크 용량"
+  "The AK clusters' fuel gauge: the engine unit's own level while the engine runs (the car's litres until then), or the litres over the tank's size always": "AK 클러스터의 연료 게이지: 시동 중에는 엔진 ECU의 연료량(그 전에는 차가 보내는 남은 리터), 또는 언제나 남은 리터 / 탱크 용량",
+  "Petrol, M car": "가솔린, M 차량",
+  "Speedometer up to": "속도계 최고값",
+  "Where the speedometers end: 260 km/h for most BMWs, 330 km/h for an M car": "속도계 끝 값: 일반 BMW는 260 km/h, M 차량은 330 km/h",
+  "Boost gauge up to": "부스트 게이지 최고값",
+  "Where the boost gauges end, shown in the pressure unit set here": "부스트 게이지 끝 값 (여기서 정한 압력 단위로 표시)"
 }

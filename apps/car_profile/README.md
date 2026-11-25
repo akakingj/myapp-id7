@@ -4,7 +4,7 @@ One place for the car's engine values and units. Set them here once and the othe
 
 | Setting | Followed by |
 |---|---|
-| Engine (Auto / Diesel / Petrol / Plug-in hybrid) | M Vitals, Redline, Warm-Up, Virtual Dyno, AK Cluster Layouts and Centre (their Vehicle; the others take a plug-in hybrid as their own setting says), AK Cluster ID8 (*Engine*) |
+| Engine (Auto / Diesel / Petrol / Petrol, M car / Plug-in hybrid) | M Vitals, Redline, Warm-Up, Virtual Dyno, AK Cluster Layouts and Centre (their Vehicle; the others take a plug-in hybrid, and an M car, as petrol), AK Cluster ID8 (*Engine*; an M car and a plug-in hybrid: its layers keep clear of the M display's boxes and the eDrive box) |
 | Yellow light at | Redline (*Lights from*), AK Cluster Layouts (the amber zone of ID6 M and ID7 M, Track's and GT3's tach turning yellow, Simple's rpm), AK Cluster Centre (*Shift light: starts at*), AK Cluster ID8 (*Shift lights from*) |
 | Red light at (Auto: the redline) | AK Cluster Layouts (the red zone, Simple's rpm red), AK Cluster ID8 (*Redline*: the red zone) |
 | Shift now warning at (the shift point; Auto: the redline less 300) | Redline (its fixed one), Warm-Up, AK Cluster Layouts, AK Cluster Centre (*Shift light: flashes at*), AK Cluster ID8 (*Shift now at*: the shift lights flash, the speed and the gear blink red) |
@@ -27,6 +27,8 @@ One place for the car's engine values and units. Set them here once and the othe
 | Fuel tank size | Water Cup, AK Cluster Layouts and Centre, AK Cluster ID8 |
 | Fuel % from (Engine unit (OBD tank level) / Litres / tank size) | AK Cluster Layouts, AK Cluster ID8: the fuel gauge's figure |
 | G-force circle up to (1, 1.2, 1.5, 2 g) | G-Force (*Circle size*), M Vitals (*G-force circle size*), AK Cluster Layouts (JDM 2's G meter) |
+| Speedometer up to (260 km/h, most BMWs; 330 km/h, an M car) | AK Cluster Layouts (every speedometer), AK Cluster ID8 (M Sport's) |
+| Boost gauge up to (1.0 - 3.5 bar, shown in the pressure unit set here) | M Vitals (*Boost gauge max*), AK Cluster Layouts and Centre (every boost gauge and bar), AK Cluster ID8 (Toro's boost gauge, M Track Mode's boost rows) |
 
 Every setting starts at **Each app**: until it is set here, each app keeps its own setting, so installing the app
 changes nothing. A setting the profile sets shows the profile's value in the other app's Settings and can't be changed

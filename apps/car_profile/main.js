@@ -14,7 +14,8 @@
  * head unit, or at once with "Each app".
  * It runs from the platform's start (app.json "autostart"): the profile is there for the other apps without opening it.
  * Page, two tabs: Car (the engine, warm-up and too hot, the units) and Display and clock (the skin, colour theme,
- * screen layout, renderer and demo data; the AK clusters' clock, fuel tank and electric range): the groups with each
+ * screen layout, renderer and demo data; the AK clusters' clock, fuel tank and electric range; where the G-force
+ * circle, the speedometers and the boost gauges end): the groups with each
  * value and the apps that follow it (what a value does in its values' list: app.json "help"); in the header, whether
  * anything is set for them.
  * Each row is a place for the iDrive controller and a tap: pressed, its values' list (kit/sheet.js) over the page.
@@ -119,8 +120,8 @@ mgu.run({
             } else {
                 // the screens' look (every app), then the AK clusters' clock and their fuel and battery figures
                 column(0, [['Display', 'Display']]);
-                // (the clock's two rows, the G's swap under them)
-                column(1, [['Clock', 'Clock'], ['G-force', 'G-force']]);
+                // (the clock's two rows; under them the gauges' ends: the G-force circle, the speedometer, boost)
+                column(1, [['Clock', 'Clock'], [['G-force', 'Gauges'], 'Gauges']]);
                 column(2, [['Fuel and battery', 'Fuel and battery']]);
             }
             // whether the other apps have it, in the header (each text translated whole)
