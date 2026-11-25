@@ -2712,5 +2712,6 @@
   "From the car's Sport Display": "차량 스포츠 디스플레이 값",
   "Off by day (on when the car switches to night)": "낮에는 끔 (차가 밤으로 바뀌면 켬)",
   "Turn glow and door red on both strips of a door line (G26: slower blink)": "방향지시등 조명과 문 열림 빨강을 문 라인의 두 줄 모두에 (G26: 더 느리게 깜빡임)",
-  "Cold engine: rpm bar faded yellow from the cold limit to the redline": "엔진이 차가울 때: 회전수 막대를 냉간 제한부터 레드라인까지 흐린 노랑으로"
+  "Cold engine: rpm bar faded yellow from the cold limit to the redline": "엔진이 차가울 때: 회전수 막대를 냉간 제한부터 레드라인까지 흐린 노랑으로",
+  "From": "시작값"
 }
