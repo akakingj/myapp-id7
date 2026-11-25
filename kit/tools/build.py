@@ -173,7 +173,9 @@ def setting_options(s):
         alts = [u for u in (s.get('units') or {}).values()] if s.get('unitBy') else []
         def text(v):
             if alts and isinstance(v, (int, float)):
-                return ' / '.join([('%g' % v) + unit] + ['%d %s' % (int(v * u.get('mul', 1) + u.get('add', 0) + 0.5), u['unit']) for u in alts])
+                # ("of": a figure of its own for each value in that unit)
+                return ' / '.join([('%g' % v) + unit] + ['%s %s' % (u['of'].get('%g' % v), u['unit']) if '%g' % v in (u.get('of') or {})
+                                                         else '%d %s' % (int(v * u.get('mul', 1) + u.get('add', 0) + 0.5), u['unit']) for u in alts])
             return ('%g' % v) + unit
         values, labels = list(steps), [named.get('%g' % v, text(v)) for v in steps]
     if s.get('markDefault'):

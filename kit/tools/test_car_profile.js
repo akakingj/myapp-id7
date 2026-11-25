@@ -184,7 +184,10 @@ const cases = {
         const read = (id) => JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', id, 'app.json'), 'utf8')).settings;
         const cp = read('car_profile');
         const own = settingsIn(cp, { boostMax: 2.5, pressUnit: 'psi' });
-        assert.strictEqual(own.display('boostMax'), '36 psi');
+        assert.strictEqual(own.display('boostMax'), '35 psi', 'its pair in psi, as the car\'s own gauge reads');
+        own.set('boostMax', 2); assert.strictEqual(own.display('boostMax'), '30 psi');
+        own.set('boostMax', 1); assert.strictEqual(own.display('boostMax'), '15 psi');
+        own.set('boostMax', 2.5);
         own.set('pressUnit', 'kpa'); assert.strictEqual(own.display('boostMax'), '250 kPa');
         own.set('pressUnit', 'bar'); assert.strictEqual(own.display('boostMax'), '2.5 bar');
         own.set('pressUnit', 'app'); assert.strictEqual(own.display('boostMax'), '2.5 bar');
@@ -192,9 +195,9 @@ const cases = {
         P.publish(fakeProfile({ boostMax: 2 }), '1.7.5');
         tick += 5; fs.utimesSync(FILE, tick, tick);
         assert.strictEqual(settingsIn(vit, { boostMax: '2.5' }).get('boostMax'), '2.0');
-        P.publish(fakeProfile({ boostMax: 1.6 }), '1.7.5');
+        P.publish(fakeProfile({ boostMax: 1.5 }), '1.7.5');
         tick += 5; fs.utimesSync(FILE, tick, tick);
-        assert.strictEqual(settingsIn(vit, { boostMax: '2.5' }).get('boostMax'), '1.6');
+        assert.strictEqual(settingsIn(vit, { boostMax: '2.5' }).get('boostMax'), '1.5');
     },
     'every app.json "profile" is one the Car profile sets, with values it can give'() {
         const cp = JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', 'car_profile', 'app.json'), 'utf8'));

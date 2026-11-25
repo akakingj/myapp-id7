@@ -244,10 +244,13 @@ class Settings {
      * in the HMI's drop-down), e.g.
      *   "unit": "kW", "unitBy": "powerUnit", "units": { "hp": { "unit": "hp", "mul": 1.34102 } }
      *   "unit": "°C", "unitBy": "tempUnit", "units": { "f": { "unit": "°F", "mul": 1.8, "add": 32 } }
+     * or, where each value has a figure of its own in that unit ("of": the gauge's end in psi for its end in bar),
+     *   "unit": "bar", "unitBy": "pressUnit", "units": { "psi": { "unit": "psi", "of": { "2": 30, "2.5": 35 } } }
      */
     numberText(s, v) {
         if (s.labels && s.labels[String(v)] !== undefined) return s.labels[String(v)];
         const u = s.unitBy && s.units ? s.units[this.get(s.unitBy)] : null;      // (get: the Car profile's unit where it sets it)
+        if (u && u.of && u.of[String(v)] !== undefined) return u.of[String(v)] + ' ' + u.unit;
         if (u && typeof v === 'number') return Math.round(v * (u.mul || 1) + (u.add || 0)) + ' ' + u.unit;
         return String(v) + (s.unit ? ' ' + s.unit : '');
     }
