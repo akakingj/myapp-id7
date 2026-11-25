@@ -34,7 +34,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { spawn, spawnSync, fork, exec } = require('child_process');
 
-const DEMO_VERSION = '1.8.3';
+const DEMO_VERSION = '1.9.0';
 const A = path.resolve(__dirname, '..');                       // this repository (akakingj/myapp-id7)
 const WEB = path.join(__dirname, 'web');
 const GFX = path.join(A, 'kit', 'emu', 'web', 'gfx');            // the car's draw engine as WebAssembly (GPL-3.0-or-later)
@@ -713,9 +713,20 @@ function onPage(ws, m) {
             pages.forEach((w) => { if (w !== ws) w.send(vehMsg()); });
         }
         break;
+    // the car's kind (the panel's buttons): the demo's, and the Car profile's Engine, which every app follows
+    case 'vtype':
+        if (KINDS[m.v]) {
+            const was = kindNow();
+            Veh.extra.vtype = m.v;
+            if (REG.car_profile) setIn('car_profile', 'engine', m.v);
+            profileEngine = m.v;            // (the profile's file follows within a second)
+            if (kindNow() !== was) kindChanged('the panel');
+        }
+        break;
     case 'extra':
         if (Object.prototype.hasOwnProperty.call(EXTRA0, m.k) && typeof m.v === typeof EXTRA0[m.k]) {
             if (m.k === 'indicator' && ['off', 'left', 'right', 'both'].indexOf(m.v) < 0) break;
+            if (m.k === 'vtype') break;
             Veh.extra[m.k] = m.v; writeWaze(); vehSend(); toPages(vehMsg());
         }
         break;
@@ -912,52 +923,120 @@ function bgMsg() {
 // (the cluster demo's car: tools/cluster_demo.html in akakingj/myapp-cluster)
 const VEH0 = { pedal: 0, throttle: 3, speed: 0, rpm: 750, gear: 0, stage: 'P', driveMode: 'COMFORT', boostActual: -0.6, torque: 20, timing: 10, hpfp: 60, lpfp: 5.2,
     oil: 96, coolant: 90, gearbox: 78, iat: 31, outside: 20, fuelPct: 55, frange: 520, steer: 0, yaw: 0, gLat: 0, gLong: 0, tyreP: 2.5, tyreT: 25, soc: 70, kw: 0, battTemp: 26, erange: 30 };
-const EXTRA0 = { waze: 'cluster', hudPct: 70, night: false, indicator: 'off' };   // indicator: off | left | right | both (hazards)
+const EXTRA0 = { waze: 'cluster', hudPct: 70, night: false, indicator: 'off', vtype: 'petrol' };   // indicator: off | left | right | both (hazards)
+/* ---------------- the car's kind: petrol, diesel, an M car, a plug-in hybrid ----------------
+ * The Car profile's Engine decides (every app follows it); left to Auto, the demo's own (EXTRA vtype), which the car's
+ * signals then say (Vehicle2 typeEngine, a plug-in hybrid's drive mode names and battery: demo/preload.js). The panel's
+ * buttons set the Car profile's Engine, so the two agree. Each kind drives as such a car: its idle, shift point and
+ * gearing, boost, torque; a plug-in hybrid electric at first and slowing down (the engine stopped), its battery. */
+const KINDS = {
+    petrol: { name: '가솔린', idle: 750, shift: 6200, cruise: 2600, boost: 1.15, boostIdle: -0.6, torque: 350, rate: 2600, hpfp: [60, 250], timing: [10, 6, 24], top: 150, typeEngine: 'BENZIN_DIREKTEINSPRITZUNG' },
+    diesel: { name: '디젤', idle: 800, shift: 4300, cruise: 1800, boost: 2.1, boostIdle: 0.02, torque: 400, rate: 1500, hpfp: [300, 1900], timing: [0, 0, 0], top: 150, typeEngine: 'DIESEL_DIREKTEINSPRITZUNG' },
+    m: { name: 'M', idle: 850, shift: 7000, cruise: 2800, boost: 1.7, boostIdle: -0.6, torque: 650, rate: 3800, hpfp: [60, 350], timing: [10, 4, 26], top: 200, typeEngine: 'BENZIN_DIREKTEINSPRITZUNG' },
+    phev: { name: '하이브리드', idle: 0, shift: 5800, cruise: 2300, boost: 1.0, boostIdle: 0, torque: 300, rate: 2400, hpfp: [60, 220], timing: [10, 6, 24], top: 150, typeEngine: 'HYBRIDMOTOR', ev: true },
+};
+const PROFILE_FILE = () => path.join(SHM, 'car-profile.json');
+let profileEngine = null, profileAt = 0;
+/** the Car profile's Engine (diesel, petrol, m, phev), or null: Auto / left to each app / no profile */
+function readProfile() {
+    try {
+        const st = fs.statSync(PROFILE_FILE());
+        if (st.mtimeMs === profileAt) return;
+        profileAt = st.mtimeMs;
+        const e = ((JSON.parse(fs.readFileSync(PROFILE_FILE(), 'utf8')) || {}).values || {}).engine;
+        const was = kindNow();
+        profileEngine = KINDS[e] ? e : null;
+        if (kindNow() !== was) kindChanged('the Car profile');
+    } catch (e) { if (profileAt) { profileAt = 0; const was = kindNow(); profileEngine = null; if (kindNow() !== was) kindChanged('no Car profile'); } }
+}
+const kindNow = () => profileEngine || (KINDS[Veh.extra.vtype] ? Veh.extra.vtype : 'petrol');
+function kindChanged(why) {
+    const K = KINDS[kindNow()], d = Veh.v;
+    appLog('info', 'demo: the car: ' + kindNow() + ' (' + why + ')');
+    // (from standing again, idling as this car does)
+    if (Veh.mode === 'auto') { Veh.auto = { phase: 'idle', t: 0 }; Object.assign(d, { speed: 0, stage: 'P', gear: 0 }); }
+    d.rpm = K.idle; d.boostActual = K.boostIdle; d.hpfp = K.hpfp[0]; d.timing = K.timing[0];
+    vehSend(); toPages(vehMsg());
+}
+/** a setting of a running app (the front or the background copy), or its settings file (read when it starts) */
+function setIn(id, k, v) {
+    const ch = App.childId === id && App.child ? App.child : (Bg.get(id) || {}).child;
+    if (ch && ch.connected) { try { ch.send({ t: 'set', k, v }); return; } catch (e) { /* gone: the file */ } }
+    const f = path.join(dataDir(id), 'settings.json');
+    let o = {};
+    try { o = JSON.parse(fs.readFileSync(f, 'utf8')) || {}; } catch (e) { /* none yet */ }
+    o[k] = v;
+    try { fs.writeFileSync(f, JSON.stringify(o, null, 1)); } catch (e) { /* next time */ }
+}
 const Veh = { mode: 'auto', v: Object.assign({}, VEH0), extra: Object.assign({}, EXTRA0), auto: { phase: 'idle', t: 0 } };
 try { const s = JSON.parse(fs.readFileSync(path.join(DATA, 'car.json'), 'utf8')); Object.assign(Veh.extra, s.extra || {}); if (s.mode === 'manual') { Veh.mode = 'manual'; Object.assign(Veh.v, s.v || {}); } } catch (e) { /* the defaults */ }
 const KMH_PER_1000 = [0, 9, 15, 23, 31, 39, 48, 57, 66];
 function stepAuto(dt) {
-    const a = Veh.auto, d = Veh.v;
+    const a = Veh.auto, d = Veh.v, kind = kindNow(), K = KINDS[kind];
     a.t += dt;
     const near = (v, to, rate) => v + Math.max(-rate * dt, Math.min(rate * dt, to - v)), prev = d.speed;
+    const input = () => d.speed / KMH_PER_1000[Math.max(1, d.gear)] * 1000;        // (the gearbox's input: the engine's when it runs)
+    // a plug-in hybrid: electric to 60 km/h when pulling away, and below 45 slowing down; its engine stopped then
+    const ev = K.ev && (a.phase === 'idle' || (a.phase === 'accel' && d.speed < 60 && !a.engine) || (a.phase === 'brake' && d.speed < 45));
+    if (K.ev && a.phase === 'accel' && d.speed >= 60) a.engine = true;
     if (a.phase === 'idle') {
-        Object.assign(d, { stage: 'P', gear: 0, speed: 0 }); d.rpm = near(d.rpm, 750, 3000); d.boostActual = near(d.boostActual, -0.6, 2); d.torque = near(d.torque, 20, 300); d.pedal = 0; d.throttle = 3;
+        Object.assign(d, { stage: 'P', gear: 0, speed: 0 }); d.rpm = near(d.rpm, K.idle, 3000); d.boostActual = near(d.boostActual, K.boostIdle, 2); d.torque = near(d.torque, K.ev ? 0 : 20, 300); d.pedal = 0; d.throttle = K.ev ? 0 : 3;
         if (a.t > 2) { Veh.auto = { phase: 'accel', t: 0 }; d.stage = 'D'; d.gear = 1; }
     } else if (a.phase === 'accel') {
-        d.rpm = Math.min(6300, d.rpm + 2600 * dt / Math.max(1, d.gear * 0.55)); d.speed = d.rpm / 1000 * KMH_PER_1000[d.gear];
-        d.boostActual = near(d.boostActual, 1.15, 3); d.torque = near(d.torque, 350, 900); d.pedal = near(d.pedal, 100, 400); d.throttle = near(d.throttle, 100, 300); d.timing = near(d.timing, 6, 20); d.hpfp = near(d.hpfp, 250, 400);
-        if (d.rpm >= 6200 && d.gear < 8) { d.gear++; d.rpm = d.speed / KMH_PER_1000[d.gear] * 1000; }
-        if (d.speed >= 150) Veh.auto = { phase: 'cruise', t: 0 };
+        if (ev) {                                   // (the electric motor alone: the speed rises, the engine stays off)
+            d.speed = Math.min(60, d.speed + 11 * dt);
+            while (d.gear < 8 && input() > 3000) d.gear++;
+            d.rpm = near(d.rpm, 0, 4000); d.boostActual = near(d.boostActual, 0, 2); d.torque = near(d.torque, 0, 600); d.throttle = 0; d.pedal = near(d.pedal, 45, 300);
+        } else {
+            if (K.ev && d.rpm < 500) d.rpm = input();      // (the engine starting at speed)
+            d.rpm = Math.min(K.shift + 100, d.rpm + K.rate * dt / Math.max(1, d.gear * 0.55)); d.speed = d.rpm / 1000 * KMH_PER_1000[d.gear];
+            d.boostActual = near(d.boostActual, K.boost, 3); d.torque = near(d.torque, K.torque, 900); d.pedal = near(d.pedal, 100, 400); d.throttle = near(d.throttle, 100, 300);
+            d.timing = near(d.timing, K.timing[1], 20); d.hpfp = near(d.hpfp, K.hpfp[1], 1200);
+            if (d.rpm >= K.shift && d.gear < 8) { d.gear++; d.rpm = input(); }
+        }
+        if (d.speed >= K.top) Veh.auto = { phase: 'cruise', t: 0 };
     } else if (a.phase === 'cruise') {
-        while (d.gear < 8 && d.speed / KMH_PER_1000[d.gear] * 1000 > 2600) d.gear++;
-        d.speed = near(d.speed, 120, 15); d.rpm = d.speed / KMH_PER_1000[d.gear] * 1000;
-        d.boostActual = near(d.boostActual, 0.05, 2); d.torque = near(d.torque, 90, 600); d.pedal = near(d.pedal, 22, 200); d.throttle = near(d.throttle, 14, 200); d.timing = near(d.timing, 24, 20); d.hpfp = near(d.hpfp, 90, 300);
+        while (d.gear < 8 && input() > K.cruise) d.gear++;
+        d.speed = near(d.speed, 120, 15); d.rpm = input();
+        d.boostActual = near(d.boostActual, kind === 'diesel' ? 0.5 : 0.05, 2); d.torque = near(d.torque, K.torque / 4, 600); d.pedal = near(d.pedal, 22, 200); d.throttle = near(d.throttle, kind === 'diesel' ? 100 : 14, 200);
+        d.timing = near(d.timing, K.timing[2], 20); d.hpfp = near(d.hpfp, K.hpfp[0] + (K.hpfp[1] - K.hpfp[0]) * 0.2, 600);
         d.steer = 60 * Math.sin(a.t * 1.3); d.yaw = 6 * Math.sin(a.t * 1.3); d.gLat = 0.35 * Math.sin(a.t * 1.3);
         if (a.t > 5) Veh.auto = { phase: 'brake', t: 0 };
     } else {
         d.speed = Math.max(0, d.speed - 32 * dt);
-        while (d.gear > 1 && d.speed / KMH_PER_1000[d.gear] * 1000 < 1200) d.gear--;
-        d.rpm = Math.max(750, d.speed / KMH_PER_1000[d.gear] * 1000);
-        d.boostActual = near(d.boostActual, -0.65, 2); d.torque = near(d.torque, 0, 600); d.pedal = 0; d.throttle = 2; d.timing = near(d.timing, 14, 20);
+        while (d.gear > 1 && input() < 1200) d.gear--;
+        d.rpm = ev ? near(d.rpm, 0, 4000) : Math.max(K.idle || 750, input());
+        d.boostActual = near(d.boostActual, ev ? 0 : K.boostIdle - 0.05, 2); d.torque = near(d.torque, 0, 600); d.pedal = 0; d.throttle = ev ? 0 : 2; d.timing = near(d.timing, K.timing[0] + 4, 20);
         d.steer = near(d.steer, 0, 120); d.yaw = near(d.yaw, 0, 20); d.gLat = near(d.gLat, 0, 1);
         if (d.speed <= 0) Veh.auto = { phase: 'idle', t: 0 };
     }
     d.gLong = Math.max(-1.2, Math.min(1.2, ((d.speed - prev) / 3.6 / Math.max(dt, 0.001)) / 9.81));
-    const hard = Veh.auto.phase === 'accel';
-    d.oil = near(d.oil, hard ? 108 : 98, 0.6); d.coolant = near(d.coolant, hard ? 96 : 90, 0.4);
+    const hard = Veh.auto.phase === 'accel' && !ev;
+    d.oil = near(d.oil, hard ? (kind === 'm' ? 112 : 108) : 98, 0.6); d.coolant = near(d.coolant, hard ? 96 : 90, 0.4);
     d.iat = near(d.iat, hard ? 42 : 30, 1.5); d.tyreT = near(d.tyreT, hard ? 45 : 35, 0.5);
-    d.kw = hard ? near(d.kw, 45, 60) : Veh.auto.phase === 'brake' ? near(d.kw, -25, 60) : near(d.kw, 3, 40);
+    // the drive battery (a plug-in hybrid's): out while driving electric or helping, in while slowing down; its range
+    if (K.ev) {
+        const ph = Veh.auto.phase;
+        d.kw = ev && ph === 'accel' ? near(d.kw, 70, 120) : ph === 'brake' ? near(d.kw, -40, 120) : ph === 'accel' ? near(d.kw, 25, 120) : near(d.kw, ph === 'idle' ? 1 : -4, 60);
+        d.soc = Math.max(15, Math.min(95, d.soc - d.kw * dt / 12 / 36 * 4));      // (12 kWh, four times as fast: to be seen)
+        if (d.soc <= 15.5) d.soc = 80;
+        d.erange = Math.round(d.soc * 0.55);
+    }
 }
 /** what each app gets: the panel's values and what follows from them */
 function vehOut() {
-    const v = Veh.v, P = v.tyreP, T = v.tyreT;
-    return Object.assign({}, v, {
+    const v = Veh.v, P = v.tyreP, T = v.tyreT, kind = kindNow(), K = KINDS[kind];
+    const o = Object.assign({}, v, {
         engineOn: v.rpm > 300, boostTarget: Math.max(0, v.boostActual + 0.05), battMin: v.battTemp - 1, battMax: v.battTemp + 1,
-        indicator: Veh.extra.indicator, night: !!Veh.extra.night,
+        indicator: Veh.extra.indicator, night: !!Veh.extra.night, vtype: kind, typeEngine: K.typeEngine,
         tyres: { p: { FL: P - 0.02, FR: P, RL: P + 0.1, RR: P + 0.08 }, t: { FL: T - 1, FR: T, RL: T + 2, RR: T + 1 } },
     });
+    // (no drive battery on a petrol, diesel or M car: none of its values)
+    if (!K.ev) ['soc', 'kw', 'battTemp', 'battMin', 'battMax', 'erange'].forEach((k) => { delete o[k]; });
+    if (kind === 'diesel') delete o.timing;
+    return o;
 }
-const vehMsg = () => ({ t: 'veh', mode: Veh.mode, v: Veh.v, extra: Veh.extra, phase: Veh.auto.phase });
+const vehMsg = () => ({ t: 'veh', mode: Veh.mode, v: Veh.v, extra: Veh.extra, phase: Veh.auto.phase, kind: kindNow(), kindFrom: profileEngine ? 'profile' : 'demo' });
 const children = () => [App.child].concat(Array.from(Bg.values()).map((b) => b.child)).filter((c) => c && c.connected);
 /** the car's own signals, as kit/tools/hu-stub.js feeds them (its "manual" signals: raw values, 20 a second): the apps
  *  see a live car, not their demo drive (the setting "demo" goes to Auto there) */
@@ -972,6 +1051,7 @@ let vehLast = Date.now(), vehPage = 0, vehSaved = '';
 setInterval(() => {
     const now = Date.now(), dt = Math.min(0.2, (now - vehLast) / 1000);
     vehLast = now;
+    if (now - (readProfile.at || 0) > 1000) { readProfile.at = now; readProfile(); }
     if (Veh.mode === 'auto') stepAuto(dt);
     vehSend();
     if (pages.size && now - vehPage >= 100) { vehPage = now; toPages(vehMsg()); }

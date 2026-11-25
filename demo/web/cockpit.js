@@ -193,7 +193,7 @@ export function makeCockpit({ $, el, ctl, manualSet, send, car }) {
     ctlCard.querySelector('.ck-start').classList.toggle('on', on);
     ctlCard.querySelector('.ck-epb').classList.toggle('on', st === 'P');
     ctlCard.querySelector('.ck-hold').classList.toggle('on', K.autoH);
-    gearOut.textContent = '기어 ' + (/^[DSM]$/.test(st) ? st + (v.gear || '') : st) + ' · ' + (mode === 'SPORT+' ? 'SPORT+' : mode) + (on ? '' : ' · 시동 꺼짐');
+    gearOut.textContent = '기어 ' + (/^[DSM]$/.test(st) ? st + (v.gear || '') : st) + ' · ' + (mode === 'SPORT+' ? 'SPORT+' : mode) + (on ? '' : car.kind === 'phev' ? ' · 엔진 정지 (전기)' : ' · 시동 꺼짐');
   }
 
   /* ---------------- what the controller did (from here, the keys or the mouse wheel over the screen) ---------------- */

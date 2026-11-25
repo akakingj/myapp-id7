@@ -371,12 +371,14 @@ function bgList(apps) {
 const SLIDERS = [
   ['주행', [['speed', '속도', 0, 260, 1, 'km/h'], ['rpm', 'rpm', 0, 8000, 50, ''], ['gear', '기어 단수', 0, 8, 1, ''], ['pedal', '가속 페달', 0, 100, 1, '%'], ['throttle', '스로틀', 0, 100, 1, '%'],
     ['gLong', '종G', -1.2, 1.2, 0.01, 'g'], ['gLat', '횡G', -1.2, 1.2, 0.01, 'g'], ['steer', '조향각', -450, 450, 5, '°'], ['yaw', '요레이트', -40, 40, 1, '°/s']]],
-  ['엔진', [['torque', '토크', 0, 500, 1, 'Nm'], ['boostActual', '부스트', -0.8, 1.6, 0.01, 'bar'], ['timing', '점화시기', -5, 40, 0.5, '°'], ['hpfp', '고압 연료', 0, 350, 1, 'bar'], ['lpfp', '저압 연료', 0, 8, 0.1, 'bar']]],
+  ['엔진', [['torque', '토크', 0, 800, 1, 'Nm'], ['boostActual', '부스트', -0.8, 2.6, 0.01, 'bar'], ['timing', '점화시기', -5, 40, 0.5, '°'], ['hpfp', '고압 연료', 0, 2500, 5, 'bar'], ['lpfp', '저압 연료', 0, 8, 0.1, 'bar']]],
   ['온도', [['oil', '오일', 20, 150, 1, '°C'], ['coolant', '냉각수', 20, 130, 1, '°C'], ['gearbox', '미션오일', 20, 130, 1, '°C'], ['iat', '흡기온', -10, 80, 1, '°C'], ['outside', '외기온', -20, 45, 1, '°C']]],
   ['연료·타이어', [['fuelPct', '연료', 0, 100, 1, '%'], ['frange', '주행가능거리', 0, 900, 5, 'km'], ['tyreP', '타이어 공기압', 1.6, 3.2, 0.01, 'bar'], ['tyreT', '타이어 온도', 0, 90, 1, '°C']]],
   ['PHEV', [['soc', '배터리', 0, 100, 1, '%'], ['kw', '배터리 출력', -60, 100, 0.5, 'kW'], ['battTemp', '배터리 온도', -5, 50, 1, '°C'], ['erange', '전기 주행거리', 0, 80, 1, 'km']]],
 ];
 const STAGES = ['P', 'R', 'N', 'D', 'S', 'M'];
+// the car's kind: the Car profile's Engine (every app follows it); the demo drives as such a car
+const KINDS = [['petrol', '가솔린'], ['diesel', '디젤'], ['m', 'M'], ['phev', '하이브리드']];
 const MODES = [['COMFORT', 'Comfort'], ['SPORT', 'Sport'], ['SPORT+', 'Sport+'], ['ECO PRO', 'Eco Pro']];
 const WAZE = [['off', '안 씀'], ['cluster', '계기판에'], ['hud', 'HUD에']];
 const INDS = [['off', '끔'], ['left', '◀ 왼쪽'], ['right', '오른쪽 ▶'], ['both', '⚠ 비상등']];
@@ -391,12 +393,13 @@ function buildCar() {
   $('#vehmode').querySelectorAll('button').forEach((b) => { b.onclick = () => send({ t: 'vehmode', mode: b.dataset.v }); });
   seg($('#stageSeg'), STAGES.map((s) => [s, s]), (v) => manualSet({ stage: v, gear: /^[DSM]$/.test(v) ? Math.max(1, Car.v.gear || 1) : 0 }));
   seg($('#modeSeg'), MODES, (v) => manualSet({ driveMode: v }, true));
+  seg($('#kindSeg'), KINDS, (v) => send({ t: 'vtype', v }));
   seg($('#wazeSeg'), WAZE, (v) => send({ t: 'extra', k: 'waze', v }));
   seg($('#indSeg'), INDS, (v) => send({ t: 'extra', k: 'indicator', v }));
   seg($('#nightSeg'), NIGHTS, (v) => send({ t: 'extra', k: 'night', v }));
   const box = $('#sliders');
   SLIDERS.forEach(([group, list]) => {
-    const g = el('div', { className: 'vgroup' }, el('div', { textContent: group }));
+    const g = el('div', { className: 'vgroup', id: 'vg-' + group }, el('div', { textContent: group }));
     list.forEach(([k, label, min, max, step, unit]) => {
       const out = el('span');
       const r = el('input', { type: 'range', min, max, step, id: 'veh-' + k, 'aria-label': label });
@@ -426,7 +429,7 @@ Car.update = (m) => {
   Car.mode = m.mode; Car.extra = m.extra || {};
   // (a value being dragged here stays as the hand has it)
   Object.keys(m.v).forEach((k) => { if (!Car.els[k] || document.activeElement !== Car.els[k].r) Car.v[k] = m.v[k]; });
-  Car.phase = m.phase;
+  Car.phase = m.phase; Car.kind = m.kind || 'petrol'; Car.kindFrom = m.kindFrom;
   syncCar();
 };
 function syncCar() {
@@ -434,6 +437,11 @@ function syncCar() {
   $('#phase').textContent = Car.mode === 'auto' ? (PHASE_KO[Car.phase] || '') : '';
   segSync($('#stageSeg'), Car.v.stage); segSync($('#modeSeg'), Car.v.driveMode); segSync($('#wazeSeg'), Car.extra.waze);
   segSync($('#indSeg'), Car.extra.indicator || 'off'); segSync($('#nightSeg'), !!Car.extra.night);
+  segSync($('#kindSeg'), Car.kind || 'petrol');
+  $('#kindNote').textContent = Car.kindFrom === 'profile' ? '카프로필 엔진 설정대로' : '카프로필 엔진: 자동 (데모 차량 신호로 감지)';
+  // (the drive battery's values: a plug-in hybrid's only; the ignition timing: not a diesel's)
+  const pg = document.getElementById('vg-PHEV'); if (pg) pg.style.display = Car.kind === 'phev' ? '' : 'none';
+  const tm = Car.els.timing; if (tm) tm.r.parentNode.style.display = Car.kind === 'diesel' ? 'none' : '';
   $('#sliders').classList.toggle('auto', Car.mode === 'auto');
   Object.keys(Car.els).forEach(show);
   if (Cockpit) Cockpit.veh();
