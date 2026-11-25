@@ -55,17 +55,15 @@ const RANGE = {
  * pairs as the car's own gauge reads them (in psi 0 5 10 15, or 0 10 20 30) */
 const BOOST_MAX = { '1.0': [1, 15, 100], '1.5': [1.5, 20, 150], '2.0': [2, 30, 200], '2.5': [2.5, 35, 250], '3.0': [3, 40, 300],
     '3.5': [3.5, 50, 350] };
+const BOOST_TICKS = { 10: [0, 5, 10], 15: [0, 5, 10, 15], 20: [0, 10, 20], 25: [0, 15, 25], 30: [0, 10, 20, 30], 35: [0, 15, 25, 35], 40: [0, 20, 40], 50: [0, 25, 50] };
 /**
- * The boost scale's numbers, evenly apart: the end divided in 3 (four numbers) where the step is a whole figure (psi
- * and kPa whole, bar to a tenth), else in 4, 2 or 5 - each number at least a quarter of the scale from the next (bar's
- * and kPa's wider figures three tenths) - else in 2 with a decimal more: 0 5 10 15, 0 5 10 15 20, 0 10 20 30,
- * 0 10 20 30 40, 0 25 50; 0.0 1.0 2.0 3.0. end in the unit. (AK Cluster Layouts' the same.) The numbers.
+ * A boost scale's numbers by its end's figure (psi as it is, bar x 10, kPa / 10): 15 0 5 10 15, 20 0 10 20, 30 0 10 20 30,
+ * 35 0 15 25 35, 40 0 20 40, 50 0 25 50; 10 0 5 10, 25 0 15 25 - in bar 0.0 1.5 2.5 3.5, in kPa 0 150 250 350. Any
+ * other end: 0, its middle and it. end in the unit. (AK Cluster Layouts' the same.) The numbers.
  */
 function boostTicks(end, unit) {
-    const dec = unit === 'bar' ? 1 : 0, room = unit === 'psi' ? 0.25 : 0.3;
-    const whole = (v) => Math.abs(v * Math.pow(10, dec) - Math.round(v * Math.pow(10, dec))) < 1e-6;
-    const k = [3, 4, 2, 5].find((n) => whole(end / n) && 1 / n >= room - 1e-9) || 2;
-    return Array.from({ length: k + 1 }, (_, i) => i * end / k);
+    const per = unit === 'bar' ? 10 : unit === 'kpa' ? 0.1 : 1, f = Math.round(end * per);
+    return Math.abs(end * per - f) < 1e-6 && BOOST_TICKS[f] ? BOOST_TICKS[f].map((v) => v / per) : [0, end / 2, end];
 }
 /**
  * Pressure units (values arrive in bar): [factor from bar, label, decimals for boost / LPFP / tyres].
@@ -173,14 +171,15 @@ mgu.run({
 
         /*
          * Boost gauge max (set in the Car profile): a pair's, or From the car's Sport Display - its own gauge's end as
-         * the least pair at or over it, once the car has sent it (2.5 bar until then)
+         * the least pair at or over it (within 5 %), once the car has sent it (2.5 bar until then)
          */
         let boostCarTop = null;
         const boostMaxNow = () => {
             const v = settings.get('boostMax');
             if (v !== 'car') return v;
             if (!G.isNum(boostCarTop)) return '2.5';
-            return Object.keys(BOOST_MAX).find((k) => BOOST_MAX[k][0] >= boostCarTop - 0.02) || '3.5';
+            // (within 5 %: a car set to psi ends at 15 psi, 1.034 bar - the 1.0 bar / 15 psi pair)
+            return Object.keys(BOOST_MAX).find((k) => BOOST_MAX[k][0] * 1.05 >= boostCarTop) || '3.5';
         };
 
         /* ---------- live data ---------- */
@@ -855,7 +854,7 @@ mgu.run({
             if (shown('boost')) {
                 const pu = settings.get('pressUnit'), psi = pu === 'psi', kpa = pu === 'kpa';
                 const bmax = BOOST_MAX[boostMaxNow()] || BOOST_MAX['2.5'], pmax = psi ? bmax[1] : kpa ? bmax[2] : bmax[0];
-                // (its numbers evenly apart; one with a decimal more - 17.5 psi, 1.25 bar - on a finer grid)
+                // (its numbers by its end; one with a decimal more - 0.25 bar's end, 1.75 - on a finer grid)
                 const ticks = boostTicks(pmax, psi ? 'psi' : kpa ? 'kpa' : 'bar'), more = ticks.some((v) => Math.abs(v * (psi || kpa ? 1 : 10) % 1) > 1e-6);
                 G.segBar(cv, t, 24, G.TOP + 242 + half, 1062, 226 - half, {
                     label: 'Boost', value: P(d.boost), unit: pU(), decimals: pressU()[2], min: 0, max: pmax,

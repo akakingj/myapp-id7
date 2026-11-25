@@ -211,7 +211,9 @@ const cases = {
         cp.settings.forEach((s) => { byKey[s.key] = s; });
         assert.deepStrictEqual(Object.keys(byKey).filter((k) => P.KEYS.indexOf(k) >= 0), P.KEYS, 'profile.js KEYS = the app\'s settings, in order');
         assert(cp.settings.every((s) => !s.profile), 'the Car profile follows no profile itself');
-        assert(cp.settings.every((s) => (s.type === 'choice' ? s.default === 'app' : s.default === -1)), 'everything starts at Each app');
+        // (Boost gauge up to is set here alone and starts at Auto, what the apps show without the profile)
+        assert(cp.settings.every((s) => (s.type === 'choice' ? s.default === 'app' : s.default === (s.key === 'boostMax' ? 0 : -1))), 'everything starts at Each app');
+        assert.deepStrictEqual(byKey.boostMax.steps, [0, 1, 1.5, 2, 2.5, 3, 3.5], 'Boost gauge up to: Auto, or a pair from 1.0 bar / 15 psi');
         let followers = 0;
         fs.readdirSync(path.join(ROOT, 'apps')).forEach((app) => {
             const f = path.join(ROOT, 'apps', app, 'app.json');
