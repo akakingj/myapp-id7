@@ -267,3 +267,34 @@ body.narrow #cockpit { grid-template-columns: 1fr 1fr; height: auto !important; 
 .cell > .cap { align-self: stretch; }
 #cHud #hudBox { box-shadow: 0 0 0 1px #222, 0 10px 40px #000a; }
 body.narrow #grid { grid-template-columns: 1fr !important; grid-template-rows: none !important; grid-template-areas: "cluster" "stage" "seat" "hud"; width: 100%; }
+
+/* ---- the view from the driver's seat (body.real; layout() sets --k: the scene's 1600 x 1000 units to pixels) ---- */
+#viewbar { flex: none; align-self: center; align-items: center; }
+#viewbar .seg2 { margin: 0; }
+#vbTools { display: inline-flex; align-items: center; gap: 8px; }
+#sceneBg { display: none; }
+body.real #grid { display: block; position: relative; overflow: hidden; border-radius: 12px; box-shadow: 0 0 0 1px #1d2026, 0 20px 60px #000c; background: #0b0c0e; }
+body.real #sceneBg { display: block; position: absolute; inset: 0; width: 100%; height: 100%; }
+body.real .cell { position: absolute; }
+body.real .cell > .cap { display: none; }
+body.real #cHud { left: calc(var(--k) * 330px); top: calc(var(--k) * 110px); }
+body.real #cCluster { left: calc(var(--k) * 160px); top: calc(var(--k) * 392px); }
+body.real #cStage { left: calc(var(--k) * 872px); top: calc(var(--k) * 330px); }
+body.real #cCockpit, body.real #cockpit { display: contents; }
+/* (the HUD: no screen, its picture on the glass) */
+body.real #cHud #hudBox { background: transparent; box-shadow: none; mix-blend-mode: screen; border-radius: 0; }
+body.real #hudBox #hudSpeed { opacity: .7; }
+/* (the cluster in its cowl; the centre display standing on the dashboard) */
+body.real #cluster { box-shadow: 0 0 0 calc(var(--k) * 6px) #050607, 0 calc(var(--k) * 10px) calc(var(--k) * 30px) #000; border-radius: calc(var(--k) * 18px); }
+body.real #stage { box-shadow: 0 0 0 calc(var(--k) * 7px) #0a0b0d, 0 0 0 calc(var(--k) * 8px) #3a3f46, 0 calc(var(--k) * 18px) calc(var(--k) * 40px) #000; border-radius: calc(var(--k) * 10px); }
+/* (the wheel in front of the cluster, cut by the bottom; the pedals in the footwell; the console under the stack) */
+body.real .ck-card { position: absolute; background: none; border: 0; border-radius: 0; overflow: visible; }
+body.real .ck-title { display: none; }
+body.real .ck-wheel { left: calc(var(--k) * 205px); top: calc(var(--k) * 664px); width: calc(var(--k) * 550px); height: calc(var(--k) * 550px); z-index: 2; }
+body.real .ck-wheel .ck-foot { display: none; }
+body.real .ck-wheel .ck-ind { width: calc(var(--k) * 46px); height: calc(var(--k) * 46px); font-size: calc(var(--k) * 20px); top: calc(var(--k) * 170px); transform: none; }
+body.real .ck-wheel .ck-ind.l { left: calc(var(--k) * -10px); } body.real .ck-wheel .ck-ind.r { right: calc(var(--k) * -10px); }
+body.real .ck-pedals { left: calc(var(--k) * 18px); top: calc(var(--k) * 790px); width: calc(var(--k) * 175px); height: calc(var(--k) * 205px); z-index: 3; }
+body.real .ck-pedals .ck-foot { font-size: max(9px, calc(var(--k) * 12px)); }
+body.real .ck-ctl { left: calc(var(--k) * 880px); top: calc(var(--k) * 690px); width: calc(var(--k) * 600px); height: calc(var(--k) * 305px); z-index: 1; }
+body.real .ck-foot { font-size: max(10px, calc(var(--k) * 15px)); color: var(--dim); }

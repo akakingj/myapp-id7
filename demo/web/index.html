@@ -9,8 +9,44 @@
 </head>
 <body>
 <main id="main">
+  <!-- how the page shows the car: from the driver's seat (the windscreen, the dashboard, the console) or set out -->
+  <div class="cap" id="viewbar"><b>보기</b><div class="seg2" id="viewSeg"></div><span class="sp"></span><span id="vbTools"></span></div>
   <!-- the car as it sits: the HUD and the centre display above, the cluster and the driver's seat below -->
   <div id="grid">
+    <svg id="sceneBg" viewBox="0 0 1600 1000" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="scSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05080e"/><stop offset=".55" stop-color="#101a29"/><stop offset="1" stop-color="#1c2533"/></linearGradient>
+        <linearGradient id="scRoad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a1e25"/><stop offset="1" stop-color="#0c0e11"/></linearGradient>
+        <linearGradient id="scDash" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#23272e"/><stop offset=".08" stop-color="#191c21"/><stop offset="1" stop-color="#0b0c0e"/></linearGradient>
+        <linearGradient id="scStack" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16191d"/><stop offset="1" stop-color="#0e1013"/></linearGradient>
+        <linearGradient id="scTrim" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2a2f36"/><stop offset=".5" stop-color="#8d949e"/><stop offset="1" stop-color="#2a2f36"/></linearGradient>
+        <radialGradient id="scGlow" cx="50%" cy="100%" r="60%"><stop offset="0" stop-color="#2a3a52" stop-opacity=".55"/><stop offset="1" stop-color="#2a3a52" stop-opacity="0"/></radialGradient>
+      </defs>
+      <!-- the windscreen: the sky, the road ahead, its lines -->
+      <rect width="1600" height="470" fill="url(#scSky)"/>
+      <rect y="180" width="1600" height="120" fill="url(#scGlow)"/>
+      <path d="M 0 470 L 700 262 L 820 262 L 1600 470 Z" fill="url(#scRoad)"/>
+      <g stroke="#e9edf3" stroke-linecap="round" opacity=".55">
+        <path d="M 756 270 L 752 282 M 744 300 L 736 322 M 722 352 L 706 392 M 684 432 L 668 470" stroke-width="4"/>
+        <path d="M 704 266 L 300 470" stroke-width="3" opacity=".6"/><path d="M 816 266 L 1340 470" stroke-width="3" opacity=".6"/>
+      </g>
+      <!-- the pillars and the roof's edge -->
+      <path d="M 0 0 L 1600 0 L 1600 26 Q 800 52 0 26 Z" fill="#07080a"/>
+      <path d="M 0 0 L 150 0 L 40 470 L 0 470 Z" fill="#0a0b0d"/><path d="M 1600 0 L 1450 0 L 1560 470 L 1600 470 Z" fill="#0a0b0d"/>
+      <!-- the dashboard: the cowl over the cluster, its top across, the stack under the centre display -->
+      <path d="M 0 470 L 40 440 Q 120 404 170 372 Q 480 318 790 372 Q 830 390 860 420 L 1600 410 L 1600 1000 L 0 1000 Z" fill="url(#scDash)"/>
+      <path d="M 170 372 Q 480 318 790 372" fill="none" stroke="#2f343c" stroke-width="2"/>
+      <path d="M 120 660 Q 480 690 860 660" fill="none" stroke="url(#scTrim)" stroke-width="3" opacity=".7"/>
+      <path d="M 860 600 L 1480 600 L 1520 1000 L 840 1000 Z" fill="url(#scStack)" stroke="#262a31"/>
+      <!-- the vents under the centre display, and one at each end -->
+      <g fill="#07080a" stroke="#30353d" stroke-width="2">
+        <rect x="930" y="612" width="200" height="44" rx="10"/><rect x="1210" y="612" width="200" height="44" rx="10"/>
+        <rect x="30" y="560" width="110" height="46" rx="12"/><rect x="1480" y="560" width="96" height="46" rx="12"/>
+      </g>
+      <g stroke="#3a4048" stroke-width="2"><path d="M 940 627 H 1120 M 940 641 H 1120 M 1220 627 H 1400 M 1220 641 H 1400"/></g>
+      <!-- the footwell -->
+      <path d="M 0 760 Q 120 740 240 760 L 260 1000 L 0 1000 Z" fill="#060708"/>
+    </svg>
     <div class="cell" id="cHud">
       <div class="cap" id="capHud"><b>HUD</b><span>800×480 · 앞유리에 비치는 화면</span></div>
       <div id="hudBox">

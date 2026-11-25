@@ -890,9 +890,23 @@ function layout() {
   const vw = document.documentElement.clientWidth;
   const narrow = vw < 1000;
   document.body.classList.toggle('narrow', narrow);
+  const real = View.real && !narrow;
+  if (document.body.classList.contains('real') !== real) { document.body.classList.toggle('real', real); View.tools(real); }
   const m = $('#main'), cs = getComputedStyle(m), px = (k) => parseFloat(cs[k]) || 0;
   const g = $('#grid'), gs = getComputedStyle(g), gap = parseFloat(gs.columnGap) || 12, rgap = parseFloat(gs.rowGap) || 8;
   const aw = m.getBoundingClientRect().width - px('paddingLeft') - px('paddingRight');
+  const bar = ($('#viewbar').offsetHeight || 0) + px('rowGap');
+  if (real) {
+    // (the scene: 1600 x 1000 units, as large as it fits; everything in it placed in those units by the stylesheet)
+    const ah = m.clientHeight - px('paddingTop') - px('paddingBottom') - bar - ($('#legend').offsetHeight || 0) - px('rowGap');
+    const k = Math.max(0.2, Math.min(aw / 1600, ah / 1000));
+    g.style.gridTemplateColumns = ''; g.style.gridTemplateRows = '';
+    g.style.width = Math.floor(1600 * k) + 'px'; g.style.height = Math.floor(1000 * k) + 'px'; g.style.setProperty('--k', k);
+    $('#cluster').style.width = Math.round(640 * k) + 'px'; stage.style.width = Math.round(590 * k) + 'px';
+    $('#hudBox').style.width = Math.round(300 * k) + 'px'; $('#cockpit').style.height = '';
+    return;
+  }
+  g.style.width = ''; g.style.height = '';
   const cap = $('#capCluster').offsetHeight || 18;
   if (narrow) {
     const w = Math.floor(aw);
@@ -901,7 +915,7 @@ function layout() {
     $('#hudBox').style.width = Math.min(w, 420) + 'px'; $('#cockpit').style.height = '';
     return;
   }
-  const fixed = 2 * (cap + 4) + rgap + ($('#legend').offsetHeight || 0) + px('rowGap');
+  const fixed = 2 * (cap + 4) + rgap + ($('#legend').offsetHeight || 0) + px('rowGap') + bar;
   const ah = m.clientHeight - px('paddingTop') - px('paddingBottom') - fixed;
   const w = Math.max(240, Math.floor(Math.min((aw - gap) / 2, ah / 0.75)));
   const h = Math.round(w * H / W), spare = Math.max(0, ah - 2 * h);
@@ -913,6 +927,27 @@ function layout() {
   $('#hudBox').style.width = Math.round(h * 800 / 480) + 'px';
   $('#cockpit').style.height = seatH + 'px';
 }
+/** the view: from the driver's seat (the default) or set out; in the driver's seat the captions' tools sit in the bar */
+const View = (() => {
+  const KEY = 'mguDemo.view';
+  let real = true;
+  try { real = localStorage.getItem(KEY) !== 'grid'; } catch (e) { /* the driver's seat */ }
+  const TOOLS = [['label.cv', '#capCluster'], ['#shotCluster', '#capCluster', '📷 계기판'], ['#shot', '#capStage', '📷 MGU']];
+  const v = {
+    get real() { return real; },
+    tools(on) {
+      TOOLS.forEach(([sel, home, label]) => {
+        const e = $(sel); if (!e) return;
+        if (on) { if (e.dataset.text === undefined) e.dataset.text = e.textContent; $('#vbTools').append(e); if (label) e.textContent = label; }
+        else { $(home).append(e); if (label && e.dataset.text !== undefined) e.textContent = e.dataset.text; }
+      });
+    },
+    set(on) { real = on; try { localStorage.setItem(KEY, on ? 'real' : 'grid'); } catch (e) { /* this visit */ } segSync($('#viewSeg'), on ? 'real' : 'grid'); layout(); },
+  };
+  seg($('#viewSeg'), [['real', '🚗 운전석에서'], ['grid', '▦ 나눠 보기']], (x) => v.set(x === 'real'));
+  segSync($('#viewSeg'), real ? 'real' : 'grid');
+  return v;
+})();
 const ro = new ResizeObserver(() => layout());
 ro.observe($('#main'));
 window.addEventListener('resize', layout);
