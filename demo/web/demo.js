@@ -882,17 +882,36 @@ function pickOpen(i) {
 }
 
 /* ---------------- layout: the cluster over the centre display, both 1920 x 720, as large as fit; the panel at the right ---------------- */
+/** the page as the car sits: two columns of the same width, the HUD over the cluster (left), the centre display over
+ * the driver's seat (right); the cluster and the centre display at their 1920 x 720, the HUD at 800 x 480 as tall as
+ * the centre display, the driver's seat the cluster's height (taller when there is room). Narrow: one column (the
+ * cluster, the centre display, the driver's seat, the HUD). */
 function layout() {
   const vw = document.documentElement.clientWidth;
   const narrow = vw < 1000;
   document.body.classList.toggle('narrow', narrow);
   const m = $('#main'), cs = getComputedStyle(m), px = (k) => parseFloat(cs[k]) || 0;
+  const g = $('#grid'), gs = getComputedStyle(g), gap = parseFloat(gs.columnGap) || 12, rgap = parseFloat(gs.rowGap) || 8;
   const aw = m.getBoundingClientRect().width - px('paddingLeft') - px('paddingRight');
-  const fixed = ['#capCluster', '#capStage', '#cockpit', '#legend'].reduce((n, s) => n + ($(s).offsetHeight || 0), 0) + ($('#cockpit').hidden ? 5 : 6) * px('rowGap');
-  const ah = (narrow ? window.innerHeight * 0.9 : m.clientHeight) - px('paddingTop') - px('paddingBottom') - fixed;
-  const w = Math.max(240, Math.floor(Math.min(aw, ah / 2 * W / H)));
+  const cap = $('#capCluster').offsetHeight || 18;
+  if (narrow) {
+    const w = Math.floor(aw);
+    g.style.gridTemplateColumns = ''; g.style.gridTemplateRows = '';
+    [stage, $('#cluster')].forEach((e) => { e.style.width = w + 'px'; });
+    $('#hudBox').style.width = Math.min(w, 420) + 'px'; $('#cockpit').style.height = '';
+    return;
+  }
+  const fixed = 2 * (cap + 4) + rgap + ($('#legend').offsetHeight || 0) + px('rowGap');
+  const ah = m.clientHeight - px('paddingTop') - px('paddingBottom') - fixed;
+  const w = Math.max(240, Math.floor(Math.min((aw - gap) / 2, ah / 0.75)));
+  const h = Math.round(w * H / W), spare = Math.max(0, ah - 2 * h);
+  // (the HUD as tall as the centre display, the rows lined up; room to spare: a taller driver's seat)
+  const seatH = Math.round(Math.max(h, Math.min(h + spare, w * 0.5)));
+  g.style.gridTemplateColumns = w + 'px ' + w + 'px';
+  g.style.gridTemplateRows = (cap + 4 + h) + 'px ' + (cap + 4 + seatH) + 'px';
   [stage, $('#cluster')].forEach((e) => { if (e.style.width !== w + 'px') e.style.width = w + 'px'; });
-  ['#capCluster', '#capStage', '#cockpit'].forEach((s) => { $(s).style.width = w + 'px'; $(s).style.alignSelf = 'center'; });
+  $('#hudBox').style.width = Math.round(h * 800 / 480) + 'px';
+  $('#cockpit').style.height = seatH + 'px';
 }
 const ro = new ResizeObserver(() => layout());
 ro.observe($('#main'));
@@ -900,17 +919,8 @@ window.addEventListener('resize', layout);
 const clock = () => { $('#hmi-clock').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }); };   // (24 h, as the car)
 setInterval(clock, 10000); clock();
 
-// the driver's seat under the centre display (the wheel, the pedals, the controller); its button hides it
-{
-  const CK_KEY = 'mguDemo.cockpit';
-  let on = true;
-  try { on = localStorage.getItem(CK_KEY) !== 'off'; } catch (e) { /* shown */ }
-  Cockpit = makeCockpit({ $, el, ctl: Ctl, manualSet, send, car: Car });
-  const b = $('#ckBtn');
-  const put = () => { $('#cockpit').hidden = !on; b.classList.toggle('on', on); b.textContent = on ? '🚗 운전석 숨기기' : '🚗 운전석'; layout(); };
-  b.onclick = () => { on = !on; try { localStorage.setItem(CK_KEY, on ? 'on' : 'off'); } catch (e) { /* this visit */ } put(); };
-  put();
-}
+// the driver's seat beside the cluster (the wheel, the pedals, the centre console)
+Cockpit = makeCockpit({ $, el, ctl: Ctl, manualSet, send, car: Car });
 buildCar();
 layout();
 connect();

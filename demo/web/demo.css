@@ -140,8 +140,11 @@ body.narrow #main { flex: none; overflow: visible; }
 .cap { align-self: stretch; display: flex; align-items: baseline; gap: 10px; color: var(--dim); font-size: 12px; margin: 2px 2px 0; white-space: nowrap; overflow: hidden; }
 .cap b { color: var(--text); font-size: 13px; font-weight: 600; }
 .cap .sp { flex: 1; }
-.cap button { padding: 1px 8px; font-size: 11px; }
-#panel { background: var(--panel); width: 380px; flex: none; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; border-left: 1px solid var(--line); display: flex; flex-direction: column; }
+.cap button { padding: 1px 8px; font-size: 11px; flex: none; }
+/* (the caption's notes give way first: its buttons stay) */
+.cap > b, .cap > label { flex: none; }
+.cap > span:not(.sp) { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+#panel { background: var(--panel); width: clamp(300px, 21vw, 380px); flex: none; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; border-left: 1px solid var(--line); display: flex; flex-direction: column; }
 body.narrow #panel { width: auto; border-left: 0; border-top: 1px solid var(--line); overflow: visible; }
 #topbar { display: flex; align-items: center; gap: 8px; padding: 9px 14px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
 #topbar h1 { font-size: 14px; margin: 0; font-weight: 650; }
@@ -168,7 +171,7 @@ body.narrow #panel { width: auto; border-left: 0; border-top: 1px solid var(--li
 #clusterErr { left: 1%; bottom: 6%; right: 1%; max-height: 40%; overflow: auto; color: #ff8a80; font: 11px ui-monospace, monospace; white-space: pre-wrap; display: none; background: #000c; padding: 4px 6px; border-radius: 4px; }
 
 /* the HUD (800 x 480), in the panel */
-#hudBox { position: relative; width: 100%; aspect-ratio: 800 / 480; background: radial-gradient(ellipse at 50% 60%, #0d1621, #000 70%); border-radius: 6px; overflow: hidden; container-type: inline-size; }
+#hudBox { position: relative; flex: none; width: 100%; aspect-ratio: 800 / 480; background: radial-gradient(ellipse at 50% 60%, #0d1621, #000 70%); border-radius: 6px; overflow: hidden; container-type: inline-size; }
 #hudBox > * { position: absolute; }
 #hudMap { display: none; left: 3%; bottom: 4%; color: #6f7f92; font: 600 3.4cqw "Segoe UI", "Malgun Gothic", sans-serif; }
 #hudSpeed { left: 16%; top: 36%; font: 600 9cqw "Segoe UI", sans-serif; color: #e9f3ff; opacity: 0.85; text-align: center; }
@@ -209,7 +212,7 @@ details.adv[open] > summary { color: var(--text); }
 .cap label.cv select { font-size: 11px; padding: 1px 4px; }
 
 /* ---- the driver's seat (cockpit.js): the wheel, the pedals, the iDrive controller, under the centre display ---- */
-#cockpit { flex: none; height: clamp(140px, 24vh, 250px); display: grid; grid-template-columns: .9fr .6fr 1.5fr; gap: 10px; max-width: 100%; }
+#cockpit { flex: none; align-self: stretch; height: 260px; display: grid; grid-template-columns: .9fr .6fr 1.5fr; gap: 8px; max-width: 100%; }
 .ck-card { position: relative; min-width: 0; display: flex; flex-direction: column; background: linear-gradient(#15181d, #0e1013); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
 .ck-title { flex: none; padding: 4px 9px 0; font-size: 11px; line-height: 14px; color: var(--dim); pointer-events: none; }
 .ck-draw { position: relative; flex: 1; min-height: 0; display: flex; justify-content: center; }
@@ -242,9 +245,7 @@ details.adv[open] > summary { color: var(--text); }
 .ck-btn.off text { fill: #5f6773; }
 .ck-btn.hit rect { fill: #3d9cff; }
 .ck-btn.hit text { fill: #fff; }
-#capStage .on#ckBtn { background: #1f3550; border-color: var(--accent); color: #fff; }
-body.short #cockpit { height: 110px; }
-body.narrow #cockpit { grid-template-columns: 1fr 1fr; height: auto; } body.narrow .ck-card { height: 150px; } body.narrow .ck-ctl { grid-column: 1 / -1; height: 210px; }
+body.narrow #cockpit { grid-template-columns: 1fr 1fr; height: auto !important; } body.narrow .ck-card { height: 150px; } body.narrow .ck-ctl { grid-column: 1 / -1; height: 210px; }
 /* the console: the gear marks (lit: the gear), the lever (comes back), P, the lights of the drive modes, START/STOP, the parking brake */
 .ck-g { fill: #4a515b; cursor: pointer; transition: fill .1s; }
 .ck-g.on { fill: #f2f4f7; }
@@ -258,3 +259,11 @@ body.narrow #cockpit { grid-template-columns: 1fr 1fr; height: auto; } body.narr
 .ck-epb.on circle { stroke: #ff4d42; } .ck-epb.on text { fill: #ff4d42; }
 .ck-epb rect { fill: #16191d; }
 .ck-foot .ck-sep { color: var(--line); margin: 0 8px; }
+
+/* ---- the page as the car sits (layout() sizes it): HUD | centre display over cluster | driver's seat ---- */
+#grid { flex: none; display: grid; gap: 8px 12px; grid-template-areas: "hud stage" "cluster seat"; justify-content: center; }
+#cHud { grid-area: hud; } #cStage { grid-area: stage; } #cCluster { grid-area: cluster; } #cCockpit { grid-area: seat; }
+.cell { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; min-height: 0; }
+.cell > .cap { align-self: stretch; }
+#cHud #hudBox { box-shadow: 0 0 0 1px #222, 0 10px 40px #000a; }
+body.narrow #grid { grid-template-columns: 1fr !important; grid-template-rows: none !important; grid-template-areas: "cluster" "stage" "seat" "hud"; width: 100%; }
