@@ -34,7 +34,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { spawn, spawnSync, fork, exec } = require('child_process');
 
-const DEMO_VERSION = '1.12.0';
+const DEMO_VERSION = '1.12.1';
 const A = path.resolve(__dirname, '..');                       // this repository (akakingj/myapp-id7)
 const WEB = path.join(__dirname, 'web');
 const GFX = path.join(A, 'kit', 'emu', 'web', 'gfx');            // the car's draw engine as WebAssembly (GPL-3.0-or-later)
@@ -736,7 +736,7 @@ function onPage(ws, m) {
         if (m.k === 'tt') break;
         if (m.k === 'hudSize' && ['full', 'low'].indexOf(m.v) < 0) break;
         if (m.k === 'limit' && [0, 30, 50, 60, 80, 100, 120].indexOf(m.v) < 0) break;
-        if (m.k === 'acc' && [0, 60, 90, 120].indexOf(m.v) < 0) break;
+        if (m.k === 'assist' && [0, 60, 90, 120].indexOf(m.v) < 0) break;
         if (Object.prototype.hasOwnProperty.call(EXTRA0, m.k) && typeof m.v === typeof EXTRA0[m.k]) {
             if (m.k === 'indicator' && ['off', 'left', 'right', 'both'].indexOf(m.v) < 0) break;
             if (m.k === 'vtype') break;
@@ -936,7 +936,7 @@ function bgMsg() {
 // (the cluster demo's car: tools/cluster_demo.html in akakingj/myapp-cluster)
 const VEH0 = { pedal: 0, throttle: 3, speed: 0, rpm: 750, gear: 0, stage: 'P', driveMode: 'COMFORT', boostActual: -0.6, torque: 20, timing: 10, hpfp: 60, lpfp: 5.2,
     oil: 96, coolant: 90, gearbox: 78, iat: 31, outside: 20, fuelPct: 55, frange: 520, steer: 0, yaw: 0, gLat: 0, gLong: 0, tyreP: 2.5, tyreT: 25, soc: 70, kw: 0, battTemp: 26, erange: 30 };
-const EXTRA0 = { waze: 'cluster', hudPct: 70, night: false, indicator: 'off', vtype: 'petrol', hudSize: 'full', hudNav: true, limit: 60, acc: 90, tt: {} };   // hudSize: full | low (the car's HUD setting); limit: the speed limit's sign (0: none); tt: the warning lights switched on   // indicator: off | left | right | both (hazards)
+const EXTRA0 = { waze: 'cluster', hudPct: 70, night: false, indicator: 'off', vtype: 'petrol', hudSize: 'full', guiding: false, limit: 60, assist: 0, tt: {} };   // hudSize: full | low (the car's HUD setting); guiding: a route being guided (the HUD's guidance shows); limit: the speed limit's sign (0: none); assist: the driving assistant's set speed (0: off); tt: the warning lights switched on   // indicator: off | left | right | both (hazards)
 /* ---------------- the car's kind: petrol, diesel, an M car, a plug-in hybrid ----------------
  * The Car profile's Engine decides (every app follows it); left to Auto, the demo's own (EXTRA vtype), which the car's
  * signals then say (Vehicle2 typeEngine, a plug-in hybrid's drive mode names and battery: demo/preload.js). The panel's
@@ -984,6 +984,7 @@ function setIn(id, k, v) {
 const Veh = { mode: 'auto', v: Object.assign({}, VEH0), extra: Object.assign({}, EXTRA0), auto: { phase: 'idle', t: 0 } };
 try { const s = JSON.parse(fs.readFileSync(path.join(DATA, 'car.json'), 'utf8')); Object.assign(Veh.extra, s.extra || {}); if (s.mode === 'manual') { Veh.mode = 'manual'; Object.assign(Veh.v, s.v || {}); } } catch (e) { /* the defaults */ }
 if (!Veh.extra.tt || typeof Veh.extra.tt !== 'object' || Array.isArray(Veh.extra.tt)) Veh.extra.tt = {};
+delete Veh.extra.hudNav; delete Veh.extra.acc;          // (1.12.0's names: the HUD's guidance and assistant, now off until switched on)
 const KMH_PER_1000 = [0, 9, 15, 23, 31, 39, 48, 57, 66];
 function stepAuto(dt) {
     const a = Veh.auto, d = Veh.v, kind = kindNow(), K = KINDS[kind];

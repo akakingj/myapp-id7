@@ -398,8 +398,8 @@ function buildCar() {
   seg($('#kindSeg'), KINDS, (v) => send({ t: 'vtype', v }));
   seg($('#hudSizeSeg'), [['full', '전체 보기'], ['low', '줄여 보기']], (v) => send({ t: 'extra', k: 'hudSize', v }));
   seg($('#limitSeg'), [[0, '없음'], [30, '30'], [50, '50'], [60, '60'], [80, '80'], [100, '100'], [120, '120']], (v) => send({ t: 'extra', k: 'limit', v }));
-  seg($('#hudNavSeg'), [[true, '켬'], [false, '끔']], (v) => send({ t: 'extra', k: 'hudNav', v }));
-  seg($('#accSeg'), [[0, '끔'], [60, '60'], [90, '90'], [120, '120']], (v) => send({ t: 'extra', k: 'acc', v }));
+  seg($('#guideSeg'), [[false, '끔'], [true, '켬']], (v) => send({ t: 'extra', k: 'guiding', v }));
+  seg($('#assistSeg'), [[0, '끔'], [60, '켬 60'], [90, '켬 90'], [120, '켬 120']], (v) => send({ t: 'extra', k: 'assist', v }));
   seg($('#wazeSeg'), WAZE, (v) => send({ t: 'extra', k: 'waze', v }));
   seg($('#indSeg'), INDS, (v) => send({ t: 'extra', k: 'indicator', v }));
   seg($('#nightSeg'), NIGHTS, (v) => send({ t: 'extra', k: 'night', v }));
@@ -444,7 +444,7 @@ function syncCar() {
   segSync($('#stageSeg'), Car.v.stage); segSync($('#modeSeg'), Car.v.driveMode); segSync($('#wazeSeg'), Car.extra.waze);
   segSync($('#indSeg'), Car.extra.indicator || 'off'); segSync($('#nightSeg'), !!Car.extra.night);
   segSync($('#kindSeg'), Car.kind || 'petrol');
-  segSync($('#hudSizeSeg'), Car.extra.hudSize || 'full'); segSync($('#limitSeg'), Car.extra.limit === undefined ? 60 : Car.extra.limit); segSync($('#hudNavSeg'), Car.extra.hudNav !== false); segSync($('#accSeg'), Car.extra.acc === undefined ? 90 : Car.extra.acc);
+  segSync($('#hudSizeSeg'), Car.extra.hudSize || 'full'); segSync($('#limitSeg'), Car.extra.limit === undefined ? 60 : Car.extra.limit); segSync($('#guideSeg'), Car.extra.guiding === true); segSync($('#assistSeg'), Number(Car.extra.assist) || 0);
   $('#kindNote').textContent = Car.kindFrom === 'profile' ? '카프로필 엔진 설정대로' : '카프로필 엔진: 자동 (데모 차량 신호로 감지)';
   // (the drive battery's values: a plug-in hybrid's only; the ignition timing: not a diesel's)
   const pg = document.getElementById('vg-PHEV'); if (pg) pg.style.display = Car.kind === 'phev' ? '' : 'none';

@@ -87,10 +87,10 @@ export function makeHud({ $ }) {
     c.strokeStyle = 'rgba(200,206,214,.8)'; c.lineWidth = Math.max(3, h * 0.025); c.beginPath(); c.moveTo(...P(0.74, 0.33)); c.lineTo(...P(1, 0.3)); c.stroke();
     c.fillStyle = '#ff7a1a'; c.beginPath(); c.moveTo(...P(0.42, 0.78)); c.lineTo(...P(0.36, 0.98)); c.lineTo(...P(0.42, 0.93)); c.lineTo(...P(0.48, 0.98)); c.closePath(); c.fill();
   }
-  /** v: the car's values; x: the extras (limit, hudSize full | low, hudNav, acc: the set speed, 0 off); waze: the app's map is on the HUD */
+  /** v: the car's values; x: the extras (limit, hudSize full | low, guiding: a route guided, assist: the driving assistant's set speed, 0 off); waze: the app's map is on the HUD */
   function draw(v, x, waze) {
     const now = performance.now(), dt = Math.min(1, (now - (S.lastT || now)) / 1000); S.lastT = now;
-    const speed = Math.round(Number(v.speed) || 0), low = x.hudSize === 'low', nav = x.hudNav !== false && !waze, limit = Number(x.limit) || 0;
+    const speed = Math.round(Number(v.speed) || 0), low = x.hudSize === 'low', nav = x.guiding === true && !waze, limit = Number(x.limit) || 0;
     // (the turn coming nearer at the car's speed; passed: the next one)
     S.dist -= (Number(v.speed) || 0) / 3.6 * dt; if (S.dist < 0) S.dist = 400;
     const H = low ? 264 : 480;
@@ -106,7 +106,7 @@ export function makeHud({ $ }) {
       const d = S.dist >= 100 ? Math.round(S.dist / 50) * 50 : Math.round(S.dist / 10) * 10;
       c.fillText(d + ' m', 784, row - (low ? 12 : 22));
     }
-    const acc = Number(x.acc) || 0;
+    const acc = Number(x.assist) || 0;
     if (acc && !low) assist(176, 214, acc, limit && limit < 100 ? 100 : limit && limit < 120 ? 120 : 0);
     let sx = 18;
     if (limit) { sign(sx + 40, row + 48, 40, limit); sx += 90; }
