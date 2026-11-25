@@ -171,6 +171,18 @@ mgu.run({
             put(k, g - z.z);
         };
 
+        /*
+         * Boost gauge max (set in the Car profile): a pair's, or From the car's Sport Display - its own gauge's end as
+         * the least pair at or over it, once the car has sent it (2.5 bar until then)
+         */
+        let boostCarTop = null;
+        const boostMaxNow = () => {
+            const v = settings.get('boostMax');
+            if (v !== 'car') return v;
+            if (!G.isNum(boostCarTop)) return '2.5';
+            return Object.keys(BOOST_MAX).find((k) => BOOST_MAX[k][0] >= boostCarTop - 0.02) || '3.5';
+        };
+
         /* ---------- live data ---------- */
         const live = {}, peak = {}, demoPeak = {}, hist = { coolant: [], oil: [], gearbox: [], egs: [], ambient: [], iat: [], hpfp: [], lpfp: [], iatRise: [], timing: [],
             boostTarget: [], boostActual: [], loadTarget: [], loadActual: [] };
@@ -334,6 +346,10 @@ mgu.run({
                     // in the car's pressure unit: 0.01 bar (or 1 kPa) a step, 0.1 psi a step on a car set to psi (issue #186)
                     const b = sc('boost', v.displayBoostPressure);
                     put('boostFes', G.isNum(b) && carUnits.press === 'PSI' ? b * 10 / 14.5038 : b);
+                    // the sport display's own boost gauge's end, in the same unit (Boost gauge max: From the car's Sport
+                    // Display); a figure no boost gauge ends at (under 0.5 bar, past 4) is not taken
+                    const m = sc('boost', v.displayMaximumValueBoostPressure), top = G.isNum(m) && carUnits.press === 'PSI' ? m * 10 / 14.5038 : m;
+                    if (G.isNum(top) && top >= 0.5 && top <= 4 && top !== boostCarTop) { boostCarTop = top; log.info('the sport display\'s boost gauge ends at ' + top.toFixed(2) + ' bar'); }
                 },
                 // the HMI's sport display: power / torque in % of the car's maximum
                 statusVehicleDynamicEngine: (v) => { put('powerPct', sc('sportPct', v.displaySportEnginePower)); put('torquePct', sc('sportPct', v.displaySportEngineTorque)); },
@@ -838,7 +854,7 @@ mgu.run({
             };
             if (shown('boost')) {
                 const pu = settings.get('pressUnit'), psi = pu === 'psi', kpa = pu === 'kpa';
-                const bmax = BOOST_MAX[settings.get('boostMax')] || BOOST_MAX['2.5'], pmax = psi ? bmax[1] : kpa ? bmax[2] : bmax[0];
+                const bmax = BOOST_MAX[boostMaxNow()] || BOOST_MAX['2.5'], pmax = psi ? bmax[1] : kpa ? bmax[2] : bmax[0];
                 // (its numbers evenly apart; one with a decimal more - 17.5 psi, 1.25 bar - on a finer grid)
                 const ticks = boostTicks(pmax, psi ? 'psi' : kpa ? 'kpa' : 'bar'), more = ticks.some((v) => Math.abs(v * (psi || kpa ? 1 : 10) % 1) > 1e-6);
                 G.segBar(cv, t, 24, G.TOP + 242 + half, 1062, 226 - half, {

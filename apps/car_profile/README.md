@@ -28,7 +28,7 @@ One place for the car's engine values and units. Set them here once and the othe
 | Fuel % from (Engine unit (OBD tank level) / Litres / tank size) | AK Cluster Layouts, AK Cluster ID8: the fuel gauge's figure |
 | G-force circle up to (1, 1.2, 1.5, 2 g) | G-Force (*Circle size*), M Vitals (*G-force circle size*), AK Cluster Layouts (JDM 2's G meter) |
 | Speedometer up to (260 km/h, most BMWs; 330 km/h, an M car) | AK Cluster Layouts (every speedometer), AK Cluster ID8 (M Sport's) |
-| Boost gauge up to (pairs as the car's own gauge reads them: 1.0 bar / 15 psi, 1.5 / 20, 2.0 / 30, 2.5 / 35, 3.0 / 40, 3.5 / 50; shown in the pressure unit set here) | M Vitals (*Boost gauge max*), AK Cluster Layouts and Centre (every boost gauge and bar), AK Cluster ID8 (Toro's boost gauge, M Track Mode's boost rows) |
+| Boost gauge up to (pairs: 1.0 bar / 15 psi, 1.5 / 20, 2.0 / 30, 2.5 / 35, 3.0 / 40, 3.5 / 50; shown in the pressure unit set here; Auto: the car's own Sport Display's gauge end, the least pair at or over it. Set here alone: the apps have no setting of their own for it) | M Vitals (*Boost gauge max*), AK Cluster Layouts and Centre (every boost gauge and bar), AK Cluster ID8 (Toro's boost gauge, M Track Mode's boost rows) |
 
 Every setting starts at **Each app**: until it is set here, each app keeps its own setting, so installing the app
 changes nothing. A setting the profile sets shows the profile's value in the other app's Settings and can't be changed

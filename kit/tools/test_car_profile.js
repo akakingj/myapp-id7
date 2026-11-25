@@ -198,6 +198,12 @@ const cases = {
         P.publish(fakeProfile({ boostMax: 1.5 }), '1.7.5');
         tick += 5; fs.utimesSync(FILE, tick, tick);
         assert.strictEqual(settingsIn(vit, { boostMax: '2.5' }).get('boostMax'), '1.5');
+        // Auto: the car's own sport display's end (M Vitals' "car"); the apps' own setting is the Car profile's alone
+        own.set('boostMax', 0); assert.strictEqual(own.display('boostMax'), 'Auto (the car\'s Sport Display)');
+        P.publish(fakeProfile({ boostMax: 0 }), '1.7.5');
+        tick += 5; fs.utimesSync(FILE, tick, tick);
+        assert.strictEqual(settingsIn(vit, { boostMax: '2.5' }).get('boostMax'), 'car');
+        assert.deepStrictEqual([vit[0].default, vit[0].hidden], ['car', true]);
     },
     'every app.json "profile" is one the Car profile sets, with values it can give'() {
         const cp = JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', 'car_profile', 'app.json'), 'utf8'));
