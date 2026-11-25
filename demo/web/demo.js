@@ -600,9 +600,10 @@ const Cluster = (() => {
     [$('#glMap'), $('#map')].forEach((e) => { if (r) Object.assign(e.style, { left: r.x / 19.2 + '%', top: r.y / 7.2 + '%', width: r.w / 19.2 + '%', height: r.h / 7.2 + '%' }); e.style.visibility = r ? '' : 'hidden'; });
   }
   function blink() {
-    const d = (Car.extra && Car.extra.indicator) || 'off', on = d !== 'off' && Math.floor(performance.now() / 400) % 2 === 0;   // (about the cluster's flash)
-    $('#turnL').style.display = on && (d === 'left' || d === 'both') ? 'block' : 'none';
-    $('#turnR').style.display = on && (d === 'right' || d === 'both') ? 'block' : 'none';
+    // (the turn signals by the driver camera: the indicators, the hazard lights, or switched on in the panel; about the cluster's flash)
+    const t = Lights ? Lights.turn() : { l: false, r: false };
+    $('#turnL').style.display = t.l ? 'block' : 'none';
+    $('#turnR').style.display = t.r ? 'block' : 'none';
   }
   function frame() {
     blink();
@@ -895,7 +896,7 @@ function pickOpen(i) {
  * the driver's seat (right); the cluster and the centre display at their 1920 x 720, the HUD at 800 x 480 as tall as
  * the centre display, the driver's seat the cluster's height (taller when there is room). Narrow: one column (the
  * cluster, the centre display, the driver's seat, the HUD). */
-const CHAMBER = 0.045;          // (a chamber lights' column: this much of the cluster's width)
+const CHAMBER = 0.07;           // (the chamber lights on one side, two columns: this much of the screen's width, as the stock housing's)
 function layout() {
   const vw = document.documentElement.clientWidth;
   const narrow = vw < 1000;
@@ -912,8 +913,8 @@ function layout() {
     const k = Math.max(0.2, Math.min(aw / 1600, ah / 1000));
     g.style.gridTemplateColumns = ''; g.style.gridTemplateRows = '';
     g.style.width = Math.floor(1600 * k) + 'px'; g.style.height = Math.floor(1000 * k) + 'px'; g.style.setProperty('--k', k);
-    $('#cluster').style.width = Math.round(640 * k) + 'px'; stage.style.width = Math.round(590 * k) + 'px';
-    document.querySelectorAll('.chamber').forEach((e) => { e.style.width = Math.round(640 * k * CHAMBER) + 'px'; });
+    $('#cluster').style.width = Math.round(600 * k) + 'px'; stage.style.width = Math.round(590 * k) + 'px';
+    document.querySelectorAll('.chamber').forEach((e) => { e.style.width = Math.round(600 * k * CHAMBER) + 'px'; });
     $('#hudBox').style.width = Math.round(300 * k) + 'px'; $('#cockpit').style.height = '';
     return;
   }

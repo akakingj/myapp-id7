@@ -191,7 +191,7 @@ export function makeCockpit({ $, el, ctl, manualSet, send, car }) {
     ctlCard.querySelector('.ck-pbtn').classList.toggle('on', st === 'P');
     ctlCard.querySelectorAll('.ck-mode').forEach((m) => m.classList.toggle('on', m.dataset.btn === mode || (m.dataset.btn === 'SPORT' && mode === 'SPORT+')));
     ctlCard.querySelector('.ck-start').classList.toggle('on', on);
-    ctlCard.querySelector('.ck-epb').classList.toggle('on', st === 'P');
+    ctlCard.querySelector('.ck-epb').classList.toggle('on', !!((car.extra && car.extra.tt) || {}).park);
     const tt = (car.extra && car.extra.tt) || {};
     ctlCard.querySelector('.ck-hold').classList.toggle('on', !!tt.autoH);
     ctlCard.querySelector('[data-btn="dsc"]').classList.toggle('on', !!tt.dscOff);
@@ -318,7 +318,7 @@ export function makeCockpit({ $, el, ctl, manualSet, send, car }) {
     // the buttons: HOME and BACK the controller's; the drive modes (SPORT again: SPORT+); START/STOP the engine;
     // AUTO H a light only; the rest are there to look at
     const TIP = { home: 'HOME: 홈 (앱 목록), H 키', back: 'BACK: 뒤로, Backspace 키', start: 'START/STOP: 시동 켜기 · 끄기 (직접 조절로 바뀜)', SPORT: 'SPORT (한 번 더: SPORT+)', COMFORT: 'COMFORT', 'ECO PRO': 'ECO PRO',
-      autoh: 'AUTO H: 계기판에 표시', dsc: 'DSC OFF: 계기판에 표시', epb: '주차 브레이크: P에서 켜짐 (표시만)' };
+      autoh: 'AUTO H: 계기판에 표시', dsc: 'DSC OFF: 계기판에 표시', epb: '주차 브레이크: 누르면 걸림, 다시 누르면 풀림 (계기판에 표시)' };
     ctlCard.querySelectorAll('.ck-btn').forEach((b) => {
       const name = b.dataset.btn;
       b.append(Object.assign(document.createElementNS(NS, 'title'), { textContent: TIP[name] || name.toUpperCase() + ': 데모에는 없는 버튼' }));
@@ -327,10 +327,11 @@ export function makeCockpit({ $, el, ctl, manualSet, send, car }) {
         else if (name === 'back') ctl.back();
         else if (name === 'SPORT' || name === 'COMFORT' || name === 'ECO PRO') { const m = name === 'SPORT' && car.v.driveMode === 'SPORT' ? 'SPORT+' : name; manualSet({ driveMode: m }, true); btn(name, m); }
         else if (name === 'start') { const was = (Number(car.v.rpm) || 0) > 300; engine(); btn(name, was ? '시동 끔' : '시동 켬'); }
-        else if (name === 'autoh' || name === 'dsc') {
-          // (AUTO H and DSC OFF: their lights on the cluster)
-          const k = name === 'autoh' ? 'autoH' : 'dscOff', was = !!((car.extra && car.extra.tt) || {})[k];
-          send({ t: 'tt', k, v: !was }); btn(name, (name === 'autoh' ? 'AUTO H ' : 'DSC OFF ') + (was ? '끔' : '켬'));
+        else if (name === 'autoh' || name === 'dsc' || name === 'epb') {
+          // (AUTO H, DSC OFF, the parking brake: their lights on the cluster; pressed again, off)
+          const k = { autoh: 'autoH', dsc: 'dscOff', epb: 'park' }[name], was = !!((car.extra && car.extra.tt) || {})[k];
+          send({ t: 'tt', k, v: !was });
+          btn(name, name === 'epb' ? (was ? '주차 브레이크 풀림' : '주차 브레이크 걸림') : (name === 'autoh' ? 'AUTO H ' : 'DSC OFF ') + (was ? '끔' : '켬'));
         }
         else btn(name);
       });
@@ -364,7 +365,6 @@ export function makeCockpit({ $, el, ctl, manualSet, send, car }) {
       const k = g.dataset.g, gr = Number(car.v.gear) || 1;
       if (k === '-' || k === '+') gearTo('M', gr + (k === '+' ? 1 : -1)); else gearTo(k);
     }));
-    ctlCard.querySelector('.ck-epb').addEventListener('click', () => { if ((Number(car.v.speed) || 0) < 3) gearTo('P'); });
   }
   /** START/STOP: running, the engine stops (standing, in P); stopped, it starts (idling) */
   function engine() {

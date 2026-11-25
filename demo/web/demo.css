@@ -204,9 +204,10 @@ details.adv[open] > summary { color: var(--text); }
 #settings .sec { color: var(--accent); font-size: 11px; font-weight: 600; margin-top: 8px; }
 
 /* the KOMBI's own turn signal arrows (a sketch: the car draws them over every layout) */
-#cluster .turn { top: 3.2%; width: 2.6%; height: 4.6%; fill: #2fd27a; filter: drop-shadow(0 0 .4cqw #2fd27a88); display: none; pointer-events: none; }
-#turnL { left: 37.2%; }
-#turnR { left: 60.2%; }
+/* (the turn signals, the hazard lights both: on the screen right beside the driver camera's cowl, as the stock cluster's) */
+#cluster .turn { top: 4%; width: 2.9%; height: 5.2%; fill: #2fd27a; filter: drop-shadow(0 0 .4cqw #2fd27a88); display: none; pointer-events: none; z-index: 6; }
+#turnL { left: 34.6%; }
+#turnR { left: 62.5%; }
 
 /* the real car's glass over the cluster: the camera's cowl, the slanted corners, and (guides) the KOMBI's own places */
 #glassView { pointer-events: none; }
@@ -302,16 +303,19 @@ body.real .ck-ctl { left: calc(var(--k) * 880px); top: calc(var(--k) * 690px); w
 body.real .ck-foot { font-size: max(10px, calc(var(--k) * 15px)); color: var(--dim); }
 
 /* ---- the cluster's housing and its lights (lights.js): the chamber lights beside the screen, those on it ---- */
-#kombi { display: flex; align-items: stretch; gap: 0; flex: none; }
-.chamber { flex: none; display: flex; flex-direction: column; justify-content: center; gap: 2%; padding: 3% 0; background: linear-gradient(90deg, #08090b, #121418 50%, #08090b); }
-#chamberL { border-radius: 10px 0 0 10px; } #chamberR { border-radius: 0 10px 10px 0; }
-.ch-slot { flex: 0 0 13%; display: flex; align-items: center; justify-content: center; }
-.ch-slot svg { width: 72%; height: auto; opacity: .08; filter: grayscale(1); transition: opacity .05s; }
+#kombi { display: flex; align-items: stretch; gap: 0; flex: none; padding: .5% 0; border-radius: 14px; background: linear-gradient(#141619, #08090b); box-shadow: inset 0 1px 0 #2a2e35, 0 6px 24px #000a; }
+/* (the housing beside the screen: two columns of chamber lights, six rows in its lower two thirds, as the stock one) */
+.chamber { flex: none; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 30% repeat(6, 1fr) 3%; align-items: stretch; justify-items: stretch; padding: 0 3px; column-gap: 3px; align-self: stretch; box-sizing: border-box; }
+.chamber::before { content: ''; grid-column: 1 / -1; }      /* (the housing's upper third: no lights) */
+#chamberL { border-radius: 14px 0 0 14px; } #chamberR { border-radius: 0 14px 14px 0; }
+.ch-slot { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; min-height: 0; }
+.ch-slot svg { width: 86%; height: auto; max-height: 100%; opacity: .07; filter: grayscale(1); transition: opacity .05s; }
+.ch-slot.wide svg { width: 100%; }
 .ch-slot.lit svg { opacity: 1; filter: drop-shadow(0 0 4px currentColor); }
 #telltaleView g { opacity: 0; }
 #telltaleView g.lit { opacity: 1; filter: drop-shadow(0 0 5px currentColor); }
 #telltaleView { pointer-events: none; }
-body.real #cCluster { left: calc(var(--k) * 131px); }
+body.real #cCluster { left: calc(var(--k) * 138px); top: calc(var(--k) * 400px); }
 body.real .chamber { background: linear-gradient(90deg, #050607, #0c0d10 50%, #050607); }
 /* the panel's switches */
 #ttList { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 4px; margin-top: 4px; }
