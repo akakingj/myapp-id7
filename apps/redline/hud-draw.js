@@ -183,6 +183,16 @@ function drawBar(cv, x, y, w, h, s) {
         }
         for (let r = r0; r < top; r += 500) seg(r, Math.min(top, r + 500), col(r));
     }
+    // the cold guard on: the unlit track from the lowered shift point to the red light faded in the mid colour, as an
+    // M car's rev band (#194); drawn each frame over the cached track, as the shift point moves while the oil warms
+    const coldEnd = isNum(s.red) ? s.red : s.redline;
+    if (fg && s.cold && isNum(s.shift) && s.shift < coldEnd) {
+        const lit = isNum(rpm) && rpm > 50 ? Math.min(rpm, s.max) : 0;
+        for (let r = Math.floor(s.shift / 500) * 500; r < coldEnd; r += 500) {
+            const a = Math.max(r, s.shift, lit), b = Math.min(r + 500, coldEnd);
+            if (b > a) seg(a, b, withAlpha(P.mid, 0.3));
+        }
+    }
     // peak: a thin slanted line where the revs peaked, while they are below it
     if (fg && isNum(s.peak) && s.peak > 0 && !(isNum(rpm) && rpm >= s.peak - 50)) {
         const px = X(Math.min(s.peak, s.max));
@@ -377,7 +387,7 @@ function drawLayer(cv, f, layer) {
         cv.text(f.mode, at[0], at[1], 18, withAlpha(P.text, 0.85), { font: 'bold' });
     }
     const z = lightsOf(f);
-    const s = { rpm: d.rpm, cue: cue, shift: f.shift, redline: f.redline, yellow: z.yellow, red: z.red, max: f.max, blink: f.blink, dim: o.dim, style: o.lightStyle, P: P,
+    const s = { rpm: d.rpm, cue: cue, shift: f.shift, cold: f.cold, redline: f.redline, yellow: z.yellow, red: z.red, max: f.max, blink: f.blink, dim: o.dim, style: o.lightStyle, P: P,
         layer: layer, peak: f.peak };
     // knock on the layouts with no place for the warning (Minimal, Split wings): the gear goes red as well
     const knock = f.chip && f.chip.verdict === 'KNOCK';
