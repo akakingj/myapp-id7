@@ -57,6 +57,15 @@ mgu.run({
         const { ui, settings } = ctx;
         const { state } = ctx.background || await background(ctx);
         const items = (ctx.spec.settings || []).filter((s) => P.KEYS.indexOf(s.key) >= 0);
+        // (a value kept in one unit and shown in another's, "unitBy": with that unit on Each app, in every unit the
+        // apps may show it in - "50 km / 31 mi" - on the rows and in the values' lists alike)
+        const numberText = settings.numberText && settings.numberText.bind(settings);
+        if (numberText) {
+            settings.numberText = (s, v) => (s.unitBy && s.units && typeof v === 'number' && !(s.labels && s.labels[String(v)] !== undefined)
+                && !P.isSet(settings.get(s.unitBy))
+                ? [numberText(s, v)].concat(Object.keys(s.units).map((k) => Math.round(v * (s.units[k].mul || 1) + (s.units[k].add || 0)) + ' ' + s.units[k].unit)).join(' / ')
+                : numberText(s, v));
+        }
 
         /**
          * A row pressed (the iDrive controller or a tap): its values' list over the page, the one set marked; a

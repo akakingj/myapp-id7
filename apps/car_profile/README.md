@@ -8,20 +8,20 @@ One place for the car's engine values and units. Set them here once and the othe
 | Yellow light at | Redline (*Lights from*), AK Cluster Layouts (the amber zone of ID6 M and ID7 M, Track's and GT3's tach turning yellow, Simple's rpm), AK Cluster Centre (*Shift light: starts at*), AK Cluster ID8 (*Yellow light at*: where the shift lights begin) |
 | Red light at (Auto: the redline) | AK Cluster Layouts (the red zone, Simple's rpm red), AK Cluster ID8 (*Red light at*: the red zone) |
 | Shift now warning at (the shift point; Auto: the redline less 300) | Redline (its fixed one), Warm-Up, AK Cluster Layouts, AK Cluster Centre (*Shift light: flashes at*), AK Cluster ID8 (*Shift now warning at*: the shift lights flash, the speed and the gear blink red) |
-| Gauge goes up to (the end of the rev scale) | M Vitals, Redline, Virtual Dyno (*Graph up to*), AK Cluster, AK Cluster ID8 (*Gauge goes up to*) |
-| Engine's top rpm (redline: the limiter) | M Vitals, Redline, Warm-Up, AK Cluster, AK Cluster ID8 (*Engine's top rpm*) |
-| Cold rev limit | Redline, Warm-Up, AK Cluster, AK Cluster ID8 |
-| Cold-engine rev guard (On / Off) | Redline, Warm-Up, AK Cluster, AK Cluster ID8 (*Cold engine*) |
-| Oil is warm at | Redline, Warm-Up, AK Cluster, AK Cluster ID8 |
+| Gauge goes up to (the end of the rev scale) | M Vitals, Redline, Virtual Dyno (*Graph up to*), AK Cluster Layouts, AK Cluster ID8 (*Gauge goes up to*) |
+| Engine's top rpm (redline: the limiter) | M Vitals, Redline, Warm-Up, AK Cluster Layouts and Centre, AK Cluster ID8 (*Engine's top rpm*) |
+| Cold rev limit | Redline, Warm-Up, AK Cluster Layouts and Centre, AK Cluster ID8 |
+| Cold-engine rev guard (On / Off) | Redline, Warm-Up, AK Cluster Layouts and Centre, AK Cluster ID8 (*Cold engine*) |
+| Oil is warm at | Redline, Warm-Up, AK Cluster Layouts, Centre (*Cold engine: oil warm at*) and Info, AK Cluster ID8 |
 | Coolant is warm at | Warm-Up |
-| Oil is too hot at | M Vitals (*Oil temp warning*), Redline (HUD and page), Warm-Up (*OIL HOT*), AK Cluster, AK Cluster ID8 (Toro's oil gauge, M Track's oil row, M Sport's oil strip: their red) |
-| Coolant is too hot at | M Vitals (*Coolant temp warning*), Redline (HUD and page), Warm-Up (the coolant gauge's red), AK Cluster, AK Cluster ID8 (Toro's coolant gauge, M Track's coolant row) |
-| Gearbox is too hot at | M Vitals (*Gearbox temp warning*), Redline HUD, Warm-Up (*GEARBOX HOT*), AK Cluster, AK Cluster ID8 (its gearbox gauge and row) |
-| Speed unit (and with it the distances: km / miles, Brake Test's metres / feet) | M Vitals, Redline, Drag Timer, Brake Test, G-Force, eDrive, Live Data (its speeds, distances and trip computer), AK Cluster, AK Cluster ID8 |
-| Temperature unit | M Vitals, Redline HUD, Warm-Up, eDrive, Transmission Config, Live Data, AK Cluster, AK Cluster ID8 |
-| Pressure unit | M Vitals, Redline HUD (boost and tyres), Live Data, AK Cluster, AK Cluster ID8 |
+| Oil is too hot at | M Vitals (*Oil temp warning*), Redline (HUD and page), Warm-Up (*OIL HOT*), AK Cluster Layouts, Centre and Info, AK Cluster ID8 (Toro's oil gauge, M Track's oil row, M Sport's oil strip: their red) |
+| Coolant is too hot at | M Vitals (*Coolant temp warning*), Redline (HUD and page), Warm-Up (the coolant gauge's red), AK Cluster Layouts, Centre and Info, AK Cluster ID8 (Toro's coolant gauge, M Track's coolant row) |
+| Gearbox is too hot at | M Vitals (*Gearbox temp warning*), Redline HUD, Warm-Up (*GEARBOX HOT*), AK Cluster Layouts, Centre and Info, AK Cluster ID8 (its gearbox gauge and row) |
+| Speed unit (and with it the distances: km / miles, Brake Test's metres / feet) | M Vitals, Redline, Drag Timer, Brake Test, G-Force, eDrive, Live Data (its speeds, distances and trip computer), AK Cluster Layouts and Centre, AK Cluster ID8 |
+| Temperature unit | M Vitals, Redline HUD, Warm-Up, eDrive, Transmission Config, Live Data, AK Cluster Layouts, Centre and Info, AK Cluster ID8 |
+| Pressure unit | M Vitals, Redline HUD (boost and tyres), Live Data, AK Cluster Layouts, Centre and Info, AK Cluster ID8 |
 | Fuel use unit | Redline HUD, AK Cluster Layouts and AK Cluster ID8 (*Fuel economy unit*: each of the four) |
-| Torque unit, Power unit | M Vitals, Redline HUD, Virtual Dyno, AK Cluster, AK Cluster ID8 |
+| Torque unit, Power unit | M Vitals, Redline HUD, Virtual Dyno, AK Cluster Layouts and Centre (Info: the torque unit), AK Cluster ID8 |
 | Fuel tank size | Water Cup, AK Cluster Layouts and Centre, AK Cluster ID8 |
 | Fuel % from (Engine unit (OBD tank level) / Litres / tank size) | AK Cluster Layouts, AK Cluster ID8: the fuel gauge's figure |
 | Electric range when full (kept in km, shown in miles with mph: 50 km is 31 mi) | eDrive (*Electric range when full, 20 °C*, in its distance unit), AK Cluster Layouts and Centre, AK Cluster ID8: a plug-in hybrid's electric range from its charge while the car gives none (ID8: its battery gauge against it too) |

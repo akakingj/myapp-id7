@@ -12,6 +12,7 @@ const Module = require('module');
 
 const ROOT = path.join(__dirname, '..', '..'), KIT = path.join(ROOT, 'kit', 'runtime');
 const MAIN = path.join(ROOT, 'apps', 'car_profile', 'main.js');
+const P = require(path.join(ROOT, 'apps', 'car_profile', 'profile.js'));
 const SPEC = JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', 'car_profile', 'app.json'), 'utf8'));
 process.env.MGU_CAR_PROFILE = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'cp-page-')), 'car-profile.json');
 const { Recorder } = require(path.join(KIT, 'record'));
@@ -42,7 +43,13 @@ const check = (name, fn) => fn().then(() => { n++; console.log('ok   ' + name); 
         spec: SPEC, settings, log,
         ui: { image: async () => {}, open: async (s) => { opened = s; } },
         theme: () => themes.theme('m_tricolour'), loop: (name, fps, fn) => { frame = fn; },
-        canvas: (w, h) => (last = new Recorder(w, h)),
+        canvas: (w, h) => {
+            last = new Recorder(w, h);
+            // (the texts drawn, for where they end)
+            const text = last.text.bind(last); last.texts = [];
+            last.text = (str, x, y, size, c, o) => { last.texts.push({ str: String(str), x, y, size, o }); return text(str, x, y, size, c, o); };
+            return last;
+        },
         sheet: (sh) => { sheet = sh; return true; },
         onTab: (fn) => { tab = fn; },
     };
@@ -65,6 +72,45 @@ const check = (name, fn) => fn().then(() => { n++; console.log('ok   ' + name); 
             all.push(...t);
         }
         assert.deepStrictEqual(all.map((q) => q.key.slice(4)).sort(), SPEC.settings.map((s) => s.key).sort());
+    });
+    await check('the apps that follow each setting: on its row, whole, inside it (11 px at least)', async () => {
+        let seen = 0;
+        for (const i of [0, 1]) {
+            await tab(i); await frame();
+            for (const q of targets()) {
+                const who = (P.FOLLOW[q.key.slice(4)] || []).join(', ');
+                if (!who) continue;
+                const t = last.texts.filter((x) => x.str === who && x.x >= q.x && x.x < q.x + q.w && x.y > q.y && x.y < q.y + q.h + 4).pop();
+                assert(t, q.key + ': its list drawn');
+                assert(t.size >= 11, q.key + ' at ' + t.size + ' px');
+                const right = t.x + last.textWidth(who, t.size, t.o), end = q.x + q.w - 12;
+                assert(right <= end + 0.5, q.key + ': ends at ' + right.toFixed(1) + ', the row at ' + end);
+                seen++;
+            }
+            last.texts.length = 0;
+        }
+        assert.strictEqual(seen, SPEC.settings.filter((s) => (P.FOLLOW[s.key] || []).length).length, 'every one looked at');
+    });
+    await check('Electric range when full: in km, in miles with mph, in both while the speed unit is each app\'s', async () => {
+        const was = [settings.get('speedUnit'), settings.get('eFullKm')];
+        settings.set('eFullKm', 50);
+        settings.set('speedUnit', 'app');
+        assert.strictEqual(settings.display('eFullKm'), '50 km / 31 mi');
+        settings.set('speedUnit', 'kmh');
+        assert.strictEqual(settings.display('eFullKm'), '50 km');
+        settings.set('speedUnit', 'mph');
+        assert.strictEqual(settings.display('eFullKm'), '31 mi');
+        settings.set('eFullKm', -1);
+        assert.strictEqual(settings.display('eFullKm'), 'Each app');
+        settings.set('speedUnit', 'app');
+        sheet = null;
+        for (const i of [0, 1]) { await tab(i); await frame(); if (targets().some((q) => q.key === 'row_eFullKm')) break; }
+        targets().find((q) => q.key === 'row_eFullKm').run();
+        const rows = sheet.draw(new Recorder(1600, 520), themes.theme('m_tricolour'));
+        assert(last && rows.length > 0);
+        assert(sheet.rows().some((r) => r.label === '50 km / 31 mi'), 'its values\' list in both');
+        sheet.back(); sheet = null;
+        settings.set('speedUnit', was[0]); settings.set('eFullKm', was[1]);
     });
     await check('the colour theme only with the classic skin (or each app\'s)', async () => {
         await tab(1);
