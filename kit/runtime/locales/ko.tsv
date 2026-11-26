@@ -2669,6 +2669,7 @@ From this oil temperature it shows red: too hot	이 오일 온도부터 빨갛�
 From this coolant temperature it shows red: too hot	이 냉각수 온도부터 빨갛게 표시 (과열)
 From this gearbox oil temperature it shows red: too hot	이 미션오일 온도부터 빨갛게 표시 (과열)
 The unit the apps show speeds in	앱들이 속도를 보여 주는 단위
+The unit the apps show speeds in, and distances with it (km or miles; Brake Test's metres or feet)	앱들이 속도를 보여 주는 단위, 거리도 함께 (km 또는 마일, 제동 테스트는 미터 또는 피트)
 The unit the apps show distances and ranges in	앱들이 거리와 주행가능거리를 보여 주는 단위
 The unit the apps show temperatures in	앱들이 온도를 보여 주는 단위
 The unit the apps show boost and tyre pressures in	앱들이 부스트와 타이어 공기압을 보여 주는 단위
