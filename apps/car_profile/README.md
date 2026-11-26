@@ -4,12 +4,12 @@ One place for the car's engine values and units. Set them here once and the othe
 
 | Setting | Followed by |
 |---|---|
-| Engine (Auto / Diesel / Petrol / Petrol, M car / Plug-in hybrid) | M Vitals, Redline, Warm-Up, Virtual Dyno, AK Cluster Layouts and Centre (their Vehicle; the others take a plug-in hybrid, and an M car, as petrol), AK Cluster ID8 (*Engine*; an M car and a plug-in hybrid: its layers keep clear of the M display's boxes and the eDrive box) |
-| Yellow light at | Redline (*Lights from*), AK Cluster Layouts (the amber zone of ID6 M and ID7 M, Track's and GT3's tach turning yellow, Simple's rpm), AK Cluster Centre (*Shift light: starts at*), AK Cluster ID8 (*Shift lights from*) |
-| Red light at (Auto: the redline) | AK Cluster Layouts (the red zone, Simple's rpm red), AK Cluster ID8 (*Redline*: the red zone) |
-| Shift now warning at (the shift point; Auto: the redline less 300) | Redline (its fixed one), Warm-Up, AK Cluster Layouts, AK Cluster Centre (*Shift light: flashes at*), AK Cluster ID8 (*Shift now at*: the shift lights flash, the speed and the gear blink red) |
-| Gauge goes up to (the end of the rev scale) | M Vitals, Redline, Virtual Dyno (*Graph up to*), AK Cluster, AK Cluster ID8 (*Tach scale*) |
-| Engine's top rpm (redline: the limiter) | M Vitals, Redline, Warm-Up, AK Cluster, AK Cluster ID8 (*Limiter*) |
+| Engine (Auto / Diesel / Petrol / Petrol, M car / Plug-in hybrid) | M Vitals, Redline, Warm-Up, Virtual Dyno, AK Cluster Layouts and Centre (*Engine*, the same five: an M car is a petrol car there), AK Cluster ID8 (*Engine*, the same five; an M car and a plug-in hybrid: its layers keep clear of the M display's boxes and the eDrive box) |
+| Yellow light at | Redline (*Lights from*), AK Cluster Layouts (the amber zone of ID6 M and ID7 M, Track's and GT3's tach turning yellow, Simple's rpm), AK Cluster Centre (*Shift light: starts at*), AK Cluster ID8 (*Yellow light at*: where the shift lights begin) |
+| Red light at (Auto: the redline) | AK Cluster Layouts (the red zone, Simple's rpm red), AK Cluster ID8 (*Red light at*: the red zone) |
+| Shift now warning at (the shift point; Auto: the redline less 300) | Redline (its fixed one), Warm-Up, AK Cluster Layouts, AK Cluster Centre (*Shift light: flashes at*), AK Cluster ID8 (*Shift now warning at*: the shift lights flash, the speed and the gear blink red) |
+| Gauge goes up to (the end of the rev scale) | M Vitals, Redline, Virtual Dyno (*Graph up to*), AK Cluster, AK Cluster ID8 (*Gauge goes up to*) |
+| Engine's top rpm (redline: the limiter) | M Vitals, Redline, Warm-Up, AK Cluster, AK Cluster ID8 (*Engine's top rpm*) |
 | Cold rev limit | Redline, Warm-Up, AK Cluster, AK Cluster ID8 |
 | Redline app: light style (shift point / rev bar) | Redline |
 | Cold-engine rev guard (On / Off) | Redline, Warm-Up, AK Cluster, AK Cluster ID8 (*Cold engine*) |
@@ -23,7 +23,7 @@ One place for the car's engine values and units. Set them here once and the othe
 | Temperature unit | M Vitals, Redline HUD, Warm-Up, eDrive, Transmission Config, Live Data, AK Cluster, AK Cluster ID8 |
 | Pressure unit | M Vitals, Redline HUD (boost and tyres), Live Data, AK Cluster, AK Cluster ID8 |
 | Fuel use unit | Redline HUD, AK Cluster Layouts (*Fuel economy unit*; mpg (UK): each its own), AK Cluster ID8 |
-| Torque unit, Power unit | M Vitals, Redline HUD, Virtual Dyno, AK Cluster |
+| Torque unit, Power unit | M Vitals, Redline HUD, Virtual Dyno, AK Cluster, AK Cluster ID8 |
 | Fuel tank size | Water Cup, AK Cluster Layouts and Centre, AK Cluster ID8 |
 | Fuel % from (Engine unit (OBD tank level) / Litres / tank size) | AK Cluster Layouts, AK Cluster ID8: the fuel gauge's figure |
 | G-force circle up to (1, 1.2, 1.5, 2 g) | G-Force (*Circle size*), M Vitals (*G-force circle size*), AK Cluster Layouts (JDM 2's G meter) |
