@@ -25,6 +25,7 @@ One place for the car's engine values and units. Set them here once and the othe
 | Fuel tank size | Water Cup, AK Cluster Layouts and Centre, AK Cluster ID8 |
 | Fuel % from (Engine unit (OBD tank level) / Litres / tank size) | AK Cluster Layouts, AK Cluster ID8: the fuel gauge's figure |
 | Electric range when full (kept in km, shown in miles with mph: 50 km is 31 mi) | eDrive (*Electric range when full, 20 °C*, in its distance unit), AK Cluster Layouts and Centre, AK Cluster ID8: a plug-in hybrid's electric range from its charge while the car gives none (ID8: its battery gauge against it too) |
+| Start on the cluster (AK Cluster Layouts, AK Cluster ID8 or none: the one that comes up at every start - its Show on the cluster turned on, and it keeps the cluster from the other whichever came up first) | AK Cluster Layouts, AK Cluster ID8 (*Start on the cluster with the car*) |
 | Clock (12 / 24 hours) | AK Cluster Layouts and Centre, AK Cluster ID8 (the time itself is the car's own clock's) |
 | G-force circle up to (1, 1.2, 1.5, 2 g) | G-Force (*Circle size*), M Vitals (*G-force circle size*), AK Cluster Layouts (JDM 2's G meter), AK Cluster ID8 (Toro's G meter) |
 | Speedometer up to (260 km/h, most BMWs; 330 km/h, an M car) | AK Cluster Layouts (every speedometer), AK Cluster ID8 (M Sport's) |

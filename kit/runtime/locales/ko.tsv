@@ -2730,6 +2730,12 @@ Litres / tank size	남은 리터 / 탱크 용량
 The AK clusters' fuel gauge: the engine unit's own level while the engine runs (the car's litres until then), or the litres over the tank's size always	AK 클러스터의 연료 게이지: 시동 중에는 엔진 ECU의 연료량(그 전에는 차가 보내는 남은 리터), 또는 언제나 남은 리터 / 탱크 용량
 Petrol, M car	가솔린, M 차량
 Speedometer up to	속도계 최고값
+None	없음
+Start on the cluster	시동 시 계기판 자동 시작
+Which AK cluster comes up at every start: its Show on the cluster is turned on, and it keeps the cluster from the other	시동할 때마다 계기판에 띄울 AK 클러스터 앱: 그 앱의 계기판에 표시가 켜지고, 다른 앱보다 먼저 계기판을 씁니다
+AK Cluster Layouts	AK Cluster Layouts
+AK Cluster ID8	AK Cluster ID8
+Cluster	계기판
 Where the speedometers end: 260 km/h for most BMWs, 330 km/h for an M car	속도계 끝 값: 일반 BMW는 260 km/h, M 차량은 330 km/h
 Boost gauge up to	부스트 게이지 최고값
 Where the boost gauges end, as the car's own: 15, 20 or 30 psi (in bar 2.0, in kPa 200), or 45 psi (3.0 bar, 300 kPa). Auto: where the car's own Sport Display's ends (the least at or over it, within 5 %)	부스트 게이지 끝 값, 순정 게이지 그대로: 15, 20, 30 psi(bar로는 2.0, kPa로는 200) 또는 45 psi(3.0 bar, 300 kPa). 자동: 차량 스포츠 디스플레이의 끝 값(그 이상인 가장 가까운 값, 5% 이내는 그 값)

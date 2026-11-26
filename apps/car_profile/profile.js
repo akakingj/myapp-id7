@@ -15,7 +15,7 @@ const fs = require('fs');
 // what the profile sets, in Settings order; FOLLOW: the apps that follow each (their app.json "profile")
 const KEYS = ['engine', 'lightStart', 'lightRed', 'shiftAt', 'rpmScale', 'redline', 'coldLimit', 'coldGuard', 'warmOil',
     'warmCoolant', 'warmGearbox', 'hotOil', 'hotCoolant', 'hotGearbox', 'speedUnit', 'tempUnit', 'pressUnit', 'fuelUnit', 'torqueUnit', 'powerUnit',
-    'skin', 'theme', 'layout', 'renderer', 'demo', 'clock', 'tankLitres', 'fuelFrom', 'eFullKm', 'gMax', 'speedMax', 'boostMax'];
+    'skin', 'theme', 'layout', 'renderer', 'demo', 'clusterStart', 'clock', 'tankLitres', 'fuelFrom', 'eFullKm', 'gMax', 'speedMax', 'boostMax'];
 const FOLLOW = {
     // (the AK clusters' Car > Engine, Layouts, Centre and ID8 alike, has the same five; the other apps take a plug-in hybrid
     // as their own setting says: Auto, petrol)
@@ -49,6 +49,8 @@ const FOLLOW = {
     layout: ['All apps with a screen layout, AK Cluster Info too'],
     renderer: ['All apps with a renderer setting, AK Cluster Info too'],
     demo: ['All apps with demo data, AK Cluster Layouts, Centre and Info too'],
+    // which AK cluster comes up at every start (its Show on the cluster on, ahead of the other)
+    clusterStart: ['AK Cluster Layouts and ID8'],
     // the AK clusters' clock, and their fuel and battery figures
     clock: ['AK Cluster Layouts, Centre and ID8'],
     tankLitres: ['Water Cup', 'AK Cluster Layouts, Centre and ID8'],
