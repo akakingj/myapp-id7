@@ -428,6 +428,8 @@ async function main() {
     assert.ok(setting('currency').default === 'EUR' && setting('currency').options.some((o) => o[0] === 'EUR'), 'currency: EUR');
     assert.strictEqual(setting('details').default, false, 'sources and unverified values: off');
     assert.ok(setting('tempUnit').default === 'c' && setting('tempUnit').options.map((o) => o[0]).join() === 'c,f', 'temperature unit: Celsius by default, or Fahrenheit');
+    assert.ok(setting('speedUnit').profile === 'speedUnit' && setting('speedUnit').default === 'kmh' && setting('speedUnit').options.map((o) => o[0]).join() === 'kmh,mph',
+        'speed unit (speeds and distances): km/h by default, or mph, as the Car profile sets it');
     assert.ok(setting('show').options.some((o) => o[0] === setting('show').default) && setting('show').reset >= 2, 'unit pages: a known default, reset from the old one');
     assert.ok(/^1\.\d+\.\d+$/.test(aspec.version), 'version 1.x');
     assert.ok(!aspec.settings.some((x) => /UAH/.test(String(x.default))), 'no local currency as a default');

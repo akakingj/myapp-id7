@@ -39,7 +39,7 @@ const clear = () => { try { fs.unlinkSync(FILE); } catch (e) { /* none */ } };
 
 const SCHEMA = [
     { key: 'speedUnit', label: 'Speed unit', type: 'choice', default: 'kmh', options: [['kmh', 'km/h'], ['mph', 'mph']], profile: 'speedUnit' },
-    { key: 'distUnit', label: 'Distance unit', type: 'choice', default: 'm', options: [['m', 'metres'], ['ft', 'feet']], profile: 'distUnit', profileMap: { km: 'm', mi: 'ft' } },
+    { key: 'distUnit', label: 'Distance unit', type: 'choice', default: 'm', options: [['m', 'metres'], ['ft', 'feet']], profile: 'speedUnit', profileMap: { kmh: 'm', mph: 'ft' } },
     { key: 'redline', label: 'Redline', type: 'number', unit: 'rpm', default: 0, labels: { 0: 'Auto' }, steps: [0, 6000, 7000], profile: 'redline' },
     { key: 'torqueUnit', label: 'Torque unit', type: 'choice', default: 'nm', options: [['nm', 'Nm'], ['kgm', 'kgm']], profile: 'torqueUnit' },
     { key: 'maxKgm', label: 'Torque gauge max', type: 'number', default: 100, steps: [40, 100], when: { torqueUnit: 'kgm' } },
@@ -68,15 +68,15 @@ const cases = {
     },
     'a profile: its values over the app\'s, kept for what it leaves out'() {
         clear();
-        writeProfile({ speedUnit: 'kmh', redline: 6000, torqueUnit: 'kgm', distUnit: 'mi' });
-        const s = settingsIn(SCHEMA, { speedUnit: 'mph', redline: 7000, theme: 'm_tricolour' });
-        assert.strictEqual(s.get('speedUnit'), 'kmh');
+        writeProfile({ speedUnit: 'mph', redline: 6000, torqueUnit: 'kgm' });
+        const s = settingsIn(SCHEMA, { speedUnit: 'kmh', redline: 7000, theme: 'm_tricolour' });
+        assert.strictEqual(s.get('speedUnit'), 'mph');
         assert.strictEqual(s.get('redline'), 6000);
-        assert.strictEqual(s.get('distUnit'), 'ft', 'profileMap: miles -> feet');
+        assert.strictEqual(s.get('distUnit'), 'ft', 'profileMap: the speed unit\'s mph -> feet (a distance unit by the speed unit)');
         assert.strictEqual(s.get('theme'), 'm_tricolour', 'a setting without "profile"');
-        assert.strictEqual(s.values.speedUnit, 'mph', 'the app\'s own value kept');
+        assert.strictEqual(s.values.speedUnit, 'kmh', 'the app\'s own value kept');
         assert.strictEqual(s.display('redline'), '6000 rpm');
-        assert.strictEqual(s.display('speedUnit'), 'km/h');
+        assert.strictEqual(s.display('speedUnit'), 'mph');
         assert.strictEqual(s.shown(SCHEMA[4]), true, '"when" goes by the profile\'s value (kgm)');
         assert.strictEqual(s.held('redline'), true);
     },
@@ -124,10 +124,10 @@ const cases = {
         assert.strictEqual(seen.length, 1, 'no change: no call');
         writeProfile({ redline: 6000, speedUnit: 'mph' });
         s._pollProfile();
-        assert.deepStrictEqual(seen.slice(1), [['speedUnit', 'mph']]);
+        assert.deepStrictEqual(seen.slice(1), [['speedUnit', 'mph'], ['distUnit', 'ft']], 'the distance unit with the speed unit');
         clear();
         s._pollProfile();
-        assert.deepStrictEqual(seen.slice(2), [['speedUnit', 'kmh'], ['redline', 7000]].sort((a, b) => (SCHEMA.findIndex((x) => x.key === a[0]) - SCHEMA.findIndex((x) => x.key === b[0]))));
+        assert.deepStrictEqual(seen.slice(3), [['speedUnit', 'kmh'], ['distUnit', 'm'], ['redline', 7000]].sort((a, b) => (SCHEMA.findIndex((x) => x.key === a[0]) - SCHEMA.findIndex((x) => x.key === b[0]))));
         assert.strictEqual(s.get('redline'), 7000);
     },
     'a broken file is not taken (and looked at again)'() {
@@ -234,8 +234,10 @@ const cases = {
                     assert.strictEqual(s.type, 'number', app + '.' + s.key);
                     // every number the profile can give is one of the setting's own (its drop-down shows it, the HMI's
                     // list too): 0 only where it is one of them or Auto
+                    // (a profileMap: the profile's number to the app's own, eDrive's km for the profile's miles)
+                    const own = (v) => (s.profileMap && s.profileMap[v] !== undefined ? s.profileMap[v] : v);
                     const lost = (p.steps || []).filter((v) => v > 0 || (v === 0 && ((s.labels && s.labels['0'] !== undefined) || (s.steps || []).indexOf(0) >= 0)))
-                        .filter((v) => (s.steps || []).indexOf(v) < 0);
+                        .filter((v) => (s.steps || []).indexOf(own(v)) < 0);
                     assert.deepStrictEqual(lost, [], app + '.' + s.key + ': the profile can give ' + lost.join(', ') + ', not in its list');
                 }
             });

@@ -125,7 +125,15 @@ mgu.run({
         const shownUnit = (u) => (u === '°C' && fahrenheit() ? '°F' : u);
         const shownTemp = (v) => (v && typeof v.n === 'number' && v.u === '°C' && fahrenheit() ? Object.assign({}, v, { n: v.n * 1.8 + 32, u: '°F' }) : v);
         const formatShown = (x, f) => (x && !x.why && typeof x.value === 'number' && f && f.u === '°C' && fahrenheit()
-            ? format(Object.assign({}, x, { value: x.value * 1.8 + 32, text: undefined }), Object.assign({}, f, { u: '°F' })) : format(x, f));
+            ? format(Object.assign({}, x, { value: x.value * 1.8 + 32, text: undefined }), Object.assign({}, f, { u: '°F' }))
+            : x && !x.why && typeof x.value === 'number' && f && shownOf(f.u)
+                ? format(Object.assign({}, x, { value: x.value * shownOf(f.u).k, text: undefined }), Object.assign({}, f, { u: shownOf(f.u).u }))
+                : format(x, f));
+        // speeds and distances are read and kept in km/h and km; shown in mph and miles when Speed unit says so
+        const miles = () => settings.get('speedUnit') === 'mph';
+        const MI = 0.621371;
+        const distText = (km, d) => (km === null || km === undefined ? '--' : (miles() ? km * MI : km).toFixed(d) + (miles() ? ' mi' : ' km'));
+        const speedText = (kmh) => (kmh === null || kmh === undefined ? '--' : Math.round(miles() ? kmh * MI : kmh) + (miles() ? ' mph' : ' km/h'));
 
         /* ---------- state ---------- */
         const UNITS_FILE = path.join(ctx.dataDir, 'units.json');
@@ -308,18 +316,21 @@ mgu.run({
         }
         const refusal = (r) => (details() ? 'refused: ' + (NRC[r.nrc] || 'NRC ' + hex(r.nrc)) : 'not available');
         /**
-         * Pressures in bar shown in Settings' Pressure unit (the Car profile's when it sets it): { k, u, dd } to
-         * multiply a bar value by, its unit and the decimals fewer; null in bar (and for any other unit). Values,
-         * ranges, peaks and traces are kept in bar; only what is shown is converted.
+         * Pressures in bar shown in Settings' Pressure unit, speeds in km/h and distances in km in its Speed unit (the
+         * Car profile's when it sets them): { k, u, dd } to multiply the value by, its unit and the decimals fewer;
+         * null as read (and for any other unit). Values, ranges, peaks and traces are kept as read; only what is
+         * shown is converted.
          */
-        function pressOf(u) {
+        function shownOf(u) {
+            if (u === 'km/h' || u === 'km') return miles() ? { k: MI, u: u === 'km' ? 'mi' : 'mph', dd: 0 } : null;
             if (u !== 'bar') return null;
             const p = settings.get('pressUnit');
             return p === 'psi' ? { k: 14.5038, u: 'psi', dd: 1 } : p === 'kpa' ? { k: 100, u: 'kPa', dd: 2 } : null;
         }
-        /** a number and its unit as text, a pressure in bar in the pressure unit (no "-0.00") */
+        /** a number and its unit as text, a pressure in bar in the pressure unit, a speed or distance in the speed unit
+            (no "-0.00") */
         function numUnit(n, u, d) {
-            const pc = pressOf(u);
+            const pc = shownOf(u);
             const s = (pc ? n * pc.k : n).toFixed(pc ? Math.max(0, d - pc.dd) : d);
             return (/^-0(\.0+)?$/.test(s) ? s.slice(1) : s) + (pc ? ' ' + pc.u : u ? ' ' + u : '');
         }
@@ -809,9 +820,9 @@ mgu.run({
             s.u = ascii(num.u);
             return inPress(Object.assign(s, { n: G.hold('scr|' + slot.k, n, 200), d: num.d, peak: p.v, hist: tr.pts, sc: SCR.scale(slot.k, useful, s.u, r) }));
         }
-        /** a gauge of a pressure in bar in the pressure unit: its number, peak, trace and range (kept in bar) */
+        /** a gauge of a pressure, a speed or a distance in the unit shown: its number, peak, trace and range (kept as read) */
         function inPress(s) {
-            const pc = pressOf(s.u);
+            const pc = shownOf(s.u);
             if (!pc) return s;
             const k = (x) => (typeof x === 'number' ? x * pc.k : x), sc = s.sc;
             return Object.assign(s, {
@@ -1409,15 +1420,15 @@ mgu.run({
             else {
                 const avg = TRIPS.per100(tr.km, tr.l), cost = tc.cost(tr), time = tr.driveMs + tr.idleMs;
                 [
-                    { label: 'Distance', value: tr.km, unit: 'km', decimals: 1 },
+                    { label: 'Distance', value: tr.km === null || tr.km === undefined ? tr.km : miles() ? tr.km * MI : tr.km, unit: miles() ? 'mi' : 'km', decimals: 1 },
                     { label: 'Fuel used', value: tr.l, unit: 'l', decimals: 2 },
                     { label: 'Consumption', value: avg, unit: 'l/100 km', decimals: 1 },
                     { label: 'Cost', value: cost, unit: cost === null ? '' : cu, decimals: 2 },
                     { label: 'Time', text: dur(time), unit: 'h' },
-                    { label: 'Average speed', value: time > 60000 ? tr.km / (time / 3600000) : null, unit: 'km/h', decimals: 0 },
+                    { label: 'Average speed', value: time > 60000 ? (miles() ? tr.km * MI : tr.km) / (time / 3600000) : null, unit: miles() ? 'mph' : 'km/h', decimals: 0 },
                 ].forEach((c, i) => G.readout(cv, t, 48 + i * 254, 108, Object.assign({ size: 54, labelSize: 18 }, c)));
-                const notes = ['standing ' + f2(tr.lIdle) + ' l', 'top speed ' + Math.round(tr.vmax) + ' km/h'];
-                if (tr.odo0 !== null) notes.push('odometer ' + tr.odo0 + ' - ' + tr.odo1 + ' km');
+                const notes = ['standing ' + f2(tr.lIdle) + ' l', 'top speed ' + speedText(tr.vmax)];
+                if (tr.odo0 !== null) notes.push('odometer ' + distText(tr.odo0, 0).replace(/ (km|mi)$/, '') + ' - ' + distText(tr.odo1, 0));
                 if (tr.tank0 !== null) notes.push('tank ' + tr.tank0 + ' - ' + tr.tank1 + ' l');
                 if (details()) {
                     const src = cur ? Object.keys(cur.src) : (tr.src || '').split('+').filter(Boolean);
@@ -1432,8 +1443,8 @@ mgu.run({
                 { label: 'Top speed', w: 180, align: 'right' }, { label: 'Tank', w: 184, align: 'right' }];
             const rows = tc.trips.slice().reverse().map((x) => {
                 const c = tc.cost(x);
-                return [day(x.start) + ', ' + clock(x.start), dur(x.driveMs + x.idleMs) + ' h', f1(x.km) + ' km', f2(x.l) + ' l', f1(TRIPS.per100(x.km, x.l)),
-                    c === null ? '--' : f2(c) + ' ' + cu, Math.round(x.vmax) + ' km/h', x.tank0 !== null ? x.tank0 + ' - ' + x.tank1 + ' l' : '--'];
+                return [day(x.start) + ', ' + clock(x.start), dur(x.driveMs + x.idleMs) + ' h', distText(x.km, 1), f2(x.l) + ' l', f1(TRIPS.per100(x.km, x.l)),
+                    c === null ? '--' : f2(c) + ' ' + cu, speedText(x.vmax), x.tank0 !== null ? x.tank0 + ' - ' + x.tank1 + ' l' : '--'];
             });
             G.table(cv, t, 48, 316, 1504, cols, rows, { rowH: 32, size: 22, empty: 'No finished trip yet' });
         }
@@ -1443,7 +1454,7 @@ mgu.run({
             const cur = tc.cur, row = (name, x) => {
                 if (!x || !x.n) return [name, '0', '--', '--', '--', '--'];
                 const avg = TRIPS.per100(x.km, x.l);
-                return [name, String(x.n), f1(x.km) + ' km', f2(x.l) + ' l', avg === null ? '--' : f1(avg), x.cost === null ? '--' : f2(x.cost) + ' ' + cu];
+                return [name, String(x.n), distText(x.km, 1), f2(x.l) + ' l', avg === null ? '--' : f1(avg), x.cost === null ? '--' : f2(x.cost) + ' ' + cu];
             };
             const rows = [
                 row('This trip', cur ? { n: 1, km: cur.km, l: cur.l, cost: tc.cost(cur) } : null),

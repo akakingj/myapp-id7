@@ -114,6 +114,8 @@ function modeOf(o) {
 mgu.run({
     async start(ctx) {
         const { ui, settings, log } = ctx;
+        // (Rev scale up to: 5000 rpm is gone - no car's rev gauge ends below 6000, a diesel's included)
+        if (settings.values && settings.values.rpmScale === 5000) settings.set('rpmScale', 6000);
         const S = (ctx.spec.config && ctx.spec.config.scaling) || {};
         const sc = (k, raw) => {
             const c = S[k];

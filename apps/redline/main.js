@@ -109,6 +109,8 @@ function migrateSettings(settings, log) {
             settings.set('hudShowGear', gear);
             log.info('settings: HUD "Shows ' + c + '" carried over to the readout switches');
         }
+        // (Gauge goes up to: 5000 rpm is gone - no car's rev gauge ends below 6000, a diesel's included)
+        if (v.rpmScale === 5000) { settings.set('rpmScale', 6000); log.info('settings: Gauge goes up to 5000 is 6000 now'); }
     } catch (e) { log.warn('settings migration: ' + e); }
 }
 

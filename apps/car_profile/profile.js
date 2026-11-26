@@ -13,8 +13,8 @@
 const fs = require('fs');
 
 // what the profile sets, in Settings order; FOLLOW: the apps that follow each (their app.json "profile")
-const KEYS = ['engine', 'lightStart', 'lightRed', 'shiftAt', 'rpmScale', 'redline', 'coldLimit', 'lightMode', 'coldGuard', 'warmOil',
-    'warmCoolant', 'warmGearbox', 'hotOil', 'hotCoolant', 'hotGearbox', 'speedUnit', 'distUnit', 'tempUnit', 'pressUnit', 'fuelUnit', 'torqueUnit', 'powerUnit',
+const KEYS = ['engine', 'lightStart', 'lightRed', 'shiftAt', 'rpmScale', 'redline', 'coldLimit', 'coldGuard', 'warmOil',
+    'warmCoolant', 'warmGearbox', 'hotOil', 'hotCoolant', 'hotGearbox', 'speedUnit', 'tempUnit', 'pressUnit', 'fuelUnit', 'torqueUnit', 'powerUnit',
     'skin', 'theme', 'layout', 'renderer', 'demo', 'clock', 'tankLitres', 'fuelFrom', 'eFull', 'gMax', 'speedMax', 'boostMax'];
 const FOLLOW = {
     // (the AK clusters' Car > Engine, Layouts, Centre and ID8 alike, has the same five; the other apps take a plug-in hybrid
@@ -28,7 +28,6 @@ const FOLLOW = {
     rpmScale: ['M Vitals', 'Redline', 'Virtual Dyno', 'AK Cluster', 'AK Cluster ID8'],
     redline: ['M Vitals', 'Redline', 'Warm-Up', 'AK Cluster', 'AK Cluster ID8'],
     coldLimit: ['Redline', 'Warm-Up', 'AK Cluster', 'AK Cluster ID8'],
-    lightMode: ['Redline'],
     coldGuard: ['Redline', 'Warm-Up', 'AK Cluster', 'AK Cluster ID8'],
     warmOil: ['Redline', 'Warm-Up', 'AK Cluster', 'AK Cluster ID8'],
     warmCoolant: ['Warm-Up'],
@@ -37,8 +36,7 @@ const FOLLOW = {
     hotOil: ['M Vitals', 'Redline', 'Warm-Up', 'AK Cluster', 'AK Cluster ID8'],
     hotCoolant: ['M Vitals', 'Redline', 'Warm-Up', 'AK Cluster', 'AK Cluster ID8'],
     hotGearbox: ['M Vitals', 'Redline', 'Warm-Up', 'AK Cluster', 'AK Cluster ID8'],
-    speedUnit: ['M Vitals', 'Redline', 'Drag Timer', 'Brake Test', 'G-Force', 'AK Cluster', 'AK Cluster ID8'],
-    distUnit: ['Brake Test', 'eDrive'],
+    speedUnit: ['M Vitals', 'Redline', 'Drag Timer', 'Brake Test (its distances too)', 'G-Force', 'eDrive (its distances)', 'Live Data', 'AK Cluster', 'AK Cluster ID8'],
     tempUnit: ['M Vitals', 'Redline HUD', 'Warm-Up', 'eDrive', 'Transmission Config', 'Live Data', 'AK Cluster', 'AK Cluster ID8'],
     pressUnit: ['M Vitals', 'Redline HUD', 'Live Data', 'AK Cluster', 'AK Cluster ID8'],
     fuelUnit: ['Redline HUD', 'AK Cluster', 'AK Cluster ID8'],
@@ -56,7 +54,7 @@ const FOLLOW = {
     tankLitres: ['Water Cup', 'AK Cluster', 'AK Cluster Centre', 'AK Cluster ID8'],
     // the fuel gauge's figure: the engine unit's tank level, or the litres over the tank's size
     fuelFrom: ['AK Cluster', 'AK Cluster ID8'],
-    eFull: ['AK Cluster', 'AK Cluster Centre', 'AK Cluster ID8'],
+    eFull: ['eDrive', 'AK Cluster', 'AK Cluster Centre', 'AK Cluster ID8'],
     // the G-force circles' size (g), where the dot goes in a bend (out: as the driver feels it), braking up or down
     gMax: ['G-Force', 'M Vitals', 'AK Cluster', 'AK Cluster ID8'],
     // where the speedometers end (km/h), and the boost gauges (bar, each app showing it in its pressure unit)
