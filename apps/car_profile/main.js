@@ -3,9 +3,8 @@
  * Car profile - one place for the car's engine values and units, followed by the other apps.
  *
  * Settings: the engine (Auto / Diesel / Petrol / Plug-in hybrid), the shift lights (yellow at, red at, the shift now
- * warning), where the rev gauges end, the engine's top rpm (the redline, its limiter), cold rev limit, the Redline app's
- * light style (shift point or rev bar), when oil and coolant count as warm, when oil, coolant and gearbox count
- * as too hot (red), and the speed, distance,
+ * warning), where the rev gauges end, the engine's top rpm (the redline, its limiter), cold rev limit, when oil and
+ * coolant count as warm, when oil, coolant and gearbox count as too hot (red), and the speed (the distances with it),
  * temperature, pressure, fuel use, torque and power units. Each one starts at "Each app": until it is set here, every
  * app keeps its own setting, so installing this app changes nothing.
  * What is set is written for the other apps (profile.js: /dev/shm/car-profile.json). Their kit follows it for the
@@ -34,6 +33,16 @@ async function background(bg) {
     const write = () => {
         try { P.publish(settings, spec.version, log); state.at = Date.now(); state.error = ''; } catch (e) { state.error = String(e && e.message || e); log.warn('car profile: ' + state.error); }
     };
+    // (Electric range when full is in km, shown in miles with mph: one set in miles before 1.9.0 moves once, to the
+    // nearest of its values; the apps that read it in miles follow their own again)
+    const v = settings.values || {};
+    if (typeof v.eFull === 'number') {
+        const mi = v.eFull, km = mi * 1.609344, steps = ((settings.item && settings.item('eFullKm')) || {}).steps || [];
+        const to = mi > 0 ? steps.filter((x) => x > 0).reduce((a, b) => (a === null || Math.abs(b - km) < Math.abs(a - km) ? b : a), null) : null;
+        delete v.eFull;                         // (saved without it with eFullKm: once)
+        settings.set('eFullKm', to !== null ? to : settings.get('eFullKm'));
+        if (to !== null) log.info('Electric range when full: ' + mi + ' mi is ' + to + ' km now');
+    }
     write();
     settings.onChange((key) => { if (P.KEYS.indexOf(key) >= 0) write(); });
     // written again should it be gone (another start of the head unit's tmpfs, a hand cleaning /dev/shm)

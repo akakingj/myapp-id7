@@ -108,5 +108,25 @@ const check = (name, fn) => fn().then(() => { n++; console.log('ok   ' + name); 
         await targets().find((q) => q.key === 'row_engine').run();
         assert.strictEqual(opened, 'SETTINGS');
     });
+    await check('Electric range when full saved in miles (before 1.9.0): in km once, Each app kept', async () => {
+        const file = path.join(DD, 'settings.json');
+        const start = async (saved) => {
+            fs.writeFileSync(file, JSON.stringify(saved));
+            const s = new Settings(SPEC.settings);
+            await app.background(Object.assign({}, ctx, { settings: s }));
+            return [s, JSON.parse(fs.readFileSync(file, 'utf8'))];
+        };
+        let [s, onDisk] = await start({ eFull: 31 });
+        assert.strictEqual(s.get('eFullKm'), 50, '31 mi: 50 km');
+        assert.strictEqual(onDisk.eFull, undefined, 'the miles gone from the file');
+        assert.strictEqual(onDisk.eFullKm, 50);
+        [s] = await start({ eFull: 37 });
+        assert.strictEqual(s.get('eFullKm'), 60, '37 mi: 60 km (59.5, the nearest)');
+        [s, onDisk] = await start({ eFull: -1 });
+        assert.strictEqual(s.get('eFullKm'), -1, 'Each app stays');
+        assert.strictEqual(onDisk.eFull, undefined);
+        [s] = await start({ eFullKm: -1 });
+        assert.strictEqual(s.get('eFullKm'), -1, 'set back to Each app later: left as it is');
+    });
     console.log(n + ' passed');
 })().catch((e) => { console.error('FAIL ' + (e && e.stack || e)); process.exit(1); });

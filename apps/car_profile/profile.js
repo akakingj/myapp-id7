@@ -15,7 +15,7 @@ const fs = require('fs');
 // what the profile sets, in Settings order; FOLLOW: the apps that follow each (their app.json "profile")
 const KEYS = ['engine', 'lightStart', 'lightRed', 'shiftAt', 'rpmScale', 'redline', 'coldLimit', 'coldGuard', 'warmOil',
     'warmCoolant', 'warmGearbox', 'hotOil', 'hotCoolant', 'hotGearbox', 'speedUnit', 'tempUnit', 'pressUnit', 'fuelUnit', 'torqueUnit', 'powerUnit',
-    'skin', 'theme', 'layout', 'renderer', 'demo', 'clock', 'tankLitres', 'fuelFrom', 'eFull', 'gMax', 'speedMax', 'boostMax'];
+    'skin', 'theme', 'layout', 'renderer', 'demo', 'clock', 'tankLitres', 'fuelFrom', 'eFullKm', 'gMax', 'speedMax', 'boostMax'];
 const FOLLOW = {
     // (the AK clusters' Car > Engine, Layouts, Centre and ID8 alike, has the same five; the other apps take a plug-in hybrid
     // as their own setting says: Auto, petrol)
@@ -54,7 +54,7 @@ const FOLLOW = {
     tankLitres: ['Water Cup', 'AK Cluster', 'AK Cluster Centre', 'AK Cluster ID8'],
     // the fuel gauge's figure: the engine unit's tank level, or the litres over the tank's size
     fuelFrom: ['AK Cluster', 'AK Cluster ID8'],
-    eFull: ['eDrive', 'AK Cluster', 'AK Cluster Centre', 'AK Cluster ID8'],
+    eFullKm: ['eDrive', 'AK Cluster', 'AK Cluster Centre', 'AK Cluster ID8'],
     // the G-force circles' size (g), where the dot goes in a bend (out: as the driver feels it), braking up or down
     gMax: ['G-Force', 'M Vitals', 'AK Cluster', 'AK Cluster ID8'],
     // where the speedometers end (km/h), and the boost gauges (bar, each app showing it in its pressure unit)
