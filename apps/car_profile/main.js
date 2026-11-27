@@ -108,8 +108,17 @@ mgu.run({
         // (a value kept in one unit and shown in another's, "unitBy": with that unit on Each app, in every unit the
         // apps may show it in - "50 km / 31 mi" - on the rows and in the values' lists alike)
         const numberText = settings.numberText && settings.numberText.bind(settings);
+        // (the power and torque gauges' ends, kept in kW and Nm: shown in hp and kgm - the owner's - or in the power and
+        // torque units set here; kgm to a tenth: 420 Nm is 42.8 kgm)
+        const SHOWN = { powerMax: { app: ['hp', 1.34102, 0], hp: ['hp', 1.34102, 0], ps: ['PS', 1.35962, 0], kw: ['kW', 1, 0] },
+            torqueMax: { app: ['kgm', 0.101972, 1], kgm: ['kgm', 0.101972, 1], nm: ['Nm', 1, 0], lbft: ['lb-ft', 0.737562, 0] } };
+        const shownIn = (s, v) => {
+            const u = SHOWN[s.key][settings.get(s.unitBy)] || SHOWN[s.key].app;
+            return (v * u[1]).toFixed(u[2]) + ' ' + u[0];
+        };
         if (numberText) {
-            settings.numberText = (s, v) => (s.unitBy && s.units && typeof v === 'number' && !(s.labels && s.labels[String(v)] !== undefined)
+            settings.numberText = (s, v) => (SHOWN[s.key] && typeof v === 'number' && !(s.labels && s.labels[String(v)] !== undefined) ? shownIn(s, v)
+                : s.unitBy && s.units && typeof v === 'number' && !(s.labels && s.labels[String(v)] !== undefined)
                 && !P.isSet(settings.get(s.unitBy))
                 ? [numberText(s, v)].concat(Object.keys(s.units).map((k) => Math.round(v * (s.units[k].mul || 1) + (s.units[k].add || 0)) + ' ' + s.units[k].unit)).join(' / ')
                 : numberText(s, v));
