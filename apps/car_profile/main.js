@@ -53,6 +53,14 @@ async function background(bg) {
         if (was.length) log.info('Auto (from the car), the new default: ' + was.join(', '));
         settings.set('gaugesAuto', true);
     }
+    // (1.14.0: the yellow, the red and the shift warning start on Auto as well - the car's own cluster's, the shift
+    // warning where its red turns solid. Those left on Each app go to Auto once)
+    if (!settings.get('lightsAuto')) {
+        const was = ['lightStart', 'lightRed', 'shiftAt'].filter((k) => settings.get(k) === -1);
+        was.forEach((k) => settings.set(k, 0));
+        if (was.length) log.info('Auto (from the car), the new default: ' + was.join(', '));
+        settings.set('lightsAuto', true);
+    }
     if (bg.signals && bg.signals.watch) {
         car.handlers().forEach(([iface, handlers]) => {
             bg.signals.watch(iface, '1', handlers, log, { pollMs: 5000 })
@@ -99,9 +107,12 @@ mgu.run({
                 return n && it && settings.numberText ? d + '  \u00b7  ' + settings.numberText(Object.assign({}, it, { labels: null }), n) : d;
             }
             const g = P.gaugesOf(P.kindOf(settings, found)), v = settings.get(key);
-            if (!g || !((key === 'rpmScale' || key === 'redline') && v === 0) && !(key === 'speedMax' && v === 'auto')) return d;
+            const auto0 = ['rpmScale', 'redline', 'lightRed', 'shiftAt', 'lightStart'].indexOf(key) >= 0 && v === 0;
+            if (!g || !auto0 && !(key === 'speedMax' && v === 'auto')) return d;
             const s = settings.item && settings.item(key);
-            const shown = key === 'speedMax' ? (opt('speedMax', g.speedMax) || [])[1] : s && settings.numberText ? settings.numberText(s, g[key]) : String(g[key]);
+            // (the yellow's none: as Off reads)
+            const shown = key === 'speedMax' ? (opt('speedMax', g.speedMax) || [])[1] : g[key] === 'off' ? (s && s.labels && s.labels[String(P.YELLOW_OFF)]) || 'Off'
+                : s && settings.numberText ? settings.numberText(s, g[key]) : String(g[key]);
             return shown ? d + '  \u00b7  ' + shown : d;
         };
         const items = (ctx.spec.settings || []).filter((s) => P.KEYS.indexOf(s.key) >= 0);

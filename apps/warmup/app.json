@@ -1,7 +1,7 @@
 {
   "id": "warmup",
   "title": "Warm-Up",
-  "version": "1.12.3",
+  "version": "1.12.4",
   "description": "Oil and coolant warm-up calculator (time to ready), ready for harder driving, safe rev limit, turbo cool-down, a cold start counter, and each drive summed up, compared and before / after a change",
   "vendor": "custom",
   "loggingId": "OA9A",

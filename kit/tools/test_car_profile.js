@@ -201,6 +201,18 @@ const cases = {
         assert.strictEqual(settingsIn(vit, { boostMax: '20' }).get('boostMax'), 'car');
         assert.deepStrictEqual([vit[0].default, vit[0].hidden], ['car', true]);
     },
+    'Yellow light at Off: the Car profile\'s "off" to Redline\'s Off, the yellow then at the red (none)'() {
+        clear();
+        const read = (id) => JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', id, 'app.json'), 'utf8')).settings;
+        const vals = P.publish(fakeProfile({ lightStart: P.YELLOW_OFF }), '1.14.0');
+        assert.deepStrictEqual(vals, { lightStart: 'off' });
+        tick += 5; fs.utimesSync(FILE, tick, tick);
+        const s = settingsIn(read('redline').filter((x) => x.key === 'lightStart'), { lightStart: 4500 });
+        assert.strictEqual(s.get('lightStart'), 99999);
+        assert.strictEqual(s.display('lightStart'), 'Off (no yellow)');
+        // (hud.js zones: the yellow at most the red)
+        assert(/yellow: lightStart > 0 \? Math\.min\(lightStart, red\)/.test(fs.readFileSync(path.join(ROOT, 'apps', 'redline', 'hud.js'), 'utf8')));
+    },
     'every app.json "profile" is one the Car profile sets, with values it can give'() {
         const cp = JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', 'car_profile', 'app.json'), 'utf8'));
         const byKey = {};
@@ -210,9 +222,10 @@ const cases = {
         // (Boost gauge up to is set here alone and starts at Auto, what the apps show without the profile; the engine
         // starts at Auto (from the car), 1.12.0: the kind of car found goes to every app; engineAuto: that change, once)
         // (1.13.0: the rev gauges' end, the redline and the speedometer on Auto too: the car's own cluster's for its kind)
-        const AUTO = { engine: 'auto', speedMax: 'auto', rpmScale: 0, redline: 0, boostMax: 0, powerMax: 0, torqueMax: 0 };
+        // (1.14.0: the yellow, the red and the shift warning on Auto as well)
+        const AUTO = { engine: 'auto', speedMax: 'auto', rpmScale: 0, redline: 0, boostMax: 0, powerMax: 0, torqueMax: 0, lightStart: 0, lightRed: 0, shiftAt: 0 };
         assert(cp.settings.filter((s) => !s.hidden).every((s) => s.default === (AUTO[s.key] !== undefined ? AUTO[s.key] : s.type === 'choice' ? 'app' : -1)), 'everything starts at Each app, the engine and the gauges at Auto');
-        assert(byKey.engineAuto.hidden === true && byKey.gaugesAuto.hidden === true, 'engineAuto, gaugesAuto are not shown');
+        assert(byKey.engineAuto.hidden === true && byKey.gaugesAuto.hidden === true && byKey.lightsAuto.hidden === true, 'engineAuto, gaugesAuto, lightsAuto are not shown');
         assert.deepStrictEqual(byKey.boostMax.steps, [0, 15, 20, 30, 45], 'Boost gauge up to: Auto, or one of the car\'s own gauges');
         let followers = 0;
         fs.readdirSync(path.join(ROOT, 'apps')).forEach((app) => {
