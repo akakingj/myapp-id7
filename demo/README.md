@@ -1,7 +1,7 @@
 # MGU 데모
 
 이 저장소(akakingj/myapp-id7), akakingj/myapp-cluster, akakingj/myapp-cluster-high(AK Cluster ID8)의 **모든 앱**과
-akakingj/myapp-comfort(IterioDev 앱의 iDrive 7용), 재민의 앱(jaimeen77-cmyk/apps)을 PC에서 차처럼 돌려 보는 데모입니다.
+akakingj/myapp-comfort(IterioDev 앱의 iDrive 7용), 재민의 앱(akakingj/jm-apps)을 PC에서 차처럼 돌려 보는 데모입니다.
 브라우저 창 하나에 차에 앉은 것처럼 나옵니다. 위쪽 **보기**에서 고릅니다 (1.11.0):
 
 - **🚗 운전석에서** (기본): 운전석에서 보는 모습. 앞유리 너머 도로와 유리에 비친 HUD, 핸들 너머 계기판(카울 안),
@@ -65,7 +65,10 @@ akakingj/myapp-comfort(IterioDev 앱의 iDrive 7용), 재민의 앱(jaimeen77-cm
 - 턴 뷰 · 드라이브 레코더 · Tailscale은 각자의 도구(카메라, 레코더, tailscale)가 없어서 앱이 "도구가 실행되지 않음"을 보여 줍니다.
 - 이 저장소(공개)에는 myapp-comfort의 코드나 패키지를 넣지 않습니다. 데모는 받은 `src\myapp-comfort`에서 읽기만 합니다.
 
-## 재민의 앱 (jaimeen77-cmyk/apps, 1.14.0)
+## 재민의 앱 (akakingj/jm-apps, 1.14.0)
+
+1.14.1부터 재민 원본(jaimeen77-cmyk/apps) 대신 내 저장소 akakingj/jm-apps(원본 main을 받아 두는 곳)의 `main`에서 받습니다.
+전에 받아 둔 `src\jm-apps`가 재민 원본의 git clone이면 런처가 받는 곳을 바꿉니다.
 
 `src\jm-apps`(직접 실행: `--jm 폴더`)가 있으면 그 저장소의 `mgu-repo.json`에 있는 앱이 나옵니다. 같은 앱의 한국어판이
 있으면 한국어판만 나옵니다: **계기판 레드라인, GIF 플레이어, 아이드라이브 회로, 8게임즈, 시트 Easy Access, Spotify, MGU 모니터**.

@@ -1,7 +1,7 @@
 'use strict';
 /**
  * mgu_demo_update.js - the MGU demo's launcher (mgu_demo.bat runs it): fetches the newest code of the repositories
- * (myapp-id7, myapp-cluster and, when they can be fetched, myapp-cluster-high, myapp-comfort and 재민's apps) into src\ before the demo starts, so the demo always shows the apps as they are on GitHub now. Only Node is needed
+ * (myapp-id7, myapp-cluster and, when they can be fetched, myapp-cluster-high, myapp-comfort and 재민's apps (akakingj/jm-apps)) into src\ before the demo starts, so the demo always shows the apps as they are on GitHub now. Only Node is needed
  * (git when it is there; otherwise the branch's tarball from GitHub, unpacked with tar, which Windows 10 and later have).
  *
  *   node mgu_demo_update.js            (APPS_BRANCH / CLUSTER_BRANCH / STYLES_BRANCH / COMFORT_BRANCH / JM_BRANCH: the branches; defaults below)
@@ -24,8 +24,9 @@ const REPOS = [
     // myapp-comfort (IterioDev's apps, the owner's copy: Seats, Ambient Light, Turn View, Drive Recorder, Tailscale on
     // iDrive 7; demo 1.14.0): its packages run on the centre display; the demo runs without it when it can't be fetched
     { name: 'myapp-comfort', repo: 'akakingj/myapp-comfort', branch: process.env.COMFORT_BRANCH || 'test', optional: true },
-    // 재민's apps (jaimeen77-cmyk/apps, MIT; demo 1.14.0): built by its own tools/store-build.js and run on the centre display
-    { name: 'jm-apps', repo: 'jaimeen77-cmyk/apps', branch: process.env.JM_BRANCH || 'main', optional: true },
+    // 재민's apps (demo 1.14.0): the owner's copy akakingj/jm-apps (재민's jaimeen77-cmyk/apps main, kept up to date; 1.14.1),
+    // built by its own tools/store-build.js and run on the centre display
+    { name: 'jm-apps', repo: 'akakingj/jm-apps', branch: process.env.JM_BRANCH || 'main', optional: true },
 ];
 const say = (s) => console.log(s);
 
@@ -50,6 +51,15 @@ async function update(r) {
     const dir = path.join(SRC, r.name), mark = path.join(dir, '.demo-source.json');
     // a clone made by hand: git pull
     if (fs.existsSync(path.join(dir, '.git')) && hasGit()) {
+        // (a clone of another repository under the same folder name - src\jm-apps from 재민's own before 1.14.1: pointed at this one)
+        const url = spawnSync('git', ['-C', dir, 'remote', 'get-url', 'origin'], { encoding: 'utf8', windowsHide: true });
+        const want = 'https://github.com/' + r.repo + '.git';
+        if (url.status === 0 && url.stdout.trim().replace(/\.git$/, '').toLowerCase() !== want.replace(/\.git$/, '').toLowerCase()) {
+            say('  ' + r.name + ': 받는 곳을 ' + r.repo + ' 로');
+            spawnSync('git', ['-C', dir, 'remote', 'set-url', 'origin', want], { stdio: 'inherit', windowsHide: true });
+            spawnSync('git', ['-C', dir, 'fetch', 'origin', r.branch], { stdio: 'inherit', windowsHide: true });
+            spawnSync('git', ['-C', dir, 'reset', '--hard', 'origin/' + r.branch], { stdio: 'inherit', windowsHide: true });
+        }
         // on the branch asked for (a clone of another branch: fetched and switched to it, local changes kept or refused)
         const cur = spawnSync('git', ['-C', dir, 'rev-parse', '--abbrev-ref', 'HEAD'], { encoding: 'utf8', windowsHide: true });
         if (cur.status === 0 && cur.stdout.trim() !== r.branch) {
@@ -76,7 +86,8 @@ async function update(r) {
     try { tgz = await get('https://codeload.github.com/' + r.repo + '/tar.gz/' + ref); } catch (e) {
         // (1.14.0) not as a download (a repository that needs a GitHub login): a git clone, once - git asks for the
         // login (Git for Windows: a browser window) and remembers it; from then on it is updated with git pull above
-        if (!fs.existsSync(path.join(dir, 'apps')) && hasGit()) {
+        // (also over an older download: a git clone replaces it only once it has come whole)
+        if (hasGit()) {
             say('  ' + r.name + ': git clone (GitHub 로그인 창이 뜨면 로그인하세요) ...');
             const tmp = path.join(SRC, '.clone-' + r.name);
             fs.rmSync(tmp, { recursive: true, force: true });

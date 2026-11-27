@@ -2,7 +2,7 @@
 /**
  * demo/server.js - the MGU demo: every app of this repository (akakingj/myapp-id7) and of akakingj/myapp-cluster running on your
  * computer as in the car, in one browser window (1.14.0: and, when they are there, akakingj/myapp-comfort's iDrive 7 apps
- * - demo/oap-host.js, demo/comfort-sim.js - and 재민's, jaimeen77-cmyk/apps):
+ * - demo/oap-host.js, demo/comfort-sim.js - and 재민's, akakingj/jm-apps):
  *
  *   - the centre display (the MGU): the HMI's app list, an app's own screen when its icon is tapped (touch, the iDrive
  *     knob from the keyboard and mouse wheel), drawn by the car's own draw engine (kit/emu/web/gfx, WebAssembly)
@@ -36,7 +36,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { spawn, spawnSync, fork, exec } = require('child_process');
 
-const DEMO_VERSION = '1.14.0';
+const DEMO_VERSION = '1.14.1';
 const A = path.resolve(__dirname, '..');                       // this repository (akakingj/myapp-id7)
 const WEB = path.join(__dirname, 'web');
 const GFX = path.join(A, 'kit', 'emu', 'web', 'gfx');            // the car's draw engine as WebAssembly (GPL-3.0-or-later)
@@ -73,7 +73,7 @@ const D = (() => {
     const c = [o, process.env.DEMO_COMFORT, B && path.join(B, '..', 'myapp-comfort'), path.join(A, '..', 'myapp-comfort')].filter(Boolean).map((p) => path.resolve(p));
     return c.find((p) => fs.existsSync(path.join(p, 'mgu-repo.json')) && fs.existsSync(path.join(p, 'apps')) && fs.existsSync(path.join(p, 'tools', 'prebuilt.js'))) || null;
 })();
-/** 재민's apps (jaimeen77-cmyk/apps, MIT): --jm, else beside the cluster repository (the launcher's src\jm-apps). Built
+/** 재민's apps (akakingj/jm-apps: the owner's copy of jaimeen77-cmyk/apps main, MIT): --jm, else beside the cluster repository (the launcher's src\jm-apps). Built
  *  by its own tools/store-build.js (its runtime template + the app's current source, as the Store builds it) and run
  *  with this repository's hu-stub.js (the same App Kit). None of them starts with the car here (Cluster Redline would
  *  draw over AK Cluster's cluster): each runs while it is the app opened. Optional. */
