@@ -2728,7 +2728,7 @@ Fuel % from	연료 % 출처
 Engine unit (OBD tank level)	엔진 ECU (OBD 연료량)
 Litres / tank size	남은 리터 / 탱크 용량
 The AK clusters' fuel gauge: the engine unit's own level while the engine runs (the car's litres until then), or the litres over the tank's size always	AK 클러스터의 연료 게이지: 시동 중에는 엔진 ECU의 연료량(그 전에는 차가 보내는 남은 리터), 또는 언제나 남은 리터 / 탱크 용량
-Petrol, M car	가솔린, M 차량
+Petrol, M car	M
 Speedometer up to	속도계 최고값
 None	없음
 Start on the cluster	시동 시 계기판 자동 시작
