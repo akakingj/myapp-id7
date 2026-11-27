@@ -44,23 +44,6 @@ if (SHM) {
     ['cluster-info', 'cluster-layouts', 'mgu-hud', 'run'].forEach((d) => { try { fs.mkdirSync(path.join(SHM, d), { recursive: true }); } catch (e) { /* there */ } });
 }
 
-/* ---------------- a tool's socket under /run/ (the Comfort tool's ctl.sock): the demo's stand-in (demo/runsock.js) ---------------- */
-if (process.env.DEMO_PID) {
-    const net = require('net'), runSocket = require('./runsock');
-    const conn = net.Socket.prototype.connect;
-    net.Socket.prototype.connect = function (...a) {
-        // (net.connect(path) hands the socket its normalized arguments: an array, the options first)
-        const arr = Array.isArray(a[0]), o = arr ? a[0][0] : a[0];
-        const p = typeof o === 'string' ? o : o && typeof o === 'object' && typeof o.path === 'string' ? o.path : null;
-        if (p && p.replace(/\\/g, '/').indexOf('/run/') === 0) {
-            const to = runSocket(p.replace(/\\/g, '/'), process.env.DEMO_PID);
-            const n = typeof o === 'string' ? to : Object.assign({}, o, { path: to });
-            if (arr) a[0][0] = n; else a[0] = n;
-        }
-        return conn.apply(this, a);
-    };
-}
-
 /* ---------------- Windows: the renderer's named pipe counts as a socket ---------------- */
 if (process.platform === 'win32') {
     const st = fs.statSync;
@@ -312,10 +295,6 @@ Module._load = function (request, parent, isMain) {
         const EE = load.apply(this, arguments);
         if (!own(EE, '__demoHu')) Object.defineProperty(EE, '__demoHu', { value: class extends EE { constructor(...a) { super(...a); if (emitters.length < 2) emitters.push(this); } } });
         return EE.__demoHu;
-    }
-    // an app's kit without qrlog.js (재민's runtime template): hu-stub.js's settings sheet takes this repository's (its QR log row)
-    if (typeof request === 'string' && /[/\\]kit[/\\]qrlog$/.test(request) && parent && /hu-stub\.js$/.test(parent.filename || '')) {
-        try { Module._resolveFilename(request, parent, isMain); } catch (e) { return load.call(this, path.join(__dirname, '..', 'kit', 'runtime', 'qrlog'), parent, isMain); }
     }
     const mod = load.apply(this, arguments);
     let file = '';

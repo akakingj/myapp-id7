@@ -1,7 +1,7 @@
 # MGU 데모
 
-이 저장소(akakingj/myapp-id7), akakingj/myapp-cluster, akakingj/myapp-cluster-high(AK Cluster ID8)의 **모든 앱**과
-akakingj/myapp-comfort(IterioDev 앱의 iDrive 7용), 재민의 앱(akakingj/jm-apps)을 PC에서 차처럼 돌려 보는 데모입니다.
+이 저장소(akakingj/myapp-id7), akakingj/myapp-cluster, akakingj/myapp-cluster-high(AK Cluster ID8)의 **모든 앱**을
+PC에서 차처럼 돌려 보는 데모입니다. (1.14.x에 넣었던 myapp-comfort와 재민의 앱은 1.15.0에서 다시 뺐습니다.)
 브라우저 창 하나에 차에 앉은 것처럼 나옵니다. 위쪽 **보기**에서 고릅니다 (1.11.0):
 
 - **🚗 운전석에서** (기본): 운전석에서 보는 모습. 앞유리 너머 도로와 유리에 비친 HUD, 핸들 너머 계기판(카울 안),
@@ -36,7 +36,7 @@ akakingj/myapp-comfort(IterioDev 앱의 iDrive 7용), 재민의 앱(akakingj/jm-
 
 1. `mgu_demo_<버전>.zip`을 풀고 (예: `C:\BMW\mgu-demo`) `mgu_demo.bat`을 실행합니다.
 2. 실행할 때마다 저장소들의 **최신 코드**를 GitHub에서 받아 `src\`에 둡니다 (이미 최신이면 그대로):
-   myapp-id7, myapp-cluster, myapp-cluster-high, myapp-comfort (1.14.0), 재민의 앱 `src\jm-apps` (1.14.0).
+   myapp-id7, myapp-cluster, myapp-cluster-high. 1.14.x가 받아 둔 `src\myapp-comfort`, `src\jm-apps`는 1.15.0 런처가 지웁니다.
    런처(`mgu_demo_update.js`)도 받은 myapp-id7의 것으로 스스로 바뀌므로, zip을 다시 받을 일은 거의 없습니다.
    1.14.0부터는 런처가 바뀌면 그 자리에서 새 런처로 한 번 더 받습니다(새 저장소가 같은 실행에 들어옴).
    내려받기로 받지 못하는 저장소(GitHub 로그인이 필요한 것)는 git이 있으면 `git clone`으로 받습니다. 처음 한 번
@@ -45,38 +45,9 @@ akakingj/myapp-comfort(IterioDev 앱의 iDrive 7용), 재민의 앱(akakingj/jm-
 
 필요한 것: Node.js (LTS), Python 3 (설치할 때 "Add python.exe to PATH"). Python이 없으면 이 저장소의 앱은 빌드되지 않고
 계기판 앱만 돕니다. 보는 브랜치는 `mgu_demo.bat` 위쪽의 `APPS_BRANCH` / `CLUSTER_BRANCH` / `STYLES_BRANCH`
-(기본: 세 저장소 모두 `test`. 예전 bat의 `ak`는 지워진 브랜치라 `test`로 받습니다), 그리고 환경 변수 `COMFORT_BRANCH`
-(기본 `test`), `JM_BRANCH`(기본 `main`).
+(기본: 세 저장소 모두 `test`. 예전 bat의 `ak`는 지워진 브랜치라 `test`로 받습니다).
 
-직접 실행: `node demo/server.js --cluster ../myapp-cluster [--styles ../myapp-cluster-high] [--comfort ../myapp-comfort] [--jm ../jm-apps] [--data 폴더] [--port 8077] [--no-open]`
-
-## myapp-comfort (IterioDev 앱, 1.14.0)
-
-`src\myapp-comfort`(직접 실행: `--comfort 폴더`)가 있으면 iDrive 7에 설치되는 앱(app.json `mguHmi`에 ID7)이 앱 목록에
-나옵니다: **시트, 앰비언트 라이트, 턴 뷰, 드라이브 레코더, Tailscale**. iDrive 8 전용 앱은 이 차에 설치되지 않으므로 나오지 않습니다.
-
-- 스토어가 설치하는 그대로 **커밋된 패키지**(`apps/<id>/<id>@<버전>.tgz`)를 풀어서 그 앱의 코드를 돌립니다
-  (`src/*.js`를 `javascript/`에, 화면은 패키지의 `renderer/`가 데모의 렌더러로 그림). 앱 코드는 바꾸지 않습니다.
-- 차의 oap-sdk 대신 `demo/oap-host.js`가 앱 시작, RHMI 화면(BACK · HOME · 앱 아이콘), iDrive 컨트롤러(FrontCCU),
-  차 속도(Vehicle2)를 줍니다. 그 밖의 서비스는 "없음"으로 답합니다.
-- **Comfort 도구**(`/run/iteriodev-comfort/ctl.sock`)는 `demo/comfort-sim.js`가 대신합니다: 앞좌석 두 개(누르고 있는 동안
-  이동, M1~M3, 하차 위치, 공간 확보는 정차 중에만)와 앰비언트 라이트(구역, 색, 밝기, 주행 모드 색). 값은
-  `data\comfort-demo.json`에 남습니다. 시트 Easy Access(재민)도 같은 도구에 붙습니다.
-- 턴 뷰 · 드라이브 레코더 · Tailscale은 각자의 도구(카메라, 레코더, tailscale)가 없어서 앱이 "도구가 실행되지 않음"을 보여 줍니다.
-- 이 저장소(공개)에는 myapp-comfort의 코드나 패키지를 넣지 않습니다. 데모는 받은 `src\myapp-comfort`에서 읽기만 합니다.
-
-## 재민의 앱 (akakingj/jm-apps, 1.14.0)
-
-1.14.1부터 재민 원본(jaimeen77-cmyk/apps) 대신 내 저장소 akakingj/jm-apps(원본 main을 받아 두는 곳)의 `main`에서 받습니다.
-전에 받아 둔 `src\jm-apps`가 재민 원본의 git clone이면 런처가 받는 곳을 바꿉니다.
-
-`src\jm-apps`(직접 실행: `--jm 폴더`)가 있으면 그 저장소의 `mgu-repo.json`에 있는 앱이 나옵니다. 같은 앱의 한국어판이
-있으면 한국어판만 나옵니다: **계기판 레드라인, GIF 플레이어, 아이드라이브 회로, 8게임즈, 시트 Easy Access, Spotify, MGU 모니터**.
-
-- 그 저장소의 `tools/store-build.js`(스토어가 쓰는 빌드)로 빌드해 이 저장소의 `kit/tools/hu-stub.js`로 돌립니다(같은 App Kit).
-- 차 시동과 함께 켜지는 앱(계기판 레드라인, 시트 Easy Access)도 데모에서는 **열었을 때만** 돕니다: 계기판 레드라인이
-  AK Cluster 계기판 위에 겹쳐 그리지 않게 하기 위해서입니다. 계기판 레드라인은 앱 안의 "앱 켜기"로 켜집니다.
-- Spotify는 앱이 직접 인터넷(Spotify)에 연결합니다.
+직접 실행: `node demo/server.js --cluster ../myapp-cluster [--styles ../myapp-cluster-high] [--data 폴더] [--port 8077] [--no-open]`
 
 ## AK Cluster ID8 (akakingj/myapp-cluster-high)
 
@@ -200,7 +171,3 @@ G20 공식 디스플레이 안내서의 모습을 따라 그렸습니다 (그림
 | `web/` | 페이지 (`kit/emu/web/emu-app.js`·`emu.css` 기반 + 계기판·HUD·패널) |
 | `web/cockpit.js` | 운전석: 핸들, 페달, 센터 콘솔 (기어, iDrive 컨트롤러) |
 | `launcher/` | 배포용 `mgu_demo.bat`, `mgu_demo_update.js` (최신 코드 받기) |
-| `oap-host.js` | myapp-comfort 앱(IterioDev) 실행: 패키지의 코드 + oap-sdk 대역 (1.14.0) |
-| `comfort-sim.js` | Comfort 도구 대역: 시트 두 개, 앰비언트 라이트 (1.14.0) |
-| `runsock.js` | `/run/<도구>/*.sock` 연결을 데모의 소켓(Windows: 파이프)으로 (1.14.0) |
-| `tgz.js` | .tgz 풀기 (Node만으로) (1.14.0) |

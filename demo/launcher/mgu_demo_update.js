@@ -1,10 +1,10 @@
 'use strict';
 /**
  * mgu_demo_update.js - the MGU demo's launcher (mgu_demo.bat runs it): fetches the newest code of the repositories
- * (myapp-id7, myapp-cluster and, when they can be fetched, myapp-cluster-high, myapp-comfort and 재민's apps (akakingj/jm-apps)) into src\ before the demo starts, so the demo always shows the apps as they are on GitHub now. Only Node is needed
+ * (myapp-id7, myapp-cluster and, when it can be fetched, myapp-cluster-high) into src\ before the demo starts, so the demo always shows the apps as they are on GitHub now. Only Node is needed
  * (git when it is there; otherwise the branch's tarball from GitHub, unpacked with tar, which Windows 10 and later have).
  *
- *   node mgu_demo_update.js            (APPS_BRANCH / CLUSTER_BRANCH / STYLES_BRANCH / COMFORT_BRANCH / JM_BRANCH: the branches; defaults below)
+ *   node mgu_demo_update.js            (APPS_BRANCH / CLUSTER_BRANCH / STYLES_BRANCH: the branches; defaults below)
  *
  * A repository that is already the newest is left as it is; with no internet the code there is used as it is.
  */
@@ -21,12 +21,6 @@ const REPOS = [
     // MGU Styles: shown when it can be fetched; while the repository is private, a git clone in src\ (made with a GitHub login) is updated with git pull
     // (its work branch is test; an older mgu_demo.bat still says ak, the branch's former name)
     { name: 'myapp-cluster-high', repo: 'akakingj/myapp-cluster-high', branch: process.env.STYLES_BRANCH && process.env.STYLES_BRANCH !== 'ak' ? process.env.STYLES_BRANCH : 'test', optional: true },
-    // myapp-comfort (IterioDev's apps, the owner's copy: Seats, Ambient Light, Turn View, Drive Recorder, Tailscale on
-    // iDrive 7; demo 1.14.0): its packages run on the centre display; the demo runs without it when it can't be fetched
-    { name: 'myapp-comfort', repo: 'akakingj/myapp-comfort', branch: process.env.COMFORT_BRANCH || 'test', optional: true },
-    // 재민's apps (demo 1.14.0): the owner's copy akakingj/jm-apps (재민's jaimeen77-cmyk/apps main, kept up to date; 1.14.1),
-    // built by its own tools/store-build.js and run on the centre display
-    { name: 'jm-apps', repo: 'akakingj/jm-apps', branch: process.env.JM_BRANCH || 'main', optional: true },
 ];
 const say = (s) => console.log(s);
 
@@ -51,7 +45,7 @@ async function update(r) {
     const dir = path.join(SRC, r.name), mark = path.join(dir, '.demo-source.json');
     // a clone made by hand: git pull
     if (fs.existsSync(path.join(dir, '.git')) && hasGit()) {
-        // (a clone of another repository under the same folder name - src\jm-apps from 재민's own before 1.14.1: pointed at this one)
+        // (a clone of another repository under the same folder name: pointed at this one)
         const url = spawnSync('git', ['-C', dir, 'remote', 'get-url', 'origin'], { encoding: 'utf8', windowsHide: true });
         const want = 'https://github.com/' + r.repo + '.git';
         if (url.status === 0 && url.stdout.trim().replace(/\.git$/, '').toLowerCase() !== want.replace(/\.git$/, '').toLowerCase()) {
@@ -121,6 +115,12 @@ async function update(r) {
     fs.mkdirSync(SRC, { recursive: true });
     say('최신 코드 확인 (GitHub)');
     for (const r of REPOS) { try { await update(r); } catch (e) { say('  ' + r.name + ': ' + e.message); } }
+    // (1.15.0) the demo no longer runs myapp-comfort's or 재민's apps: the copies a 1.14 launcher fetched into src\ go
+    for (const n of ['myapp-comfort', 'jm-apps']) {
+        const d = path.join(SRC, n);
+        if (!fs.existsSync(d)) continue;
+        try { fs.rmSync(d, { recursive: true, force: true }); say('  ' + n + ': 데모에서 빠져서 src\\' + n + ' 를 지웠습니다'); } catch (e) { say('  ' + n + ': 지우지 못했습니다 (' + e.message + ')'); }
+    }
     // this launcher itself as myapp-id7 has it now (a new repository or branch reaches the PC without a new zip; from the next start)
     try {
         const mine = path.join(SRC, 'myapp-id7', 'demo', 'launcher', 'mgu_demo_update.js');
