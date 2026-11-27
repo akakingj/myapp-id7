@@ -3631,3 +3631,7 @@ Pick what it was in Settings > Change to mark. Then drive: this view shows what 
 Pick the part or care in Settings > Noted in Garage, then Note it (twice) on this page.	설정 > 차고에 기록에서 부품이나 관리를 고르고, 이 페이지에서 기록하기를 (두 번) 누르세요.
 Read only: it uses what the car sends the head unit anyway and asks nothing of any control unit. Settings > Plausibility checks turns it off.	읽기 전용: 차가 헤드유닛에 원래 보내는 것만 쓰고 어떤 제어 유닛에도 묻지 않습니다. 설정 > 타당성 검사로 끕니다.
 (own)	(내 항목)
+# Car profile 1.13.0: the power and torque gauges from the car's Sport Display
+Torque gauge up to	토크 게이지 최댓값
+The engine's most power, where the power gauges end. Auto: the car's own Sport Display's (its power gauge's 100 %)	엔진 최대 출력, 출력 게이지의 끝. 자동: 차량 스포츠 디스플레이의 값 (출력 게이지 100 %)
+The engine's most torque, where the torque gauges end. Auto: the car's own Sport Display's (its torque gauge's 100 %)	엔진 최대 토크, 토크 게이지의 끝. 자동: 차량 스포츠 디스플레이의 값 (토크 게이지 100 %)

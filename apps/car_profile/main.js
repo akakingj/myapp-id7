@@ -36,7 +36,7 @@ async function background(bg) {
     const car = Detect.create({ dataDir: bg.dataDir, log, onChange: () => write() });
     state.car = car;
     const write = () => {
-        try { P.publish(settings, spec.version, log, car.kind()); state.at = Date.now(); state.error = ''; } catch (e) { state.error = String(e && e.message || e); log.warn('car profile: ' + state.error); }
+        try { P.publish(settings, spec.version, log, car.kind(), car.sport()); state.at = Date.now(); state.error = ''; } catch (e) { state.error = String(e && e.message || e); log.warn('car profile: ' + state.error); }
     };
     // (1.12.0: the engine starts on Auto. One left on Each app as it came, before Auto was the default, goes to Auto once)
     if (!settings.get('engineAuto')) {
@@ -92,6 +92,11 @@ mgu.run({
             if (key === 'engine') {
                 const o = settings.get('engine') === 'auto' && found ? opt('engine', found) : null;
                 return o ? d + '  \u00b7  ' + o[1] : d;
+            }
+            // (the power and torque gauges on Auto: the Sport Display's most, once the car has sent it)
+            if ((key === 'powerMax' || key === 'torqueMax') && settings.get(key) === 0) {
+                const sp = state.car ? state.car.sport() : {}, n = key === 'powerMax' ? sp.kw : sp.nm, it = settings.item && settings.item(key);
+                return n && it && settings.numberText ? d + '  \u00b7  ' + settings.numberText(Object.assign({}, it, { labels: null }), n) : d;
             }
             const g = P.gaugesOf(P.kindOf(settings, found)), v = settings.get(key);
             if (!g || !((key === 'rpmScale' || key === 'redline') && v === 0) && !(key === 'speedMax' && v === 'auto')) return d;
@@ -187,7 +192,7 @@ mgu.run({
                 column(2, [['Fuel and battery', 'Fuel and battery'], ['Cluster', 'Cluster']]);
             }
             // whether the other apps have it, in the header (each text translated whole)
-            const n = Object.keys(P.valuesOf(settings, state.car && state.car.kind())).length;
+            const n = Object.keys(P.valuesOf(settings, state.car && state.car.kind(), state.car && state.car.sport())).length;
             const badge = state.error ? { text: 'Not written for the apps', color: 'crit' }
                 : n ? { text: 'Set for the apps', color: t.sel || t.accent } : { text: 'Nothing set: each app as it is', color: t.dim };
             G.frame(cv, t, TABS, page, [badge]);

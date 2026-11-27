@@ -2,7 +2,7 @@
   "id": "car_vitals",
   "title": "M Vitals",
   "description": "Live engine, thermal, intake / fuel / ignition, tyre and chassis gauges",
-  "version": "2.31.0",
+  "version": "2.31.1",
   "vendor": "custom",
   "loggingId": "OA93",
   "iconGlyph": "gauge",
@@ -287,6 +287,7 @@
     },
     {
       "key": "maxPower",
+      "profile": "powerMax",
       "label": "Max power (100% on sport display)",
       "type": "number",
       "unit": "kW",

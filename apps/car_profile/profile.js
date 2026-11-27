@@ -15,7 +15,8 @@ const fs = require('fs');
 // what the profile sets, in Settings order; FOLLOW: the apps that follow each (their app.json "profile")
 const KEYS = ['engine', 'lightStart', 'lightRed', 'shiftAt', 'rpmScale', 'redline', 'coldLimit', 'coldGuard', 'warmOil',
     'warmCoolant', 'warmGearbox', 'hotOil', 'hotCoolant', 'hotGearbox', 'speedUnit', 'tempUnit', 'pressUnit', 'fuelUnit', 'torqueUnit', 'powerUnit',
-    'skin', 'theme', 'layout', 'renderer', 'demo', 'clusterStart', 'clock', 'tankLitres', 'fuelFrom', 'eFullKm', 'gMax', 'speedMax', 'boostMax'];
+    'skin', 'theme', 'layout', 'renderer', 'demo', 'clusterStart', 'clock', 'tankLitres', 'fuelFrom', 'eFullKm', 'gMax', 'speedMax', 'boostMax',
+    'powerMax', 'torqueMax'];
 const FOLLOW = {
     // (the AK clusters' Car > Engine, Layouts, Centre and ID8 alike, has the same five; the other apps take a plug-in hybrid
     // as their own setting says: Auto, petrol)
@@ -62,6 +63,9 @@ const FOLLOW = {
     // where the speedometers end (km/h), and the boost gauges (bar, each app showing it in its pressure unit)
     speedMax: ['AK Cluster Layouts and ID8'],
     boostMax: ['M Vitals', 'AK Cluster Layouts, Centre and ID8'],
+    // the engine's most power and torque, where the power and torque gauges end (Auto: the car's Sport Display's)
+    powerMax: ['M Vitals', 'AK Cluster Layouts and ID8'],
+    torqueMax: ['AK Cluster Layouts and ID8'],
 };
 // (AK Cluster Layouts, Centre and Info: the cluster apps of akakingj/idrive7-cluster-info, each named where it follows
 // one, as their app.json "profile" says; AK Cluster ID8: akakingj/myapp-cluster-high's, the same way; every AK Cluster
@@ -75,7 +79,7 @@ const isSet = (v) => v !== undefined && v !== null && v !== 'app' && v !== -1;
  * car found (detect.js: 'phev', 'm', 'diesel' or 'petrol'), so every app follows the same; 'auto' (each app reads
  * the car itself) until one is found.
  */
-function valuesOf(settings, carKind) {
+function valuesOf(settings, carKind, sport) {
     const o = {};
     KEYS.forEach((k) => { const v = settings.get(k); if (isSet(v)) o[k] = v; });
     if (o.engine === 'auto' && carKind) o.engine = carKind;
@@ -84,6 +88,9 @@ function valuesOf(settings, carKind) {
     if (o.rpmScale === 0 && g) o.rpmScale = g.rpmScale;
     if (o.redline === 0 && g) o.redline = g.redline;
     if (o.speedMax === 'auto') { if (g) o.speedMax = g.speedMax; else delete o.speedMax; }
+    // the power and torque gauges on Auto: the car's Sport Display's most (detect.js), none (each app's) till it has sent it
+    if (o.powerMax === 0) { if (sport && sport.kw) o.powerMax = sport.kw; else delete o.powerMax; }
+    if (o.torqueMax === 0) { if (sport && sport.nm) o.torqueMax = sport.nm; else delete o.torqueMax; }
     return o;
 }
 
@@ -108,8 +115,8 @@ function kindOf(settings, carKind) {
 const gaugesOf = (kind) => G20[kind] || null;
 
 /** Write the profile from settings when it differs from the file (or there is none). Returns the values. */
-function publish(settings, version, log, carKind) {
-    const f = file(), values = valuesOf(settings, carKind);
+function publish(settings, version, log, carKind, sport) {
+    const f = file(), values = valuesOf(settings, carKind, sport);
     const text = JSON.stringify({ v: 1, app: 'car_profile', version: version || '', values }, null, 1);
     try { if (fs.readFileSync(f, 'utf8') === text) return values; } catch (e) { /* none yet */ }
     const tmp = f + '.' + process.pid + '.tmp';

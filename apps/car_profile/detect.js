@@ -5,6 +5,7 @@
  *   const d = detect.create({ dataDir, log, onChange });
  *   d.handlers()   -> [[iface, { field: fn }], ...] to watch (app.json "signals" has them)
  *   d.kind()       -> 'phev' | 'm' | 'diesel' | 'petrol' | null (nothing seen yet)
+ *   d.sport()      -> { kw, nm }: the Sport Display's most power and torque (sportMax), null till they come
  *
  * What it goes by, as the apps that read these already do:
  *   - a plug-in hybrid: its own drive modes (FES actualValueModeDrivingExperience 15 - 22, PHEV_SPORT to
@@ -36,6 +37,23 @@ function mMode(v) {
 }
 const kindOf = (f) => (f.phev ? 'phev' : f.m ? 'm' : f.fuel === 'diesel' || f.fuel === 'petrol' ? f.fuel : null);
 
+/*
+ * The Sport Display's most power and torque (FES statusVehicleDynamicEngineMaxValue: displayMaximumValuePower,
+ * displayMaximumValueTorque; its power and torque gauges' 100 %). Taken as kW and Nm, as the car's signals have
+ * power and torque (statusActualValueTorque2 in Nm) and as the G20 range spans them: 320d 140 kW / 400 Nm, 320i
+ * 135 / 300, 330i 190 / 400, 330e 215 / 420 (with its electric motor), M340i 275 / 500, M3 353 - 375 / 550 - 650. A
+ * torque under 100 is taken as kgm (x 9.80665). Kept only within 60 - 600 kW and 150 - 1000 Nm, with the power at
+ * 0.2 - 0.9 kW a Nm (every G20 is 0.34 - 0.65); 65535 or 0: none.
+ */
+function sportMax(v) {
+    const p = v && v.displayMaximumValuePower, t0 = v && v.displayMaximumValueTorque;
+    const t = typeof t0 === 'number' && t0 > 0 && t0 < 100 ? Math.round(t0 * 9.80665) : t0;
+    const kw = typeof p === 'number' && p >= 60 && p <= 600 ? Math.round(p) : null;
+    const nm = typeof t === 'number' && t >= 150 && t <= 1000 ? Math.round(t) : null;
+    if (kw && nm && (kw / nm < 0.2 || kw / nm > 0.9)) return { kw: null, nm: null };
+    return { kw, nm };
+}
+
 function create(opts) {
     const log = opts.log, file = opts.dataDir ? path.join(opts.dataDir, 'car.json') : null;
     let found = {};
@@ -46,8 +64,8 @@ function create(opts) {
         found[what[0]] = what[1];
         const k = kindOf(found);
         if (file) { try { fs.writeFileSync(file, JSON.stringify(found)); } catch (e) { if (log) log.warn('car: cannot save ' + file); } }
-        if (k === kind) return;
-        if (log) log.info('car: ' + k + ' (' + why + ')');
+        if (k === kind && (what[0] !== 'kw' && what[0] !== 'nm')) return;
+        if (log) log.info('car: ' + (k === kind ? '' : k + ', ') + why);
         kind = k;
         if (opts.onChange) { try { opts.onChange(k); } catch (e) { if (log) log.warn('car: ' + e); } }
     };
@@ -57,7 +75,12 @@ function create(opts) {
     };
     return {
         handlers: () => [
-            ['de.bmw.infotainment.drivingexcitement.FES', { statusSwitchDriveDynamicSport2: mode, statusFESVehicleDynamicSwitchHMI: mode }],
+            ['de.bmw.infotainment.drivingexcitement.FES', { statusSwitchDriveDynamicSport2: mode, statusFESVehicleDynamicSwitchHMI: mode,
+                statusVehicleDynamicEngineMaxValue: (v) => {
+                    const m = sportMax(v);
+                    if (m.kw && found.kw !== m.kw) note(['kw', m.kw], 'Sport Display: ' + m.kw + ' kW');
+                    if (m.nm && found.nm !== m.nm) note(['nm', m.nm], 'Sport Display: ' + m.nm + ' Nm');
+                } }],
             ['de.bmw.infotainment.misc.MDrive', { controlDisplayMSystems: (v) => { if (mMode(v)) note(['m', true], 'its M engine modes'); } }],
             ['de.bmw.infotainment.vehicle.Vehicle2', { statusVehiclePartType: (v) => {
                 const t = Engine.typeOf(v && v.typeEngine);
@@ -65,7 +88,9 @@ function create(opts) {
             } }],
         ],
         kind: () => kind,
+        /** The Sport Display's most power (kW) and torque (Nm), each null till it has come. */
+        sport: () => ({ kw: found.kw || null, nm: found.nm || null }),
     };
 }
 
-module.exports = { create, phevMode, mMode, kindOf };
+module.exports = { create, phevMode, mMode, kindOf, sportMax };

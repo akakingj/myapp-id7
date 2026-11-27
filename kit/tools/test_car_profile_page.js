@@ -230,6 +230,19 @@ const check = (name, fn) => fn().then(() => { n++; console.log('ok   ' + name); 
         assert.deepStrictEqual([all().rpmScale, all().redline, all().speedMax], [8000, 6500, '260'], 'set by hand: that one');
         s.set('engine', 'app'); s.set('speedMax', 'auto');
         assert.deepStrictEqual([all().rpmScale, all().speedMax], [0, undefined], 'no kind of car: Auto as each app has it, the speedometer each app\'s');
+        // the power and torque gauges on Auto: the Sport Display's most, kW and Nm (a 330e: 215 kW, 420 Nm)
+        s.set('engine', 'auto');
+        assert.strictEqual(all().powerMax, undefined, 'not sent yet: each app\'s own');
+        watched['de.bmw.infotainment.drivingexcitement.FES'].statusVehicleDynamicEngineMaxValue({ displayMaximumValuePower: 215, displayMaximumValueTorque: 420 });
+        assert.deepStrictEqual([all().powerMax, all().torqueMax], [215, 420]);
+        assert.ok(/^Auto \(the car's Sport Display\)  \u00b7  215 kW/.test(s.display('powerMax')), s.display('powerMax'));
+        s.set('powerMax', 300);
+        assert.strictEqual(all().powerMax, 300, 'set by hand: that one');
+        const Det = require(path.join(ROOT, 'apps', 'car_profile', 'detect.js'));
+        assert.deepStrictEqual(Det.sportMax({ displayMaximumValuePower: 135, displayMaximumValueTorque: 300 }), { kw: 135, nm: 300 }, 'a 320i');
+        assert.deepStrictEqual(Det.sportMax({ displayMaximumValuePower: 135, displayMaximumValueTorque: 30.6 }), { kw: 135, nm: 300 }, 'torque in kgm');
+        assert.deepStrictEqual(Det.sportMax({ displayMaximumValuePower: 65535, displayMaximumValueTorque: 65535 }), { kw: null, nm: null }, 'none');
+        assert.deepStrictEqual(Det.sportMax({ displayMaximumValuePower: 400, displayMaximumValueTorque: 300 }), { kw: null, nm: null }, 'not a car: neither');
         // an M car by its M engine modes; a diesel by its engine type; a petrol car's modes (1 - 14) are no plug-in hybrid's
         const Detect = require(path.join(ROOT, 'apps', 'car_profile', 'detect.js'));
         assert.strictEqual(Detect.kindOf({ m: true, fuel: 'petrol' }), 'm');
