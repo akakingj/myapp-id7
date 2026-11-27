@@ -3640,3 +3640,15 @@ From here the lights and the rev gauges turn yellow (e.g. 4000; Auto: an M car's
 From here they turn red: the red zone (Auto: where the car's own red zone begins, 6,000 on a 320i)	이 rpm부터 빨갛게: 레드존 (자동: 차 계기판의 레드존 시작, 320i는 6,000)
 Shift now: the lights flash, the speed and the gear red (Auto: where the car's red turns solid, 6,500 on a 320i)	지금 변속: 표시등 깜빡임, 속도와 단수 빨강 (자동: 차 계기판의 레드존이 꽉 찬 빨강이 되는 곳, 320i는 6,500)
 The engine's real limit, where the fuel is cut (Auto: the gauge's end); Auto is fine	엔진의 실제 한계(연료 컷) (자동: 게이지 끝). 보통 자동이면 됩니다
+# 11-27 bug hunt: texts drawn half in English (each app's page)
+Police: flashes a burst · flash · order (tap to change)	경찰: 깜빡임 횟수 · 한 번 길이 · 순서 (눌러서 바꾸기)
+A value n/a or wrong? Adjust config.battery in apps/edrive/app.json and rebuild. Regen shown while accelerating: powerSign 1.	값이 없거나 잘못되면 apps/edrive/app.json의 config.battery를 조정 후 다시 빌드하세요. 가속 중에 회생으로 나오면: powerSign 1.
+Take a photo when it says DONE. Settings > Scan unit picks the unit. Replies are saved in the app's data folder	완료 표시 시 사진을 찍으세요. 설정에서 진단할 제어기를 선택합니다. 응답은 앱 데이터 폴더에 저장됩니다
+Settings > Save the last minute. Until then nothing is read or saved.	설정 > 최근 1분 저장. 그때까지는 아무것도 읽거나 저장하지 않습니다.
+chosen in Settings > Noted in Garage	설정 > 차고에 기록에서 고른 항목
+green: calmer or cooler, red: harder on the car. Settings > Compare with	초록: 더 부드럽거나 시원함, 빨강: 차에 더 부담. 설정 > 주행 비교 대상
+Counted from the next engine start	다음 시동부터 셉니다
+slowest	가장 느림
+sent	차가 보냄
+from speed	속도로 계산
+no access	접근 불가
