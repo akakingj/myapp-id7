@@ -163,7 +163,7 @@ body.narrow #panel { width: auto; border-left: 0; border-top: 1px solid var(--li
   background-image: linear-gradient(28deg, transparent 47%, #3a4656 47%, #3a4656 53%, transparent 53%), linear-gradient(-62deg, transparent 48%, #2f3a48 48%, #2f3a48 52%, transparent 52%),
     linear-gradient(90deg, transparent 30%, #4ea3ff 30%, #4ea3ff 31.4%, transparent 31.4%);
   background-size: 24% 42%, 31% 62%, 100% 100%; }
-#strip { left: 0; width: 100%; height: 3.8%; display: flex; pointer-events: none; color: #eef1f5; font: 500 1.42cqw "Segoe UI", "Malgun Gothic", sans-serif; letter-spacing: 0.01em; }
+#strip { left: 0; top: 92.2%; width: 100%; height: 7.8%; display: flex; pointer-events: none; color: #eef1f5; font: 500 1.42cqw "Segoe UI", "Malgun Gothic", sans-serif; letter-spacing: 0.01em; }
 #strip span { position: absolute; top: 50%; transform: translateY(-50%); white-space: nowrap; }
 #strip .dim { color: #b9c0ca; }
 #clusterNote { left: 0; top: 4%; width: 100%; display: none; align-items: center; justify-content: center; flex-direction: column; gap: .3cqw; color: #7d8794; font: 600 1.2cqw "Segoe UI", "Malgun Gothic", sans-serif; pointer-events: none; text-align: center; }

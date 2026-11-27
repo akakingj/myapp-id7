@@ -175,6 +175,9 @@ G20 공식 디스플레이 안내서의 모습을 따라 그렸습니다 (그림
   Cluster Info · 레드라인의 HUD 화살표, 앰비언트 설정, 밤의 HUD 밝기가 이것을 따릅니다.
 - **차량 프로필**이 쓰는 공통 설정(`/dev/shm/car-profile.json`)을 다른 앱이 그대로 따라갑니다.
 - 앱 설정은 PC에 남습니다 (`data\apps\<앱>\settings.json`). 처음에는 AK Cluster Layouts만 "계기판에 표시"가 켜져 있습니다.
+- **BMW 하단바** (1.14.2): 순정 하단 줄(주행 가능 거리, 시각, 도로명, 주행 모드, 기어, 바깥 온도)은 실차처럼 계기판 앱의
+  레이어 **아래**에 있습니다. 그래서 AK Cluster Layouts와 AK Cluster ID8의 "BMW 하단바" 설정이 그대로 보입니다.
+  켜짐이면 하단 줄이 보이고, 꺼짐이면 앱이 덮어서 기어 글자만 남습니다. 기어 자리는 실차의 기어 창(x 1385~1462)에 맞췄습니다.
 - **속도 표지판** (패널 "HUD"의 제한 속도, 1.14.0): HUD 그림만이 아니라 차의 신호(DisplayDataServer `functionalLibraryData`의
   `xSpeedLimitAssist.vSLISpeedValue`)로도 나가서, AK Cluster Layouts와 AK Cluster ID8의 **속도 표지판** 설정을 켜면 계기판에
   같은 숫자가 나옵니다. 실차에서 이 값은 리미터나 크루즈가 표지판 속도를 받아들였을 때만 오므로, 데모는 표지판이 있으면

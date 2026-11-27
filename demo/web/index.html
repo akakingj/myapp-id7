@@ -105,19 +105,20 @@
     <div id="cluster" class="car" aria-label="계기판, 1920 x 720">
       <canvas id="mock" class="full" width="1920" height="720"></canvas>
       <div id="map">지도 자리 (Waze)</div>
+      <!-- (the KOMBI's own bottom strip: under the apps' layers, as on the car - their "BMW 하단바 꺼짐" covers it, all but the gear) -->
+      <div id="strip" title="순정 하단 줄: 계기판이 직접 그리는 영역 (모형). 계기판 앱의 레이어 아래에 있습니다">
+        <span id="sRange" style="left:8.2%"><b>520</b> <span class="dim" style="position:static;transform:none">km</span></span>
+        <span id="sTime" style="left:20.6%">--:--</span>
+        <span id="sPlace" style="left:44.8%" class="dim">서울특별시 중구 세종대로</span>
+        <span id="sMode" style="right:28.3%">COMFORT</span>
+        <span id="sGear" style="left:72.1%;width:4.1%;text-align:center">P</span>
+        <span id="sTemp" style="left:84.4%">+20.0°C</span>
+      </div>
       <canvas id="glPanel" class="full" width="1920" height="720"></canvas>
       <canvas id="glMap" width="1088" height="480"></canvas>
       <!-- (the stock cluster's frames and readings: over the map, as the car's) -->
       <canvas id="mockTop" class="full" width="1920" height="720"></canvas>
       <canvas id="ovl" class="full" width="1920" height="720"></canvas>
-      <div id="strip" title="순정 하단 줄: 계기판이 직접 그리는 영역 (모형)">
-        <span id="sRange" style="left:8.2%"><b>520</b> <span class="dim" style="position:static;transform:none">km</span></span>
-        <span id="sTime" style="left:20.6%">--:--</span>
-        <span id="sPlace" style="left:44.8%" class="dim">서울특별시 중구 세종대로</span>
-        <span id="sMode" style="left:68.4%">COMFORT</span>
-        <span id="sGear" style="left:76.6%">P</span>
-        <span id="sTemp" style="left:84.4%">+20.0°C</span>
-      </div>
       <svg id="turnL" class="turn" viewBox="0 0 40 32"><path d="M2 16 18 2v8h20v12H18v8z"/></svg>
       <svg id="turnR" class="turn" viewBox="0 0 40 32"><path d="M38 16 22 2v8H2v12h20v8z"/></svg>
       <div class="lcd"></div>

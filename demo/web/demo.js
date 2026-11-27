@@ -475,6 +475,7 @@ const Cluster = (() => {
   const px = new Map();                // 'app/key' -> { rev, data: Uint8Array }
   const errors = new Set();
   let geo = { map: { x: 416, y: 120, w: 1088, h: 480 }, stripY: 646 };
+  const STRIP_TRIM = 18;          // (AK Cluster Layouts' STRIP_TRIM_MAX, AK Cluster ID8's Panel.STRIP_TRIM_MAX: the row above the gear's window)
   // where the map shows: its slot on the stock cluster; over a layout only in the layout's map window (map_window.js)
   let win = null, panelOn = false;
   const mapRect = () => (panelOn ? win : geo.map);
@@ -625,7 +626,8 @@ const Cluster = (() => {
   requestAnimationFrame(frame);
   return {
     redraw() { dirty = true; },
-    geo(g) { geo = g; $('#strip').style.top = g.stripY / 7.2 + '%'; placed = ''; dirty = true; glassView(); },
+    // (the strip's readings sit below the trim the apps' "BMW 하단바 켜짐" draws over its top: 18 px, as on the car)
+    geo(g) { geo = g; Object.assign($('#strip').style, { top: (g.stripY + STRIP_TRIM) / 7.2 + '%', height: (720 - g.stripY - STRIP_TRIM) / 7.2 + '%' }); placed = ''; dirty = true; glassView(); },
     mapWin(r) { win = r || null; placed = ''; dirty = true; },
     reset(fs) { Object.keys(FS).forEach((k) => delete FS[k]); Object.assign(FS, fs || {}); apps.clear(); px.clear(); errors.clear(); dirty = true; },
     layers(app, layers, fsNew) {
@@ -812,11 +814,29 @@ function strip() {
   $('#hudBox').classList.toggle('low', x.hudSize === 'low');
   if (Hud) Hud.draw(d, x, x.waze === 'hud');
 }
+/** the strip's readings into a 1920 x 720 picture (the cluster's PNG), where the page shows them */
+function stripTo(g) {
+  const cr = $('#cluster').getBoundingClientRect(), k = 1920 / cr.width;
+  g.save(); g.textBaseline = 'middle';
+  $('#strip').querySelectorAll(':scope > span').forEach((e) => {
+    if (e.style.visibility === 'hidden') return;
+    const r = e.getBoundingClientRect(), cs = getComputedStyle(e);
+    g.font = cs.fontWeight + ' ' + parseFloat(cs.fontSize) * k + 'px ' + cs.fontFamily; g.fillStyle = cs.color;
+    const mid = cs.textAlign === 'center';
+    g.textAlign = mid ? 'center' : 'left';
+    g.fillText(e.textContent.replace(/\s+/g, ' ').trim(), (r.left + (mid ? r.width / 2 : 0) - cr.left) * k, (r.top + r.height / 2 - cr.top) * k);
+  });
+  g.restore();
+}
 $('#carlook').onchange = (e) => $('#cluster').classList.toggle('car', e.target.checked);
 $('#shotCluster').onclick = () => {
   const out = el('canvas', { width: 1920, height: 720 }), g = out.getContext('2d');
   g.fillStyle = '#000'; g.fillRect(0, 0, 1920, 720);
-  ['#mock', '#glPanel', '#mockTop', '#ovl'].forEach((s) => { const c = $(s); if (c.style.display !== 'none') g.drawImage(c, 0, 0); });
+  ['#mock', '#strip', '#glPanel', '#mockTop', '#ovl'].forEach((s) => {
+    const c = $(s);
+    if (s === '#strip') { stripTo(g); return; }
+    if (c.style.display !== 'none') g.drawImage(c, 0, 0);
+  });
   const m = $('#glMap'), r = m.getBoundingClientRect(), cr = $('#cluster').getBoundingClientRect();
   g.drawImage(m, (r.left - cr.left) * 1920 / cr.width, (r.top - cr.top) * 720 / cr.height, r.width * 1920 / cr.width, r.height * 720 / cr.height);
   out.toBlob((b) => { const a = el('a', { href: URL.createObjectURL(b), download: 'cluster-' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-') + '.png' }); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }, 'image/png');
