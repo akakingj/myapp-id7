@@ -5,7 +5,7 @@ One place for the car's engine values and units. Set them here once and the othe
 | Setting | Followed by |
 |---|---|
 | Engine (Auto / Diesel / Petrol / Petrol, M car / Plug-in hybrid) | M Vitals, Redline, Warm-Up, Virtual Dyno, AK Cluster Layouts and Centre (*Engine*, the same five: an M car is a petrol car there), AK Cluster ID8 (*Engine*, the same five; an M car and a plug-in hybrid: its layers keep clear of the M display's boxes and the eDrive box) |
-| Yellow light at (Off: no yellow, green then red) | Redline (*Lights from*), AK Cluster Layouts (the amber zone of ID6 M and ID7 M, Track's and GT3's tach turning yellow, Simple's rpm), AK Cluster Centre (*Shift light: starts at*), AK Cluster ID8 (*Yellow light at*: where the shift lights begin) |
+| Yellow light at (Auto: an M car's 6500, else each app's) | Redline (*Lights from*), AK Cluster Layouts (the amber zone of ID6 M and ID7 M, Track's and GT3's tach turning yellow, Simple's rpm), AK Cluster Centre (*Shift light: starts at*), AK Cluster ID8 (*Yellow light at*: where the shift lights begin) |
 | Red light at (Auto: where the car's red zone begins, else the redline) | AK Cluster Layouts (the red zone, Simple's rpm red), AK Cluster ID8 (*Red light at*: the red zone) |
 | Shift now warning at (the shift point; Auto: where the car's red turns solid, else the redline less 300) | Redline (its fixed one), Warm-Up, AK Cluster Layouts, AK Cluster Centre (*Shift light: flashes at*), AK Cluster ID8 (*Shift now warning at*: the shift lights flash, the speed and the gear blink red) |
 | Gauge goes up to (the end of the rev scale) | M Vitals, Redline, Virtual Dyno (*Graph up to*), AK Cluster Layouts, AK Cluster ID8 (*Gauge goes up to*) |
@@ -22,8 +22,6 @@ One place for the car's engine values and units. Set them here once and the othe
 | Pressure unit | M Vitals, Redline HUD (boost and tyres), Live Data, AK Cluster Layouts, Centre and Info, AK Cluster ID8 |
 | Fuel use unit | Redline HUD, AK Cluster Layouts and AK Cluster ID8 (*Fuel economy unit*: each of the four) |
 | Torque unit, Power unit | M Vitals, Redline HUD, Virtual Dyno, AK Cluster Layouts and Centre (Info: the torque unit), AK Cluster ID8 |
-| Fuel tank size | Water Cup, AK Cluster Layouts and Centre, AK Cluster ID8 |
-| Fuel % from (Engine unit (OBD tank level) / Litres / tank size) | AK Cluster Layouts, AK Cluster ID8: the fuel gauge's figure |
 | Electric range when full (kept in km, shown in miles with mph: 50 km is 31 mi) | eDrive (*Electric range when full, 20 °C*, in its distance unit), AK Cluster Layouts and Centre, AK Cluster ID8: a plug-in hybrid's electric range from its charge while the car gives none (ID8: its battery gauge against it too) |
 | Start on the cluster (AK Cluster Layouts, AK Cluster ID8 or none: the one that comes up at every start - its Show on the cluster turned on, and it keeps the cluster from the other whichever came up first) | AK Cluster Layouts, AK Cluster ID8 (*Start on the cluster with the car*) |
 | Clock (12 / 24 hours) | AK Cluster Layouts and Centre, AK Cluster ID8 (the time itself is the car's own clock's) |
@@ -43,14 +41,14 @@ themselves, as on Auto before. What was found is kept for the next start.
 (1.14.0, the same once): on Auto they are what BMW's own cluster has for that kind of car (G20). Its red zone is hatched
 for the first half (6000 - 6500 on a 320i) and solid from there to the gauge's end: the red light comes on where it
 begins, the shift now warning (the shift lights flashing, the speed and the gear blinking red) where it turns solid. Only
-an M car's has a yellow before the red; on the others **Yellow light at** on Auto is *Off*: the lights go from green
-straight to red. *Off* can be chosen for any car.
+an M car's has a yellow before the red (6500); on the others **Yellow light at** on Auto is each app's own, where its
+shift lights begin to turn.
 
 | Kind of car (G20) | Rev gauge ends at (and the engine's top rpm) | Yellow from | Red from | Shift now warning at | Speedometer |
 |---|---|---|---|---|---|
-| Diesel (320d) | 6000 | Off | 5000 | 5500 | 260 |
-| Petrol (320i, 330i; M340i, whose red starts at about 6500) | 7000 | Off | 6000 | 6500 | 260 |
-| Plug-in hybrid (330e: Power % on Electric and Hybrid, its petrol engine's revs on Sport) | 7000 | Off | 6000 | 6500 | 260 |
+| Diesel (320d) | 6000 | each app's | 5000 | 5500 | 260 |
+| Petrol (320i, 330i; M340i, whose red starts at about 6500) | 7000 | each app's | 6000 | 6500 | 260 |
+| Plug-in hybrid (330e: Power % on Electric and Hybrid, its petrol engine's revs on Sport) | 7000 | each app's | 6000 | 6500 | 260 |
 | M car (M3) | 8000 | 6500 | 7200 | 7200 | 330 |
 
 Their rows show it (*Auto · 7000 rpm*); with no kind of car known yet, Auto is each app's own as before. Boost gauge up to, set here alone, starts at *Auto*, as the apps show it without the Car profile. A setting the profile sets shows the profile's value in the other app's Settings and can't be changed

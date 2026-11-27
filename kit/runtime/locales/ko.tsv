@@ -3635,9 +3635,8 @@ Read only: it uses what the car sends the head unit anyway and asks nothing of a
 Torque gauge up to	토크 게이지 최댓값
 The engine's most power, where the power gauges end. Auto: the car's own Sport Display's (its power gauge's 100 %)	엔진 최대 출력, 출력 게이지의 끝. 자동: 차량 스포츠 디스플레이의 값 (출력 게이지 100 %)
 The engine's most torque, where the torque gauges end. Auto: the car's own Sport Display's (its torque gauge's 100 %)	엔진 최대 토크, 토크 게이지의 끝. 자동: 차량 스포츠 디스플레이의 값 (토크 게이지 100 %)
-Auto (an M car's 6,500, others none)	자동 (M 차량 6,500, 그 외 없음)
-Off (no yellow)	끔 (노란불 없음)
-From here the lights and the rev gauges turn yellow, as an M car's cluster (Off: green, then red)	이 rpm부터 표시등과 회전수 게이지가 노랗게, M 차량 계기판처럼 (끔: 초록 다음 바로 빨강)
+Auto (an M car's 6,500, others each app's)	자동 (M 차량 6,500, 그 외 각 앱)
+From here the lights and the rev gauges turn yellow (e.g. 4000; Auto: an M car's cluster's)	이 rpm부터 표시등과 회전수 게이지가 노랗게 (예: 4000; 자동: M 차량 계기판 기준)
 From here they turn red: the red zone (Auto: where the car's own red zone begins, 6,000 on a 320i)	이 rpm부터 빨갛게: 레드존 (자동: 차 계기판의 레드존 시작, 320i는 6,000)
 Shift now: the lights flash, the speed and the gear red (Auto: where the car's red turns solid, 6,500 on a 320i)	지금 변속: 표시등 깜빡임, 속도와 단수 빨강 (자동: 차 계기판의 레드존이 꽉 찬 빨강이 되는 곳, 320i는 6,500)
 The engine's real limit, where the fuel is cut (Auto: the gauge's end); Auto is fine	엔진의 실제 한계(연료 컷) (자동: 게이지 끝). 보통 자동이면 됩니다

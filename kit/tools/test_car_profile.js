@@ -201,18 +201,6 @@ const cases = {
         assert.strictEqual(settingsIn(vit, { boostMax: '20' }).get('boostMax'), 'car');
         assert.deepStrictEqual([vit[0].default, vit[0].hidden], ['car', true]);
     },
-    'Yellow light at Off: the Car profile\'s "off" to Redline\'s Off, the yellow then at the red (none)'() {
-        clear();
-        const read = (id) => JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', id, 'app.json'), 'utf8')).settings;
-        const vals = P.publish(fakeProfile({ lightStart: P.YELLOW_OFF }), '1.14.0');
-        assert.deepStrictEqual(vals, { lightStart: 'off' });
-        tick += 5; fs.utimesSync(FILE, tick, tick);
-        const s = settingsIn(read('redline').filter((x) => x.key === 'lightStart'), { lightStart: 4500 });
-        assert.strictEqual(s.get('lightStart'), 99999);
-        assert.strictEqual(s.display('lightStart'), 'Off (no yellow)');
-        // (hud.js zones: the yellow at most the red)
-        assert(/yellow: lightStart > 0 \? Math\.min\(lightStart, red\)/.test(fs.readFileSync(path.join(ROOT, 'apps', 'redline', 'hud.js'), 'utf8')));
-    },
     'every app.json "profile" is one the Car profile sets, with values it can give'() {
         const cp = JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', 'car_profile', 'app.json'), 'utf8'));
         const byKey = {};

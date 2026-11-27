@@ -4,44 +4,17 @@
  *
  * Ten blocks of tofu beside the cup, two rows of five: one block for each tenth of the tank. As the fuel goes down
  * they go, the top row first (its right end first), then the bottom row; the last one left is the bottom row's left.
- *   - the fuel: KombiIF.statusRangeTankStatus (the car's own tank level, litres; read-only, no diagnostics), its
- *     field's name differs by car (as AK Cluster Centre's rangesOf: a "fuel / tank" + "level / fill" leaf, not a
- *     saddle tank's left or right half), over the tank's size (Settings > Fuel tank size, the Car profile's)
+ *   - the fuel: the engine unit's own tank level, % (main.js reads it; 1.3.0: no longer the car's litres over a
+ *     tank size)
  *   - blocks = ceil(fuel / 10 %), so a drop left still shows one; a change needs 1.5 % past the step (the level
  *     swings in a bend: no block blinking in and out)
  *   - no fuel signal yet: ten empty places
  *
- *   fuelLitres(v) -> litres or null      fuelPct(litres, tank) -> 0 .. 100 or null
  *   count(pct, prev) -> 0 .. 10          demoFuel(tMs) -> % (the demo: full to 5 % in 60 s, round again)
  *   blocks(geo, shear) -> [{ i, row, col, top, front, side }] (polygons in px; see the bottom)
  */
 const N = 10, PER_ROW = 5, HYST = 1.5;
 const isNum = (v) => typeof v === 'number' && isFinite(v);
-
-/** Every number in a signal's value with its key: [{ key, v }]. */
-function leaves(v, key, out) {
-    out = out || [];
-    if (v && typeof v === 'object') Object.keys(v).forEach((k) => leaves(v[k], k, out));
-    else out.push({ key: key === undefined ? '' : key, v });
-    return out;
-}
-
-/** The tank's level in litres from a statusRangeTankStatus value, or null (0xFFFE and up: no value). */
-function fuelLitres(v) {
-    let whole = null, half = null;
-    leaves(v).forEach((l) => {
-        const n = l.v, key = String(l.key).toLowerCase();
-        if (!isNum(n) || n < 0 || n >= 0xFFFE) return;
-        if (!(/level|fill|inhalt|volume|liter/.test(key) && /fuel|tank|kraftstoff/.test(key))) return;
-        if (/left|right|links|rechts/.test(key)) { if (half === null) half = n; } else if (whole === null) whole = n;
-    });
-    return whole !== null ? whole : half;
-}
-
-function fuelPct(litres, tank) {
-    if (!isNum(litres) || !isNum(tank) || tank <= 0) return null;
-    return Math.max(0, Math.min(100, litres / tank * 100));
-}
 
 /** How many blocks: ceil(pct / 10); kept at prev while pct is within HYST % of the step between them. */
 function count(pct, prev) {
@@ -85,4 +58,4 @@ function tray(geo, row) {
     return { x: x0 - 12, y: y - 4, w: PER_ROW * w + (PER_ROW - 1) * gap + dx + 24, h: 12 };
 }
 
-module.exports = { N, PER_ROW, HYST, leaves, fuelLitres, fuelPct, count, demoFuel, blocks, tray };
+module.exports = { N, PER_ROW, HYST, count, demoFuel, blocks, tray };

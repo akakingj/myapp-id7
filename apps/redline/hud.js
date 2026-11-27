@@ -144,8 +144,7 @@ const numOf = (settings, k, d) => { const v = Number(settings.get(k)); return is
 /**
  * The yellow and the red light's rpm for the engine's top rpm (redline), as Cluster Layouts and the Car profile
  * have them: red where the red zone starts (lightRed; 0 Auto: the redline), at most the redline; yellow where the
- * lights and the gauges turn yellow (lightStart; 0 Auto: 700 under the red; Off, 99999 - the Car profile's 'off': at
- * the red, so none), at most the red.
+ * lights and the gauges turn yellow (lightStart; 0 Auto: 700 under the red), at most the red.
  */
 function zones(lightStart, lightRed, redline) {
     const red = lightRed > 0 ? Math.min(lightRed, redline) : redline;

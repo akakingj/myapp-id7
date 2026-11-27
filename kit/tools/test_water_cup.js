@@ -1,8 +1,8 @@
 'use strict';
 /*
  * test_water_cup.js - Water Cup (apps/ak_water_cup): its water stays in the cup, its springs stay in bounds, a still
- * cup sends no frames, a hidden-then-shown cup doesn't jump, and it asks the car for nothing (no diagnostics); its fuel
- * tofu: the tank's level read from the car's field names, a block for each tenth, no blinking at a step.
+ * cup sends no frames, a hidden-then-shown cup doesn't jump, and it only reads (the read-only link, for the tank
+ * level); its fuel tofu: the engine unit's own tank level, a block for each tenth, no blinking at a step.
  *   node kit/tools/test_water_cup.js
  */
 const assert = require('assert');
@@ -75,18 +75,12 @@ ok('the demo drives: weaving, a stop, still between', () => {
     assert.deepStrictEqual(at(12), { gLat: 0, gLong: 0 });
 });
 
-ok('the fuel: the tank\'s own level by its field\'s name, not a saddle tank\'s half; no value dropped', () => {
-    assert.strictEqual(T.fuelLitres({ fluidLevelFuelTank: 41, fluidLevelFuelTankLeftHand: 20, fluidLevelFuelTankRightHand: 21, range: 452, mileageKilometre: 23817 }), 41);
-    assert.strictEqual(T.fuelLitres({ fluidLevelFuelTankLeftHand: 0, fluidLevelFuelTankRightHand: 77 }), 0, 'only halves: the first');
-    assert.strictEqual(T.fuelLitres({ tank: { fuelLevel: 38 } }), 38, 'nested');
-    assert.strictEqual(T.fuelLitres({ fluidLevelFuelTank: 0xFFFF, range: 300 }), null, 'no value');
-    assert.strictEqual(T.fuelLitres({ range: 300 }), null);
-    assert.strictEqual(T.fuelLitres(null), null);
-    assert.strictEqual(T.fuelPct(59, 59), 100);
-    assert.strictEqual(T.fuelPct(70, 59), 100, 'over the size: full');
-    assert.strictEqual(T.fuelPct(29.5, 59), 50);
-    assert.strictEqual(T.fuelPct(null, 59), null);
-    assert.strictEqual(T.fuelPct(30, 0), null);
+ok('the fuel: the engine unit\'s own tank level (UDS F42F, else OBD 01 2F), a full and an empty tank in range', () => {
+    const d = spec.config.dme;
+    assert.strictEqual(d.ecu, 0x12);
+    assert.deepStrictEqual(d.tank.map((c) => c.did || 'OBD ' + c.obd), ['F42F', 'OBD 2F']);
+    d.tank.forEach((c) => [0, 255].forEach((raw) => { const v = raw * c.factor + c.offset; assert(v >= c.min && v <= c.max, raw + ' -> ' + v); }));
+    assert(!spec.settings.some((x) => x.key === 'tankLitres'), 'no tank size (1.3.0)');
 });
 
 ok('the tofu: a block for each tenth, the last drop still one, no blinking at a step', () => {
@@ -136,10 +130,13 @@ ok('the sign: its eight glyphs its own (the shared CJK atlas lacks them), kept i
     assert(fonts.measure(f, S.text) * 36 / f.size + 7 * 8 < r.w - 24, 'the name fits the board');
 });
 
-ok('it asks the car for nothing: no diagnostics, read-only signals only', () => {
+ok('it only reads: the read-only diagnostic link (reads only, never parked), read-only signals', () => {
     const src = fs.readdirSync(APP).filter((f) => f.endsWith('.js')).map((f) => fs.readFileSync(path.join(APP, f), 'utf8')).join('\n');
-    assert(!/kit\/(diag|readonly-diag|ecus|dids|sgbd)\b/.test(src), 'no diagnostics module');
-    Object.values(spec.signals).forEach((fields) => Object.values(fields).forEach((m) => assert.strictEqual(m, 'rs')));
+    assert(!/kit\/(diag|ecus|sgbd)\b/.test(src), 'no diagnostics module but the read-only one');
+    assert(/require\('\.\/kit\/readonly-diag'\)/.test(src));
+    // (the link's transport; the car's state, listened to so nothing is asked while it is parked: kit/diag.js)
+    Object.entries(spec.signals).forEach(([iface, fields]) => { if (!/InternalTasu$|VehicleCondition$/.test(iface)) Object.values(fields).forEach((m) => assert.strictEqual(m, 'rs')); });
+    assert.strictEqual(spec.signals['de.bmw.infrastructure.VehicleCondition'].VehicleCondition, 's');
     assert(!spec.autostart, 'opens only when opened');
 });
 
@@ -147,12 +144,17 @@ ok('it asks the car for nothing: no diagnostics, read-only signals only', () => 
 (async () => {
     const kit = path.join(ROOT, 'kit/runtime');
     let app = null, sample = null, loopFn = null, frames = 0, lastWords = null;
-    let extra = null;
-    class FakeCar { constructor(ctx, groups, x) { extra = x; } onSample(fn) { sample = fn; } data() { return { demo: false }; } }
+    // the engine unit's tank level, as the stubbed read-only link answers it
+    let tankPct = null, asked = 0;
+    class FakeCar { constructor() {} onSample(fn) { sample = fn; } data() { return { demo: false }; } }
+    class FakeLink { constructor() {} init() { return Promise.resolve(this); } }
+    class FakeReader { constructor() {} async value(k) { asked++; return k === 'tank' ? tankPct : null; } }
     const load = Module._load;
     Module._load = function (req, parent, isMain) {
         if (req === './kit/mgu') return { run: (a) => { app = a; } };
         if (req === './kit/car') return FakeCar;
+        if (req === './kit/readonly-diag') return { ReadOnlyDiag: FakeLink };
+        if (req === './kit/dids') return { DidReader: FakeReader };
         if (req.startsWith('./kit/')) return load.call(this, path.join(kit, req.slice(6)), parent, isMain);
         return load.call(this, req, parent, isMain);
     };
@@ -160,9 +162,9 @@ ok('it asks the car for nothing: no diagnostics, read-only signals only', () => 
     Module._load = load;
     const { Recorder } = require(path.join(kit, 'record'));
     const themes = require(path.join(kit, 'themes'));
-    const vals = { gain: 2.2, level: 0.5, flipLat: false, tofu: true, tankLitres: 59, theme: 'm_tricolour', skin: 'classic', demo: 'off' };
+    const vals = { gain: 2.2, level: 0.5, flipLat: false, tofu: true, theme: 'm_tricolour', skin: 'classic', demo: 'off' };
     await app.start({
-        ui: { image: async (k, cv) => { frames++; lastWords = Array.from(cv.words()); } }, settings: { get: (k) => vals[k], onChange() {} },
+        ui: { image: async (k, cv) => { frames++; lastWords = Array.from(cv.words()); } }, settings: { get: (k) => vals[k], onChange() {} }, spec,
         log: { info() {}, warn() {}, error() {} }, theme: () => themes.theme(vals.theme, vals.skin), canvas: (w, h) => new Recorder(w, h),
         onLayout() {}, loop: (name, fps, fn) => { loopFn = fn; },
     });
@@ -181,19 +183,21 @@ ok('it asks the car for nothing: no diagnostics, read-only signals only', () => 
     frames = 0; await loopFn(); const first = frames;
     await run(800, { gLat: -0.2, gLong: 0 });
     assert(first === 1 && frames <= 2, 'shown again: one frame and still (' + frames + ')'); n++; console.log('ok shown again without a jump');
-    // the fuel: a new block count sends one frame; the same count again, nothing
-    const tank = extra['de.bmw.infotainment.KombiIF'].statusRangeTankStatus;
-    tank({ fluidLevelFuelTank: 41, range: 452 });
-    frames = 0; await run(300, { gLat: -0.2, gLong: 0 });
+    // the fuel: asked every 10 s (the first at once); a new block count sends one frame; the same count, nothing
+    assert(asked >= 1, 'the tank level asked');
+    const answer = async (pct) => { tankPct = pct; await new Promise((r) => setTimeout(r, 10)); };
+    const next = async (pct) => { await answer(pct); asked = 0; while (!asked) await run(250, { gLat: -0.2, gLong: 0 }); await answer(pct); };
+    frames = 0; await next(69.5); await run(300, { gLat: -0.2, gLong: 0 });
     assert.strictEqual(frames, 1, 'fuel read: one frame (' + frames + ')');
-    tank({ fluidLevelFuelTank: 40.5, range: 450 });                    // (69 %: still 7 blocks)
-    frames = 0; await run(300, { gLat: -0.2, gLong: 0 });
+    frames = 0; await next(68.6); await run(300, { gLat: -0.2, gLong: 0 });                    // (still 7 blocks)
     assert.strictEqual(frames, 0, 'the same blocks: no frame'); n++; console.log('ok the tofu: a frame only when a block goes');
-    vals.tofu = false; tank({ fluidLevelFuelTank: 5 });
+    frames = 0; await next(null); await run(300, { gLat: -0.2, gLong: 0 });
+    assert.strictEqual(frames, 0, 'the unit silent: the last held'); n++; console.log('ok the engine unit silent: its last level held');
+    vals.tofu = false;
     frames = 0; await run(300, { gLat: -0.2, gLong: 0 });
     assert.strictEqual(frames, 1, 'tofu off: one frame (the cup back in the middle)');
-    frames = 0; tank({ fluidLevelFuelTank: 50 }); await run(300, { gLat: -0.2, gLong: 0 });
-    assert.strictEqual(frames, 0, 'tofu off: the fuel draws nothing'); n++; console.log('ok tofu off: the fuel ignored');
+    asked = 0; frames = 0; tankPct = 5; await run(11000, { gLat: -0.2, gLong: 0 });
+    assert.strictEqual(asked, 0, 'tofu off: not asked'); assert.strictEqual(frames, 0, 'tofu off: the fuel draws nothing'); n++; console.log('ok tofu off: the tank not asked');
     assert(lastWords && lastWords.length > 100);
     console.log(n + ' passed');
     process.exit(0);

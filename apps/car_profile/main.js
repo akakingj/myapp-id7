@@ -110,9 +110,9 @@ mgu.run({
             const auto0 = ['rpmScale', 'redline', 'lightRed', 'shiftAt', 'lightStart'].indexOf(key) >= 0 && v === 0;
             if (!g || !auto0 && !(key === 'speedMax' && v === 'auto')) return d;
             const s = settings.item && settings.item(key);
-            // (the yellow's none: as Off reads)
-            const shown = key === 'speedMax' ? (opt('speedMax', g.speedMax) || [])[1] : g[key] === 'off' ? (s && s.labels && s.labels[String(P.YELLOW_OFF)]) || 'Off'
-                : s && settings.numberText ? settings.numberText(s, g[key]) : String(g[key]);
+            // (the yellow on Auto has a figure for an M car only: the others' rows say Auto as it is)
+            if (key !== 'speedMax' && !g[key]) return d;
+            const shown = key === 'speedMax' ? (opt('speedMax', g.speedMax) || [])[1] : s && settings.numberText ? settings.numberText(s, g[key]) : String(g[key]);
             return shown ? d + '  \u00b7  ' + shown : d;
         };
         const items = (ctx.spec.settings || []).filter((s) => P.KEYS.indexOf(s.key) >= 0);
@@ -204,12 +204,13 @@ mgu.run({
                 column(1, [[['Warm-up', 'Too hot'], 'Warm-up and too hot']]);
                 column(2, [['Units', 'Units']]);
             } else {
-                // the screens' look (every app), then the AK clusters' clock and their fuel and battery figures
+                // the screens' look (every app), then the AK clusters' clock and a plug-in hybrid's battery (1.15.0: the
+                // fuel's two rows gone)
                 column(0, [['Display', 'Display']]);
                 // (the clock's two rows; under them the gauges' ends: the G-force circle, the speedometer, boost)
                 column(1, [['Clock', 'Clock'], [['G-force', 'Gauges'], 'Gauges']]);
-                // (under the fuel and battery: which AK cluster comes up at every start)
-                column(2, [['Fuel and battery', 'Fuel and battery'], ['Cluster', 'Cluster']]);
+                // (under the battery: which AK cluster comes up at every start)
+                column(2, [['Battery', 'Battery'], ['Cluster', 'Cluster']]);
             }
             // whether the other apps have it, in the header (each text translated whole)
             const n = Object.keys(P.valuesOf(settings, state.car && state.car.kind(), state.car && state.car.sport())).length;

@@ -221,25 +221,26 @@ const check = (name, fn) => fn().then(() => { n++; console.log('ok   ' + name); 
         await app.start(c2);
         assert.strictEqual(s.display('engine'), 'Auto (from the car)  \u00b7  Plug-in hybrid (petrol)', 'its row says what was found');
         // the gauges on Auto, as the G20's own cluster: a plug-in hybrid's petrol engine (a 330i's) 7000, red from 6000
-        // (hatched), solid from 6500 - the shift warning - no yellow, 260
+        // (hatched), solid from 6500 - the shift warning - the yellow each app's, 260
         const all = () => JSON.parse(fs.readFileSync(process.env.MGU_CAR_PROFILE, 'utf8')).values;
         const lights = () => [all().lightStart, all().lightRed, all().shiftAt];
         s.set('rpmScale', 0); s.set('redline', 0); s.set('speedMax', 'auto'); s.set('lightStart', 0); s.set('lightRed', 0); s.set('shiftAt', 0);
         assert.deepStrictEqual([all().rpmScale, all().redline, all().speedMax], [7000, 7000, '260'], 'the limiter at the gauge\'s end');
-        assert.deepStrictEqual(lights(), ['off', 6000, 6500]);
+        assert.deepStrictEqual(lights(), [undefined, 6000, 6500]);
         assert.ok(/^Auto  \u00b7  6500 rpm/.test(s.display('shiftAt')), s.display('shiftAt'));
-        assert.ok(/^Auto .*  \u00b7  Off \(no yellow\)$/.test(s.display('lightStart')), s.display('lightStart'));
+        assert.ok(/^Auto \(an M car's 6,500, others each app's\)$/.test(s.display('lightStart')), s.display('lightStart'));
         assert.strictEqual(s.display('speedMax'), 'Auto (from the car)  \u00b7  260 km/h (160 mph)');
         assert.ok(/^Auto  \u00b7  7000 rpm/.test(s.display('rpmScale')), s.display('rpmScale'));
         s.set('engine', 'diesel');
         assert.strictEqual(prof(), 'diesel', 'a type chosen: that one');
         assert.deepStrictEqual([all().rpmScale, all().redline, all().speedMax], [6000, 6000, '260'], 'a 320d\'s: 6000');
-        assert.deepStrictEqual(lights(), ['off', 5000, 5500], 'red from 5000, solid from 5500');
+        assert.deepStrictEqual(lights(), [undefined, 5000, 5500], 'red from 5000, solid from 5500');
         s.set('engine', 'm');
         assert.deepStrictEqual([all().rpmScale, all().redline, all().speedMax], [8000, 8000, '330'], 'an M3\'s: 8000, 330');
         assert.deepStrictEqual(lights(), [6500, 7200, 7200], 'yellow from 6500, red from 7200, the shift warning there');
-        s.set('lightStart', -2); s.set('shiftAt', 7000);
-        assert.deepStrictEqual(lights(), ['off', 7200, 7000], 'Off and a figure set by hand');
+        assert.ok(/^Auto .*  \u00b7  6500 rpm/.test(s.display('lightStart')), s.display('lightStart'));
+        s.set('lightStart', 4500); s.set('shiftAt', 7000);
+        assert.deepStrictEqual(lights(), [4500, 7200, 7000], 'figures set by hand');
         s.set('lightStart', 0); s.set('shiftAt', 0);
         s.set('redline', 6500); s.set('speedMax', '260');
         assert.deepStrictEqual([all().rpmScale, all().redline, all().speedMax], [8000, 6500, '260'], 'set by hand: that one');

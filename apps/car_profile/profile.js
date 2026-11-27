@@ -15,13 +15,13 @@ const fs = require('fs');
 // what the profile sets, in Settings order; FOLLOW: the apps that follow each (their app.json "profile")
 const KEYS = ['engine', 'lightStart', 'lightRed', 'shiftAt', 'rpmScale', 'redline', 'coldLimit', 'coldGuard', 'warmOil',
     'warmCoolant', 'warmGearbox', 'hotOil', 'hotCoolant', 'hotGearbox', 'speedUnit', 'tempUnit', 'pressUnit', 'fuelUnit', 'torqueUnit', 'powerUnit',
-    'skin', 'theme', 'layout', 'renderer', 'demo', 'clusterStart', 'clock', 'tankLitres', 'fuelFrom', 'eFullKm', 'gMax', 'speedMax', 'boostMax',
+    'skin', 'theme', 'layout', 'renderer', 'demo', 'clusterStart', 'clock', 'eFullKm', 'gMax', 'speedMax', 'boostMax',
     'powerMax', 'torqueMax'];
 const FOLLOW = {
     // (the AK clusters' Car > Engine, Layouts, Centre and ID8 alike, has the same five; the other apps take a plug-in hybrid
     // as their own setting says: Auto, petrol)
     engine: ['M Vitals', 'Redline', 'Warm-Up', 'Virtual Dyno', 'AK Cluster Layouts, Centre and ID8'],
-    // the shift lights: yellow from (0: Auto, an M car's; -2 Off, published 'off': no yellow), red from (0: Auto, where
+    // the shift lights: yellow from (0: Auto, an M car's, else each app's), red from (0: Auto, where
     // the car's red zone begins, else each app's redline), the warning at the shift point (0: Auto, where the car's red
     // turns solid, else each app's redline less 300; 0.3.x: was "so many before the redline"), the rev scale's end; the
     // redline (the limiter; Auto: the gauge's end)
@@ -54,11 +54,9 @@ const FOLLOW = {
     demo: ['All apps with demo data, AK Cluster Layouts, Centre and Info too'],
     // which AK cluster comes up at every start (its Show on the cluster on, ahead of the other)
     clusterStart: ['AK Cluster Layouts and ID8'],
-    // the AK clusters' clock, and their fuel and battery figures
+    // the AK clusters' clock, and a plug-in hybrid's electric range when full (1.15.0: the tank's size and Fuel % from
+    // gone - the fuel gauges are the engine unit's own tank level)
     clock: ['AK Cluster Layouts, Centre and ID8'],
-    tankLitres: ['Water Cup', 'AK Cluster Layouts, Centre and ID8'],
-    // the fuel gauge's figure: the engine unit's tank level, or the litres over the tank's size
-    fuelFrom: ['AK Cluster Layouts and ID8'],
     eFullKm: ['eDrive', 'AK Cluster Layouts, Centre and ID8'],
     // the G-force circles' size (g), where the dot goes in a bend (out: as the driver feels it), braking up or down
     gMax: ['G-Force', 'M Vitals', 'AK Cluster Layouts and ID8'],
@@ -90,12 +88,11 @@ function valuesOf(settings, carKind, sport) {
     if (o.rpmScale === 0 && g) o.rpmScale = g.rpmScale;
     if (o.redline === 0 && g) o.redline = g.redline;
     // the lights on Auto the same: the red from where the car's red zone begins, the shift warning where it turns
-    // solid, the yellow an M car's (none on the others: 'off'); till the kind is known, each app's own Auto (0), the
-    // yellow left to each app
+    // solid, the yellow an M car's (on the others each app's own, its shift lights' run-up); till the kind is known,
+    // each app's own Auto (0), the yellow left to each app
     if (o.lightRed === 0 && g) o.lightRed = g.lightRed;
     if (o.shiftAt === 0 && g) o.shiftAt = g.shiftAt;
-    if (o.lightStart === YELLOW_OFF) o.lightStart = 'off';
-    else if (o.lightStart === 0) { if (g) o.lightStart = g.lightStart; else delete o.lightStart; }
+    if (o.lightStart === 0) { if (g && g.lightStart) o.lightStart = g.lightStart; else delete o.lightStart; }
     if (o.speedMax === 'auto') { if (g) o.speedMax = g.speedMax; else delete o.speedMax; }
     // the power and torque gauges on Auto: the car's Sport Display's most (detect.js), none (each app's) till it has sent it
     if (o.powerMax === 0) { if (sport && sport.kw) o.powerMax = sport.kw; else delete o.powerMax; }
@@ -112,16 +109,15 @@ function valuesOf(settings, carKind, sport) {
  * revs (a 330i's) on Sport.
  *   rpmScale: the gauge's end; redline: the engine's top rpm, taken as the gauge's end (the apps' limiter);
  *   lightRed: where the red begins; shiftAt: the shift now warning, where the red turns solid (an M car's: at its red,
- *   about 7200, as the owner has it); lightStart: the yellow, an M car's only ('off': none).
+ *   about 7200, as the owner has it); lightStart: the yellow, an M car's (the others have none on the
+ *   gauge: each app's own, where its shift lights begin to turn).
  */
 const G20 = {
-    diesel: { rpmScale: 6000, redline: 6000, lightRed: 5000, shiftAt: 5500, lightStart: 'off', speedMax: '260' },
-    petrol: { rpmScale: 7000, redline: 7000, lightRed: 6000, shiftAt: 6500, lightStart: 'off', speedMax: '260' },
-    phev: { rpmScale: 7000, redline: 7000, lightRed: 6000, shiftAt: 6500, lightStart: 'off', speedMax: '260' },
+    diesel: { rpmScale: 6000, redline: 6000, lightRed: 5000, shiftAt: 5500, speedMax: '260' },
+    petrol: { rpmScale: 7000, redline: 7000, lightRed: 6000, shiftAt: 6500, speedMax: '260' },
+    phev: { rpmScale: 7000, redline: 7000, lightRed: 6000, shiftAt: 6500, speedMax: '260' },
     m: { rpmScale: 8000, redline: 8000, lightRed: 7200, shiftAt: 7200, lightStart: 6500, speedMax: '330' },
 };
-/** Yellow light at Off, as it is kept here (a number setting: -1 is Each app, 0 Auto); published as 'off'. */
-const YELLOW_OFF = -2;
 /** The kind of car the gauges go by: the engine set here, or on Auto the one found (detect.js); null: not known. */
 function kindOf(settings, carKind) {
     const e = settings.get('engine');
@@ -142,4 +138,4 @@ function publish(settings, version, log, carKind, sport) {
     return values;
 }
 
-module.exports = { KEYS, FOLLOW, file, isSet, valuesOf, publish, G20, YELLOW_OFF, kindOf, gaugesOf };
+module.exports = { KEYS, FOLLOW, file, isSet, valuesOf, publish, G20, kindOf, gaugesOf };

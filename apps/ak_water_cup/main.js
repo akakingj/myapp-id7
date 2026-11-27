@@ -15,14 +15,18 @@
  *   - no G for over 3 s (the car off, asleep): the water levels out slowly
  *   - shown again after a while: the springs start where the G is now (no jump, no slosh from the gap)
  *   - demo data (Settings > Demo data, or the Car profile's): a drive of its own (cup.js demoG)
- *   - the fuel: KombiIF.statusRangeTankStatus (the car's tank level, litres, read-only), over Settings > Fuel tank size
- *     (the Car profile's where it sets one; 59 L); demo data: a tank of its own going down (tofu.js demoFuel)
- * Settings: Slosh strength (x the G, 2.2 as Layouts), Water level, Fuel tofu, Fuel tank size, skin, colour theme, layout, renderer, demo data (the Car profile's).
+ *   - the fuel: the engine unit's own tank level, % (OBD PID 0x2F, as AK Cluster Layouts and Live Data), read every
+ *     10 s while the tofu shows, over the kit's read-only link (readonly-diag.js: reads only; never while parked);
+ *     its last answer held, ten empty places till it first answers (1.3.0: the car's litres over a tank size and
+ *     Settings > Fuel tank size gone); demo data: a tank of its own going down (tofu.js demoFuel)
+ * Settings: Slosh strength (x the G, 2.2 as Layouts), Water level, Fuel tofu, skin, colour theme, layout, renderer, demo data (the Car profile's).
  */
 const mgu = require('./kit/mgu');
 const { withAlpha, mix } = require('./kit/canvas');
 const G = require('./kit/gauges');
 const Car = require('./kit/car');
+const { ReadOnlyDiag } = require('./kit/readonly-diag');
+const { DidReader } = require('./kit/dids');
 const C = require('./cup');
 const T = require('./tofu');
 const fonts = require('./kit/fonts');
@@ -37,11 +41,20 @@ const TOFU = { top: '#fffdf4', front: '#f1ecdd', side: '#d8d0bb', edge: '#b9b09a
 mgu.run({
     async start(ctx) {
         const { ui, settings, log } = ctx;
-        // the fuel in the tank (litres), as the car last sent it (sent on change: kept, however old)
-        let litres = null;
-        const car = new Car(ctx, ['accel', 'speed'], { 'de.bmw.infotainment.KombiIF': {
-            statusRangeTankStatus: (v) => { const l = T.fuelLitres(v); if (l !== null) litres = l; },
-        } });
+        const car = new Car(ctx, ['accel', 'speed']);
+        // the fuel in the tank, %: the engine unit's own level (config.dme.tank: UDS F42F, else OBD 01 2F), asked every
+        // 10 s while the tofu shows, one at a time; the last answer kept (null till the first)
+        const dme = Object.assign({ ecu: 0x12, tank: [] }, (ctx.spec && ctx.spec.config && ctx.spec.config.dme) || {});
+        let fuel = null, tankAt = 0, tankBusy = false, rd = null;
+        const askTank = (now) => {
+            if (tankBusy || now - tankAt < 10000 || !dme.tank.length) return;
+            tankAt = now; tankBusy = true;
+            if (!rd) { const link = new ReadOnlyDiag(ctx.signals, log); link.init().catch((e) => log.warn('diagnostic link: ' + e)); rd = new DidReader(link, { ecu: dme.ecu }); }
+            rd.value('tank', dme.tank)
+                .then((v) => { if (typeof v === 'number' && isFinite(v)) fuel = Math.max(0, Math.min(100, v)); })
+                .catch((e) => log.warn('tank level: ' + e))
+                .then(() => { tankBusy = false; });
+        };
         const zero = C.zeroer();
         let g = null, gAt = 0, demo = false;
         car.onSample((d, t) => {
@@ -76,7 +89,8 @@ mgu.run({
             const a = lat(w.lat, dt), b = lon(w.lon, dt), level = Number(settings.get('level')) || 0.5;
             const tofu = settings.get('tofu') !== false;
             if (tofu) {
-                const pct = demo ? T.demoFuel(now) : T.fuelPct(litres, Number(settings.get('tankLitres')) || 59);
+                if (!demo) askTank(now);
+                const pct = demo ? T.demoFuel(now) : fuel;
                 tofuN = T.count(pct, tofuN);
             }
             geo.cx = tofu ? 470 : W / 2;

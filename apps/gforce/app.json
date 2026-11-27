@@ -1,7 +1,7 @@
 {
   "id": "gforce",
   "title": "G-Force",
-  "version": "1.10.2",
+  "version": "1.10.3",
   "description": "Friction circle with grip envelope, peak g per direction and session records, and the last minute of driving saved when it matters, with replay",
   "vendor": "custom",
   "loggingId": "OA9B",
