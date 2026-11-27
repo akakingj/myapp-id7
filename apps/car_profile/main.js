@@ -6,7 +6,8 @@
  * warning), where the rev gauges end, the engine's top rpm (the redline, its limiter), cold rev limit, when oil and
  * coolant count as warm, when oil, coolant and gearbox count as too hot (red), and the speed (the distances with it),
  * temperature, pressure, fuel use, torque and power units. Each one starts at "Each app": until it is set here, every
- * app keeps its own setting, so installing this app changes nothing.
+ * app keeps its own setting - but the engine, which starts on Auto (from the car, 1.12.0): the kind of car found
+ * (detect.js: a plug-in hybrid, an M car, a diesel or a petrol car) is written for the apps.
  * What is set is written for the other apps (profile.js: /dev/shm/car-profile.json). Their kit follows it for the
  * settings that name it (app.json "profile") and shows those settings with the profile's value, not changeable there.
  * Uninstalled (or everything back on "Each app"), every app has its own settings again: from the next start of the
@@ -24,15 +25,31 @@ const G = require('./kit/gauges');
 const { withAlpha } = require('./kit/canvas');
 const P = require('./profile');
 const { listSheet } = require('./kit/sheet');
+const Detect = require('./detect');
 
 const W = 1600, H = 520;
 
 async function background(bg) {
     const { settings, log, spec } = bg;
-    const state = { at: 0, error: '' };
+    const state = { at: 0, error: '', car: null };
+    // Engine: Auto (from the car): which car this is (detect.js), written for the apps in its place
+    const car = Detect.create({ dataDir: bg.dataDir, log, onChange: () => write() });
+    state.car = car;
     const write = () => {
-        try { P.publish(settings, spec.version, log); state.at = Date.now(); state.error = ''; } catch (e) { state.error = String(e && e.message || e); log.warn('car profile: ' + state.error); }
+        try { P.publish(settings, spec.version, log, car.kind()); state.at = Date.now(); state.error = ''; } catch (e) { state.error = String(e && e.message || e); log.warn('car profile: ' + state.error); }
     };
+    // (1.12.0: the engine starts on Auto. One left on Each app as it came, before Auto was the default, goes to Auto once)
+    if (!settings.get('engineAuto')) {
+        if (settings.get('engine') === 'app') { settings.set('engine', 'auto'); log.info('Engine: Auto (from the car), the new default'); }
+        settings.set('engineAuto', true);
+    }
+    if (bg.signals && bg.signals.watch) {
+        car.handlers().forEach(([iface, handlers]) => {
+            bg.signals.watch(iface, '1', handlers, log, { pollMs: 5000 })
+                .then((r) => { if (r && r.error) log.warn('car: ' + iface + ': ' + r.error); })
+                .catch((e) => log.warn('car: ' + iface + ': ' + e));
+        });
+    }
     // (Electric range when full is in km, shown in miles with mph: one set in miles before 1.9.0 moves once, to the
     // nearest of its values; the apps that read it in miles follow their own again)
     const v = settings.values || {};
@@ -56,6 +73,14 @@ mgu.run({
     async start(ctx) {
         const { ui, settings } = ctx;
         const { state } = ctx.background || await background(ctx);
+        // Engine on Auto: the kind of car found, by it ("Auto (from the car)  ·  Plug-in hybrid (petrol)")
+        const display = settings.display.bind(settings);
+        settings.display = (key) => {
+            const d = display(key), k = key === 'engine' && settings.get('engine') === 'auto' && state.car ? state.car.kind() : null;
+            const o = k ? ((settings.item && settings.item('engine')) || {}).options || [] : [];
+            const name = (o.find((x) => x[0] === k) || [])[1];
+            return name ? d + '  \u00b7  ' + name : d;
+        };
         const items = (ctx.spec.settings || []).filter((s) => P.KEYS.indexOf(s.key) >= 0);
         // (a value kept in one unit and shown in another's, "unitBy": with that unit on Each app, in every unit the
         // apps may show it in - "50 km / 31 mi" - on the rows and in the values' lists alike)
@@ -144,7 +169,7 @@ mgu.run({
                 column(2, [['Fuel and battery', 'Fuel and battery'], ['Cluster', 'Cluster']]);
             }
             // whether the other apps have it, in the header (each text translated whole)
-            const n = Object.keys(P.valuesOf(settings)).length;
+            const n = Object.keys(P.valuesOf(settings, state.car && state.car.kind())).length;
             const badge = state.error ? { text: 'Not written for the apps', color: 'crit' }
                 : n ? { text: 'Set for the apps', color: t.sel || t.accent } : { text: 'Nothing set: each app as it is', color: t.dim };
             G.frame(cv, t, TABS, page, [badge]);

@@ -70,16 +70,21 @@ const FOLLOW = {
 const file = () => process.env.MGU_CAR_PROFILE || '/dev/shm/car-profile.json';
 const isSet = (v) => v !== undefined && v !== null && v !== 'app' && v !== -1;
 
-/** The values the profile sets now: { key: value } for each one not left to each app. */
-function valuesOf(settings) {
+/**
+ * The values the profile sets now: { key: value } for each one not left to each app. The engine on Auto: the kind of
+ * car found (detect.js: 'phev', 'm', 'diesel' or 'petrol'), so every app follows the same; 'auto' (each app reads
+ * the car itself) until one is found.
+ */
+function valuesOf(settings, carKind) {
     const o = {};
     KEYS.forEach((k) => { const v = settings.get(k); if (isSet(v)) o[k] = v; });
+    if (o.engine === 'auto' && carKind) o.engine = carKind;
     return o;
 }
 
 /** Write the profile from settings when it differs from the file (or there is none). Returns the values. */
-function publish(settings, version, log) {
-    const f = file(), values = valuesOf(settings);
+function publish(settings, version, log, carKind) {
+    const f = file(), values = valuesOf(settings, carKind);
     const text = JSON.stringify({ v: 1, app: 'car_profile', version: version || '', values }, null, 1);
     try { if (fs.readFileSync(f, 'utf8') === text) return values; } catch (e) { /* none yet */ }
     const tmp = f + '.' + process.pid + '.tmp';

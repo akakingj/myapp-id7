@@ -207,8 +207,10 @@ const cases = {
         cp.settings.forEach((s) => { byKey[s.key] = s; });
         assert.deepStrictEqual(Object.keys(byKey).filter((k) => P.KEYS.indexOf(k) >= 0), P.KEYS, 'profile.js KEYS = the app\'s settings, in order');
         assert(cp.settings.every((s) => !s.profile), 'the Car profile follows no profile itself');
-        // (Boost gauge up to is set here alone and starts at Auto, what the apps show without the profile)
-        assert(cp.settings.every((s) => (s.type === 'choice' ? s.default === 'app' : s.default === (s.key === 'boostMax' ? 0 : -1))), 'everything starts at Each app');
+        // (Boost gauge up to is set here alone and starts at Auto, what the apps show without the profile; the engine
+        // starts at Auto (from the car), 1.12.0: the kind of car found goes to every app; engineAuto: that change, once)
+        assert(cp.settings.filter((s) => s.key !== 'engineAuto').every((s) => (s.type === 'choice' ? s.default === (s.key === 'engine' ? 'auto' : 'app') : s.default === (s.key === 'boostMax' ? 0 : -1))), 'everything starts at Each app, the engine at Auto');
+        assert(byKey.engineAuto.hidden === true, 'engineAuto is not shown');
         assert.deepStrictEqual(byKey.boostMax.steps, [0, 15, 20, 30, 45], 'Boost gauge up to: Auto, or one of the car\'s own gauges');
         let followers = 0;
         fs.readdirSync(path.join(ROOT, 'apps')).forEach((app) => {

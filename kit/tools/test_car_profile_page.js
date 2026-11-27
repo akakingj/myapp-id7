@@ -71,7 +71,7 @@ const check = (name, fn) => fn().then(() => { n++; console.log('ok   ' + name); 
             t.forEach((q) => assert(q.y >= 46 && q.y + q.h <= 520, q.key + ' on the page'));
             all.push(...t);
         }
-        assert.deepStrictEqual(all.map((q) => q.key.slice(4)).sort(), SPEC.settings.map((s) => s.key).sort());
+        assert.deepStrictEqual(all.map((q) => q.key.slice(4)).sort(), SPEC.settings.filter((s) => !s.hidden).map((s) => s.key).sort());
     });
     await check('the apps that follow each setting: on its row, whole, inside it (11 px at least)', async () => {
         let seen = 0;
@@ -173,6 +173,51 @@ const check = (name, fn) => fn().then(() => { n++; console.log('ok   ' + name); 
         assert.strictEqual(onDisk.eFull, undefined);
         [s] = await start({ eFullKm: -1 });
         assert.strictEqual(s.get('eFullKm'), -1, 'set back to Each app later: left as it is');
+    });
+    await check('Engine on Auto (1.12.0): its default; Each app left as it came goes to Auto once, chosen later it stays', async () => {
+        const file = path.join(DD, 'settings.json');
+        const start = async (saved) => {
+            fs.writeFileSync(file, JSON.stringify(saved));
+            const s = new Settings(SPEC.settings);
+            await app.background(Object.assign({}, ctx, { settings: s }));
+            return s;
+        };
+        assert.strictEqual(SPEC.settings.find((x) => x.key === 'engine').default, 'auto');
+        let s = await start({ engine: 'app' });
+        assert.strictEqual(s.get('engine'), 'auto', 'Each app as it came: Auto');
+        assert.strictEqual(s.get('engineAuto'), true);
+        s = await start({ engine: 'app', engineAuto: true });
+        assert.strictEqual(s.get('engine'), 'app', 'Each app chosen after: stays');
+        s = await start({ engine: 'diesel' });
+        assert.strictEqual(s.get('engine'), 'diesel', 'a type chosen: stays');
+    });
+    await check('Engine on Auto: the kind of car found, for the apps and on its row (a 530e\'s drive modes: a plug-in hybrid)', async () => {
+        const dd = fs.mkdtempSync(path.join(os.tmpdir(), 'cp-car-'));
+        const watched = {};
+        const signals = { watch: (iface, inst, h) => { watched[iface] = Object.assign(watched[iface] || {}, h); return Promise.resolve({}); } };
+        const s = new Settings(SPEC.settings);
+        s.set('engine', 'auto');
+        const c2 = Object.assign({}, ctx, { settings: s, signals, dataDir: dd });
+        c2.background = await app.background(c2);
+        const prof = () => JSON.parse(fs.readFileSync(process.env.MGU_CAR_PROFILE, 'utf8')).values.engine;
+        assert.strictEqual(prof(), 'auto', 'nothing seen yet: Auto, each app reads the car');
+        watched['de.bmw.infotainment.vehicle.Vehicle2'].statusVehiclePartType({ typeEngine: 'BENZIN_DIREKTEINSPRITZUNG' });
+        assert.strictEqual(prof(), 'petrol');
+        watched['de.bmw.infotainment.drivingexcitement.FES'].statusFESVehicleDynamicSwitchHMI({ actualValueModeDrivingExperience: 17 });
+        assert.strictEqual(prof(), 'phev', 'HYBRID (17): a plug-in hybrid, over petrol');
+        watched['de.bmw.infotainment.vehicle.Vehicle2'].statusVehiclePartType({ typeEngine: 'BENZIN_DIREKTEINSPRITZUNG' });
+        assert.strictEqual(prof(), 'phev', 'and stays one');
+        assert.strictEqual(JSON.parse(fs.readFileSync(path.join(dd, 'car.json'), 'utf8')).phev, true, 'kept for the next start');
+        await app.start(c2);
+        assert.strictEqual(s.display('engine'), 'Auto (from the car)  \u00b7  Plug-in hybrid (petrol)', 'its row says what was found');
+        s.set('engine', 'diesel');
+        assert.strictEqual(prof(), 'diesel', 'a type chosen: that one');
+        // an M car by its M engine modes; a diesel by its engine type; a petrol car's modes (1 - 14) are no plug-in hybrid's
+        const Detect = require(path.join(ROOT, 'apps', 'car_profile', 'detect.js'));
+        assert.strictEqual(Detect.kindOf({ m: true, fuel: 'petrol' }), 'm');
+        assert.strictEqual(Detect.kindOf({ fuel: 'diesel' }), 'diesel');
+        assert.ok(Detect.mMode({ controlDisplayEngineMode: 2 }) && !Detect.mMode({ controlDisplayEngineMode: 0 }));
+        assert.ok(!Detect.phevMode(5) && !Detect.phevMode('SPORT_PLUS') && Detect.phevMode('PHEV_SPORT') && Detect.phevMode(20));
     });
     console.log(n + ' passed');
 })().catch((e) => { console.error('FAIL ' + (e && e.stack || e)); process.exit(1); });

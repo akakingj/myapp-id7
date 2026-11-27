@@ -31,8 +31,12 @@ One place for the car's engine values and units. Set them here once and the othe
 | Speedometer up to (260 km/h, most BMWs; 330 km/h, an M car) | AK Cluster Layouts (every speedometer), AK Cluster ID8 (M Sport's) |
 | Boost gauge up to (the car's own gauges: 15, 20 or 30 psi - in bar 2.0, in kPa 200 - or 45 psi, 3.0 bar, 300 kPa; each numbered as the car's: 0 5 10 15, 0 10 20, 0 10 20 30, 0 15 30 45 psi, 0.0 1.0 2.0, 0.0 1.0 2.0 3.0 bar; Auto: the car's own Sport Display's gauge end, the least at or over it (within 5 %). Set here alone: the apps have no setting of their own for it) | M Vitals (*Boost gauge max*), AK Cluster Layouts and Centre (every boost gauge and bar), AK Cluster ID8 (Toro's boost gauge, M Track Mode's boost rows) |
 
-Every setting starts at **Each app**: until it is set here, each app keeps its own setting, so installing the app
-changes nothing. Boost gauge up to, set here alone, starts at *Auto*, as the apps show it without the Car profile. A setting the profile sets shows the profile's value in the other app's Settings and can't be changed
+Every setting starts at **Each app**: until it is set here, each app keeps its own setting. The **Engine** starts at
+**Auto (from the car)** (1.12.0; one left on *Each app* as it came goes to *Auto* once): the Car profile finds the kind
+of car itself and writes that for every app - a **plug-in hybrid** by its own drive modes (Hybrid, Electric, Battery
+Control...), an **M car** by its M engine modes, else **diesel** or **petrol** by the car's engine type. Its row shows
+what was found (*Auto (from the car) · Plug-in hybrid (petrol)*); until something is found the apps read the car
+themselves, as on Auto before. What was found is kept for the next start. Boost gauge up to, set here alone, starts at *Auto*, as the apps show it without the Car profile. A setting the profile sets shows the profile's value in the other app's Settings and can't be changed
 there (no arrow on its row); set it back to *Each app* here and the app's own value is back.
 
 ## One shift point, one rev limit
