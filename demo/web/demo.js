@@ -934,7 +934,7 @@ function layout() {
     // (the scene: 1600 x 1000 units, as large as it fits; everything in it placed in those units by the stylesheet)
     const ah = m.clientHeight - px('paddingTop') - px('paddingBottom') - bar - ($('#legend').offsetHeight || 0) - px('rowGap');
     const k = Math.max(0.2, Math.min(aw / 1600, ah / 1000));
-    g.style.gridTemplateColumns = ''; g.style.gridTemplateRows = '';
+    g.style.gridTemplateColumns = ''; g.style.gridTemplateRows = ''; g.style.gridTemplateAreas = '';
     g.style.width = Math.floor(1600 * k) + 'px'; g.style.height = Math.floor(1000 * k) + 'px'; g.style.setProperty('--k', k);
     $('#cluster').style.width = Math.round(600 * k) + 'px'; stage.style.width = Math.round(590 * k) + 'px';
     document.querySelectorAll('.chamber').forEach((e) => { e.style.width = Math.round(600 * k * CHAMBER) + 'px'; });
@@ -945,20 +945,24 @@ function layout() {
   const cap = $('#capCluster').offsetHeight || 18;
   if (narrow) {
     const w = Math.floor(aw);
-    g.style.gridTemplateColumns = ''; g.style.gridTemplateRows = '';
+    g.style.gridTemplateColumns = ''; g.style.gridTemplateRows = ''; g.style.gridTemplateAreas = '';
     stage.style.width = w + 'px'; $('#cluster').style.width = Math.round(w / (1 + 2.3 * CHAMBER)) + 'px';
     document.querySelectorAll('.chamber').forEach((e) => { e.style.width = Math.round(w / (1 + 2.3 * CHAMBER) * CHAMBER) + 'px'; });
     $('#hudBox').style.width = Math.min(w, 420) + 'px'; $('#cockpit').style.height = '';
     return;
   }
-  const fixed = 2 * (cap + 4) + rgap + ($('#legend').offsetHeight || 0) + px('rowGap') + bar;
+  // (보기 > 표시: the rows and columns of the cells shown; one cell left in a row spans it)
+  const on = (k) => !Hide.off(k), rows = [['hud', 'stage'], ['cluster', 'seat']].map((r) => r.filter(on)).filter((r) => r.length);
+  const nr = Math.max(1, rows.length), nc = Math.max(1, ...rows.map((r) => r.length));
+  const fixed = nr * (cap + 4) + (nr - 1) * rgap + ($('#legend').offsetHeight || 0) + px('rowGap') + bar;
   const ah = m.clientHeight - px('paddingTop') - px('paddingBottom') - fixed;
-  const w = Math.max(240, Math.floor(Math.min((aw - gap) / 2, ah / 0.75)));
-  const h = Math.round(w * H / W), spare = Math.max(0, ah - 2 * h);
+  const w = Math.max(240, Math.floor(Math.min((aw - gap * (nc - 1)) / nc, ah / (nr * H / W))));
+  const h = Math.round(w * H / W), spare = Math.max(0, ah - nr * h);
   // (the HUD as tall as the centre display, the rows lined up; room to spare: a taller driver's seat)
   const seatH = Math.round(Math.max(h, Math.min(h + spare, w * 0.5)));
-  g.style.gridTemplateColumns = w + 'px ' + w + 'px';
-  g.style.gridTemplateRows = (cap + 4 + h) + 'px ' + (cap + 4 + seatH) + 'px';
+  g.style.gridTemplateAreas = rows.map((r) => '"' + (nc === 2 && r.length === 1 ? r[0] + ' ' + r[0] : r.join(' ')) + '"').join(' ') || '"stage"';
+  g.style.gridTemplateColumns = nc === 2 ? w + 'px ' + w + 'px' : w + 'px';
+  g.style.gridTemplateRows = rows.map((r) => (cap + 4 + (r.indexOf('seat') >= 0 ? seatH : h)) + 'px').join(' ');
   // (the cluster in its housing: the chamber lights' columns beside it, all in the column's width)
   if (stage.style.width !== w + 'px') stage.style.width = w + 'px';
   const cw = Math.round(w / (1 + 2.3 * CHAMBER));
@@ -987,6 +991,29 @@ const View = (() => {
   seg($('#viewSeg'), [['real', '🚗 운전석에서'], ['grid', '▦ 나눠 보기']], (x) => v.set(x === 'real'));
   segSync($('#viewSeg'), real ? 'real' : 'grid');
   return v;
+})();
+/** 보기 > 표시: the HUD, the head unit, the cluster, the driver's seat each hidden or shown (the apps keep running; kept
+ *  in this browser). At least one stays shown. */
+const Hide = (() => {
+  const KEY = 'mguDemo.hide', CELLS = { hud: '#cHud', stage: '#cStage', cluster: '#cCluster', seat: '#cCockpit' };
+  let off = {};
+  try { off = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { off = {}; }
+  const sync = () => {
+    Object.keys(CELLS).forEach((k) => { const c = $(CELLS[k]); if (c) c.classList.toggle('off', !!off[k]); });
+    $('#hideSeg').querySelectorAll('button').forEach((b) => b.classList.toggle('on', !off[b.dataset.v]));
+  };
+  const h = {
+    off: (k) => !!off[k],
+    toggle(k) {
+      if (!off[k] && Object.keys(CELLS).filter((x) => !off[x]).length <= 1) return;   // (the last one shown stays)
+      off[k] = !off[k];
+      try { localStorage.setItem(KEY, JSON.stringify(off)); } catch (e) { /* this visit */ }
+      sync(); layout();
+    },
+  };
+  seg($('#hideSeg'), [['hud', 'HUD'], ['stage', '헤드유닛'], ['cluster', '계기판'], ['seat', '운전석']], (k) => h.toggle(k));
+  sync();
+  return h;
 })();
 const ro = new ResizeObserver(() => layout());
 ro.observe($('#main'));

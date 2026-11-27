@@ -322,3 +322,10 @@ body.real .chamber { background: linear-gradient(90deg, #050607, #0c0d10 50%, #0
 #ttList .tt.on { background: #1f3550; border-color: var(--accent); color: #fff; }
 #ttList .tt.on svg { opacity: 1; }
 #ttList .tt i { font-style: normal; font-size: 9px; color: var(--accent); }
+
+/* 1.14.0: 보기 > 표시 - HUD, 헤드유닛, 계기판, 운전석을 숨기기 (앱은 그대로 돌아감) */
+.vbHideT { margin-left: 14px; }
+#hideSeg button:not(.on) { opacity: .55; text-decoration: line-through; }
+.cell.off { display: none !important; }
+body.real .cell.off { display: flex !important; visibility: hidden; }
+body.real #cCockpit.off { display: contents !important; }

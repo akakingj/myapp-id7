@@ -1,7 +1,8 @@
 'use strict';
 /**
  * demo/server.js - the MGU demo: every app of this repository (akakingj/myapp-id7) and of akakingj/myapp-cluster running on your
- * computer as in the car, in one browser window:
+ * computer as in the car, in one browser window (1.14.0: and, when they are there, akakingj/myapp-comfort's iDrive 7 apps
+ * - demo/oap-host.js, demo/comfort-sim.js - and 재민's, jaimeen77-cmyk/apps):
  *
  *   - the centre display (the MGU): the HMI's app list, an app's own screen when its icon is tapped (touch, the iDrive
  *     knob from the keyboard and mouse wheel), drawn by the car's own draw engine (kit/emu/web/gfx, WebAssembly)
@@ -9,7 +10,8 @@
  *     it (their GLSL, WebGL)
  *   - one car for every app: an automatic drive or your own values (the panel), and each app's settings
  *
- *   node demo/server.js [--cluster ../myapp-cluster] [--styles ../myapp-cluster-high] [--data <folder>] [--port 8077] [--no-open]
+ *   node demo/server.js [--cluster ../myapp-cluster] [--styles ../myapp-cluster-high] [--comfort ../myapp-comfort] [--jm ../jm-apps]
+ *                       [--data <folder>] [--port 8077] [--no-open]
  *   (Windows: MGU_데모_실행.bat, which also fetches the newest code of both repositories first)
  *
  * The apps are not copied or changed for the demo: each is built from apps/<id> as the MGU Store builds it (this repo:
@@ -34,7 +36,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { spawn, spawnSync, fork, exec } = require('child_process');
 
-const DEMO_VERSION = '1.13.0';
+const DEMO_VERSION = '1.14.0';
 const A = path.resolve(__dirname, '..');                       // this repository (akakingj/myapp-id7)
 const WEB = path.join(__dirname, 'web');
 const GFX = path.join(A, 'kit', 'emu', 'web', 'gfx');            // the car's draw engine as WebAssembly (GPL-3.0-or-later)
@@ -62,11 +64,30 @@ const C = (() => {
     const c = [o, process.env.DEMO_STYLES, B && path.join(B, '..', 'myapp-cluster-high'), path.join(A, '..', 'myapp-cluster-high')].filter(Boolean).map((p) => path.resolve(p));
     return c.find((p) => fs.existsSync(path.join(p, 'apps', STYLES_APP, 'app.json')) && fs.existsSync(path.join(p, 'kit', 'tools', 'build.py'))) || null;
 })();
+/** IterioDev's apps (akakingj/myapp-comfort: the owner's copy, kept with IterioDev's leave): --comfort, else beside the
+ *  cluster repository. Only the apps whose package installs on iDrive 7 (app.json "mguHmi" has ID7) are listed, each
+ *  run from its committed package (apps/<id>/<id>@<version>.tgz) with demo/oap-host.js; the Comfort tool they drive is
+ *  demo/comfort-sim.js. Optional: without it the demo runs without them. */
+const D = (() => {
+    const o = opt('--comfort', null);
+    const c = [o, process.env.DEMO_COMFORT, B && path.join(B, '..', 'myapp-comfort'), path.join(A, '..', 'myapp-comfort')].filter(Boolean).map((p) => path.resolve(p));
+    return c.find((p) => fs.existsSync(path.join(p, 'mgu-repo.json')) && fs.existsSync(path.join(p, 'apps')) && fs.existsSync(path.join(p, 'tools', 'prebuilt.js'))) || null;
+})();
+/** 재민's apps (jaimeen77-cmyk/apps, MIT): --jm, else beside the cluster repository (the launcher's src\jm-apps). Built
+ *  by its own tools/store-build.js (its runtime template + the app's current source, as the Store builds it) and run
+ *  with this repository's hu-stub.js (the same App Kit). None of them starts with the car here (Cluster Redline would
+ *  draw over AK Cluster's cluster): each runs while it is the app opened. Optional. */
+const J = (() => {
+    const o = opt('--jm', null);
+    const c = [o, process.env.DEMO_JM, B && path.join(B, '..', 'jm-apps'), path.join(A, '..', 'jm-apps')].filter(Boolean).map((p) => path.resolve(p));
+    return c.find((p) => fs.existsSync(path.join(p, 'mgu-repo.json')) && fs.existsSync(path.join(p, 'tools', 'store-build.js'))) || null;
+})();
 /** the demo's own files (each app's settings, the shared /dev/shm files, the cluster apps' staged code): --data */
 const DATA = path.resolve(opt('--data', path.join(__dirname, '.data')));
 const SHM = path.join(DATA, 'shm');
 const STAGE = path.join(DATA, 'stage');
 [DATA, SHM, STAGE, path.join(SHM, 'run', 'waze-on-cluster')].forEach((d) => fs.mkdirSync(d, { recursive: true }));
+process.env.DEMO_PID = String(process.pid);                    // (demo/preload.js: the tools' /run/ sockets are this demo's: demo/runsock.js)
 let HOSTS = [];
 const setHosts = () => { HOSTS = ['localhost:' + PORT, '127.0.0.1:' + PORT]; };
 setHosts();
@@ -87,13 +108,14 @@ const PY = (() => {
     return null;
 })();
 
-/* ---------------- the apps: both repositories ---------------- */
+/* ---------------- the apps: every repository ---------------- */
 const koOf = (root) => { try { return JSON.parse(fs.readFileSync(path.join(root, 'kit', 'runtime', 'locales', 'ko.json'), 'utf8')); } catch (e) { return {}; } };
 let REG = {};
 function scanApps() {
     const reg = {};
-    [[A, 'A'], [B, 'B'], [C, 'C']].forEach(([root, repo]) => {
+    [[A, 'A'], [B, 'B'], [C, 'C'], [D, 'D'], [J, 'J']].forEach(([root, repo]) => {
         if (!root) return;
+        if (repo === 'D' || repo === 'J') { scanPackaged(root, repo, reg); return; }
         const ko = koOf(root);
         let dirs = [];
         try { dirs = fs.readdirSync(path.join(root, 'apps')); } catch (e) { return; }
@@ -109,6 +131,37 @@ function scanApps() {
     });
     REG = reg;
     return reg;
+}
+/** myapp-comfort's apps (their package for iDrive 7) and 재민's (mgu-repo.json's components that build with its
+ *  tools/store-build.js: of each app the Korean one, else the one there is) */
+function scanPackaged(root, repo, reg) {
+    const read = (f) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return null; } };
+    if (repo === 'J') {
+        const comps = ((read(path.join(root, 'mgu-repo.json')) || {}).components || [])
+            .filter((c) => c && c.kind === 'app' && c.build && /store-build\.js$/.test(c.build.node || '') && /^[A-Za-z0-9_./-]+$/.test(c.path || ''));
+        const argOf = (c, k) => { const a = c.build.args || [], i = a.indexOf(k); return i >= 0 ? a[i + 1] : null; };
+        const pick = {};
+        comps.forEach((c) => { const t = argOf(c, '--template') || c.id; if (!pick[t] || (argOf(c, '--language') === 'ko' && argOf(pick[t], '--language') !== 'ko')) pick[t] = c; });
+        Object.keys(pick).forEach((t) => {
+            const c = pick[t], j = read(path.join(root, c.path, 'app.json'));
+            if (!j || reg[c.id]) return;
+            reg[c.id] = { id: c.id, root, repo, dir: c.path, src: (argOf(c, '--source') || c.path).split('/').pop(), build: c.build,
+                title: String(c.title || j.title || c.id).replace(/\s*\((한국어|English)\)$/, ''), version: j.version || '', auto: false, hasDemo: false, hasShow: false };
+        });
+        return;
+    }
+    let dirs = [];
+    try { dirs = fs.readdirSync(path.join(root, 'apps')); } catch (e) { return; }
+    dirs.forEach((dir) => {
+        const j = read(path.join(root, 'apps', dir, 'app.json'));
+        if (!j) return;
+        const id = j.id || dir;
+        if (reg[id]) return;                                        // (an id another repository has: that one)
+        if (!Array.isArray(j.mguHmi) || j.mguHmi.indexOf('ID7') < 0) return;              // (iDrive 8 only: not on this car)
+        if (!fs.existsSync(path.join(root, 'apps', dir, id + '@' + j.version + '.tgz'))) return;
+        const ko = (j.texts && j.texts.ko) || {};
+        reg[id] = { id, root, repo, dir, title: ko.title || j.title || id, version: j.version || '', auto: false, hasDemo: false, hasShow: false };
+    });
 }
 scanApps();
 const listApps = () => Object.keys(REG).sort();
@@ -129,6 +182,8 @@ function buildApp(id) {
             } catch (e) { res({ error: String(e && e.stack || e) }); }
         }));
     }
+    if (a.repo === 'D') return new Promise((res) => setImmediate(() => { try { res({ dir: stagePackage(a) }); } catch (e) { res({ error: String(e && e.stack || e) }); } }));
+    if (a.repo === 'J') return buildJm(a);
     if (!PY) return Promise.resolve({ error: 'Python 3 was not found: this repository\'s apps are built with kit/tools/build.py.\nInstall Python 3 (python.org, "Add to PATH") and start the demo again.' });
     // (AK Cluster ID8: its own kit/tools/build.py in its own tree, in Korean as the Store builds it)
     const root = a.repo === 'C' ? C : A, lang = ['--language', 'ko'];
@@ -139,6 +194,58 @@ function buildApp(id) {
         p.stderr.on('data', (d) => { out += d; });
         p.on('error', (e) => { out += String(e); });
         p.on('close', (code) => res(code === 0 ? { dir: path.join(root, 'dist', id), out } : { error: out || 'build.py exit ' + code }));
+    });
+}
+
+/** myapp-comfort: the app's package as the Store installs it - the tree, with its src/*.js under javascript/ (where its
+ *  main.js finds the tree: __dirname/..) - in stage/comfort/<id>/ (its data/ beside the tree is kept); again only when
+ *  the package changed */
+function stagePackage(a) {
+    const tgz = path.join(a.root, 'apps', a.dir, a.id + '@' + a.version + '.tgz'), st = fs.statSync(tgz);
+    const home = path.join(STAGE, 'comfort', a.id), mark = path.join(home, '.package.json'), key = path.basename(tgz) + ' ' + st.size + ' ' + st.mtimeMs;
+    let m = null;
+    try { m = JSON.parse(fs.readFileSync(mark, 'utf8')); } catch (e) { /* not staged yet */ }
+    if (m && m.key === key && fs.existsSync(path.join(home, m.tree, 'javascript', 'main.js'))) return path.join(home, m.tree);
+    fs.mkdirSync(home, { recursive: true });
+    fs.readdirSync(home).filter((n) => n !== 'data').forEach((n) => fs.rmSync(path.join(home, n), { recursive: true, force: true }));
+    const tmp = fs.mkdtempSync(path.join(home, '.new-'));
+    require('./tgz').untgz(tgz, tmp);
+    const meta = JSON.parse(fs.readFileSync(path.join(tmp, 'mgu-app.json'), 'utf8'));
+    if (!/^[A-Za-z0-9_.@-]+$/.test(meta.tree || '')) throw new Error('mgu-app.json: no tree');
+    fs.renameSync(path.join(tmp, meta.tree), path.join(home, meta.tree));
+    const js = path.join(home, meta.tree, 'javascript');
+    fs.mkdirSync(js, { recursive: true });
+    (meta.modules || []).forEach((f) => fs.copyFileSync(path.join(tmp, f), path.join(js, path.basename(f))));
+    fs.rmSync(tmp, { recursive: true, force: true });
+    fs.mkdirSync(path.join(home, 'data'), { recursive: true });
+    fs.writeFileSync(mark, JSON.stringify({ key, tree: meta.tree }));
+    return path.join(home, meta.tree);
+}
+/** 재민's: its tools/store-build.js with the component's own arguments (mgu-repo.json), Korean, into an empty folder;
+ *  the package it makes unpacked as stage/jm/<id>/source (what hu-stub.js runs) */
+function buildJm(a) {
+    const out = fs.mkdtempSync(path.join(STAGE, '.jm-')), b = a.build;
+    const sub = (x) => String(x).replace('{id}', a.id).replace('{version}', a.version).replace('{dir}', a.dir);
+    const argv = (b.args || []).map(sub).concat(['--out', out]);
+    return new Promise((res) => {
+        let log = '';
+        const p = spawn(process.execPath, [path.join(a.root, b.node)].concat(argv), { cwd: a.root, windowsHide: true });
+        p.stdout.on('data', (d) => { log += d; });
+        p.stderr.on('data', (d) => { log += d; });
+        p.on('error', (e) => { log += String(e); });
+        p.on('close', (code) => {
+            try {
+                const tgz = fs.readdirSync(out).find((n) => /\.tgz$/.test(n));
+                if (code !== 0 || !tgz) throw new Error(log.trim() || 'store-build.js exit ' + code);
+                const home = path.join(STAGE, 'jm', a.id);
+                fs.rmSync(home, { recursive: true, force: true });
+                fs.mkdirSync(home, { recursive: true });
+                require('./tgz').untgz(path.join(out, tgz), home);
+                fs.renameSync(path.join(home, 'package'), path.join(home, 'source'));
+                res({ dir: home, out: log });
+            } catch (e) { res({ error: String(e && e.message || e) }); }
+            fs.rmSync(out, { recursive: true, force: true });
+        });
     });
 }
 
@@ -160,10 +267,15 @@ function forkApp(id, dir, fg, closed) {
     const env = Object.assign({}, process.env, { DEMO_SHM: SHM, DEMO_APP: id, MGU_EMU_CLOSED: closed ? '1' : '' });
     delete env.MGU_RENDERD_FILE;
     if (fg) env.MGU_RENDERD_SOCKET = SOCK; else delete env.MGU_RENDERD_SOCKET;
+    if (a.repo === 'D') {
+        // (IterioDev's: its own code with the oap-sdk stand-in, demo/oap-host.js; the renderer's socket as for every app)
+        env.DEMO_TITLE = a.title;
+        return fork(path.join(__dirname, 'oap-host.js'), [dir, data], { cwd: data, env, execArgv: ['-r', PRELOAD], stdio: ['ignore', 'pipe', 'pipe', 'ipc'] });
+    }
     if (a.repo !== 'A') env.KIT_DIR = path.join(dir, 'source', 'javascript', 'kit');
     if (a.repo === 'C') env.MGU_EMU_BACKGROUND = '1';            // (MGU Styles draws the cluster from impl.background)
     // (MGU Styles' tree has no hu-stub.js: this repository's runs it, the app with its own kit)
-    const stub = path.join(a.repo === 'C' ? A : a.root, 'kit', 'tools', 'hu-stub.js');
+    const stub = path.join(a.repo === 'C' || a.repo === 'J' ? A : a.root, 'kit', 'tools', 'hu-stub.js');
     return fork(stub, [dir, data], { cwd: data, env, execArgv: ['-r', PRELOAD], stdio: ['ignore', 'pipe', 'pipe', 'ipc'] });
 }
 
@@ -260,7 +372,7 @@ const server = http.createServer((req, res) => {
         const ic = /^\/icon\/([A-Za-z0-9_-]+)\.png$/.exec(u);
         if (ic && !REG[ic[1]]) { fail(404); return; }
         let f;
-        if (ic) f = path.join(REG[ic[1]].root, 'apps', ic[1], 'icon.png');
+        if (ic) f = path.join(REG[ic[1]].root, 'apps', REG[ic[1]].src || REG[ic[1]].dir || ic[1], 'icon.png');
         else if (u === '/bg' && BG) f = BG;
         else if (u.indexOf('/gfx/') === 0) { f = path.join(GFX, path.normalize(u.slice(5)).replace(/^([/\\])+/, '')); if (!inside(f, GFX)) { fail(403); return; } }
         else { f = path.join(WEB, u === '/' ? 'index.html' : path.normalize(u).replace(/^([/\\])+/, '')); if (!inside(f, WEB)) { fail(403); return; } }
@@ -307,7 +419,7 @@ function sourcesInfo() {
         if (!s.branch) { try { s.branch = spawnSync('git', ['-C', root, 'rev-parse', '--abbrev-ref', 'HEAD'], { encoding: 'utf8', windowsHide: true }).stdout.trim(); } catch (e) { /* no git */ } }
         return Object.assign({ name }, s);
     };
-    return [one(A, 'myapp-id7'), one(B, 'myapp-cluster')].concat(C ? [one(C, 'myapp-cluster-high')] : []);
+    return [one(A, 'myapp-id7'), one(B, 'myapp-cluster')].concat(C ? [one(C, 'myapp-cluster-high')] : [], D ? [one(D, 'myapp-comfort')] : [], J ? [one(J, 'jm-apps')] : []);
 }
 /** the cluster's glass as the car shows it, from Cluster Layouts' layout_common.js (its own measurements of the car):
  *  the map's place, the car's bottom strip, the driver camera's cowl, the slanted top corners, the stock warning
@@ -1044,6 +1156,7 @@ function vehOut() {
     const o = Object.assign({}, v, {
         engineOn: v.rpm > 300, boostTarget: Math.max(0, v.boostActual + 0.05), battMin: v.battTemp - 1, battMax: v.battTemp + 1,
         indicator: Veh.extra.indicator, night: !!Veh.extra.night, vtype: kind, typeEngine: K.typeEngine,
+        limit: Veh.extra.limit | 0, assist: Veh.extra.assist | 0,
         tyres: { p: { FL: P - 0.02, FR: P, RL: P + 0.1, RR: P + 0.08 }, t: { FL: T - 1, FR: T, RL: T + 2, RR: T + 1 } },
     });
     // (no drive battery on a petrol, diesel or M car: none of its values)
@@ -1130,7 +1243,7 @@ function assetOf(root, id, rel) {
 }
 function watchAll() {
     watchers.forEach((w) => w.close());
-    const dirs = [[A, 'apps'], [A, 'kit/runtime'], [B, 'apps'], [B, 'shared'], [B, 'kit/runtime'], [C, 'apps'], [C, 'kit/runtime']].filter(([r]) => r).map(([r, d]) => [r, path.join(r, d)]);
+    const dirs = [[A, 'apps'], [A, 'kit/runtime'], [B, 'apps'], [B, 'shared'], [B, 'kit/runtime'], [C, 'apps'], [C, 'kit/runtime'], [D, 'apps'], [J, 'apps']].filter(([r]) => r).map(([r, d]) => [r, path.join(r, d)]);
     let t = null, hit = new Set(), rescan = false;
     const kick = (root, dir) => (ev, f) => {
         if (f && /(^|[/\\])\.|~$|\.swp$|\.tmp$/.test(String(f))) return;            // editor temp files
@@ -1138,8 +1251,10 @@ function watchAll() {
         if (path.basename(dir) === 'apps') {
             const id = rel.split(/[/\\]/)[0];
             if (REG[id] && assetOf(root, id, rel)) return;                        // (a file the build downloads, as Doom's WAD: not a change)
-            if (!REG[id] || /app\.json$/.test(rel)) rescan = true;
-            if (id) hit.add(id);
+            // (재민's: a folder under apps/ is the source of the app built from it - its Korean one has another id)
+            const of = listApps().filter((x) => REG[x].root === root && REG[x].src === id);
+            if ((!REG[id] && !of.length) || /app\.json$/.test(rel)) rescan = true;
+            if (id) { hit.add(id); of.forEach((x) => hit.add(x)); }
         } else listApps().filter((id) => REG[id].root === root).forEach((id) => hit.add(id));
         clearTimeout(t);
         t = setTimeout(() => {
@@ -1161,6 +1276,10 @@ function watchAll() {
 const buildQ = {};
 const buildOnce = buildApp;
 function queuedBuild(id) { const p = (buildQ[id] || Promise.resolve()).then(() => buildOnce(id)); buildQ[id] = p.catch(() => {}); return p; }
+
+/* ---------------- the tools the comfort apps drive: the Comfort tool (demo/comfort-sim.js), one for every app ---------------- */
+const Comfort = D || J ? require('./comfort-sim').start({ path: require('./runsock')('/run/iteriodev-comfort/ctl.sock', process.pid), file: path.join(DATA, 'comfort-demo.json'),
+    veh: () => Veh.v, ambientJs: D && path.join(D, 'tools', 'iteriodev-comfort', 'ambient.js'), log: (x) => appLog('info', x) }) : null;
 
 /* ---------------- go ---------------- */
 function openBrowser(url) {
@@ -1191,6 +1310,7 @@ function cleanup(code) {
     watchers.forEach((w) => w.close());
     [App.child].concat(Array.from(Bg.values()).map((b) => b.child)).forEach((ch) => { if (ch) { try { ch.kill('SIGKILL'); } catch (e) { /* gone */ } } });
     if (process.platform !== 'win32') { try { fs.unlinkSync(SOCK); } catch (e) { /* gone */ } }
+    if (Comfort) Comfort.close();
     process.exit(code || 0);
 }
 process.on('SIGINT', () => cleanup(0));

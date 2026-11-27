@@ -1,10 +1,10 @@
 'use strict';
 /**
  * mgu_demo_update.js - the MGU demo's launcher (mgu_demo.bat runs it): fetches the newest code of the repositories
- * (myapp-id7, myapp-cluster and, when it can be fetched, myapp-cluster-high) into src\ before the demo starts, so the demo always shows the apps as they are on GitHub now. Only Node is needed
+ * (myapp-id7, myapp-cluster and, when they can be fetched, myapp-cluster-high, myapp-comfort and 재민's apps) into src\ before the demo starts, so the demo always shows the apps as they are on GitHub now. Only Node is needed
  * (git when it is there; otherwise the branch's tarball from GitHub, unpacked with tar, which Windows 10 and later have).
  *
- *   node mgu_demo_update.js            (APPS_BRANCH / CLUSTER_BRANCH / STYLES_BRANCH: the branches; defaults below)
+ *   node mgu_demo_update.js            (APPS_BRANCH / CLUSTER_BRANCH / STYLES_BRANCH / COMFORT_BRANCH / JM_BRANCH: the branches; defaults below)
  *
  * A repository that is already the newest is left as it is; with no internet the code there is used as it is.
  */
@@ -21,6 +21,11 @@ const REPOS = [
     // MGU Styles: shown when it can be fetched; while the repository is private, a git clone in src\ (made with a GitHub login) is updated with git pull
     // (its work branch is test; an older mgu_demo.bat still says ak, the branch's former name)
     { name: 'myapp-cluster-high', repo: 'akakingj/myapp-cluster-high', branch: process.env.STYLES_BRANCH && process.env.STYLES_BRANCH !== 'ak' ? process.env.STYLES_BRANCH : 'test', optional: true },
+    // myapp-comfort (IterioDev's apps, the owner's copy: Seats, Ambient Light, Turn View, Drive Recorder, Tailscale on
+    // iDrive 7; demo 1.14.0): its packages run on the centre display; the demo runs without it when it can't be fetched
+    { name: 'myapp-comfort', repo: 'akakingj/myapp-comfort', branch: process.env.COMFORT_BRANCH || 'test', optional: true },
+    // 재민's apps (jaimeen77-cmyk/apps, MIT; demo 1.14.0): built by its own tools/store-build.js and run on the centre display
+    { name: 'jm-apps', repo: 'jaimeen77-cmyk/apps', branch: process.env.JM_BRANCH || 'main', optional: true },
 ];
 const say = (s) => console.log(s);
 
@@ -69,6 +74,16 @@ async function update(r) {
     say('  ' + r.name + ' (' + r.branch + '): 받는 중' + (info ? ' ' + info.sha.slice(0, 7) : '') + ' ...');
     let tgz;
     try { tgz = await get('https://codeload.github.com/' + r.repo + '/tar.gz/' + ref); } catch (e) {
+        // (1.14.0) not as a download (a repository that needs a GitHub login): a git clone, once - git asks for the
+        // login (Git for Windows: a browser window) and remembers it; from then on it is updated with git pull above
+        if (!fs.existsSync(path.join(dir, 'apps')) && hasGit()) {
+            say('  ' + r.name + ': git clone (GitHub 로그인 창이 뜨면 로그인하세요) ...');
+            const tmp = path.join(SRC, '.clone-' + r.name);
+            fs.rmSync(tmp, { recursive: true, force: true });
+            const c = spawnSync('git', ['clone', '--depth', '1', '--branch', r.branch, 'https://github.com/' + r.repo + '.git', tmp], { stdio: 'inherit', windowsHide: true });
+            if (c.status === 0) { fs.rmSync(dir, { recursive: true, force: true }); fs.renameSync(tmp, dir); say('  ' + r.name + ': 받음 (git)'); return; }
+            fs.rmSync(tmp, { recursive: true, force: true });
+        }
         say('  ' + r.name + ': 받지 못했습니다 (' + e.message + ')' + (fs.existsSync(dir) ? ' - 지금 있는 코드로 실행합니다' : r.optional ? ' - 이 앱 없이 실행합니다' : ''));
         return;
     }
@@ -99,7 +114,15 @@ async function update(r) {
     try {
         const mine = path.join(SRC, 'myapp-id7', 'demo', 'launcher', 'mgu_demo_update.js');
         const next = fs.readFileSync(mine, 'utf8');
-        if (next.indexOf('mgu_demo_update.js') > 0 && next !== fs.readFileSync(__filename, 'utf8')) { fs.writeFileSync(__filename, next); say('  런처(mgu_demo_update.js)를 새 버전으로 바꿨습니다: 다음 실행부터 적용'); }
+        if (next.indexOf('mgu_demo_update.js') > 0 && next !== fs.readFileSync(__filename, 'utf8')) {
+            fs.writeFileSync(__filename, next);
+            say('  런처(mgu_demo_update.js)를 새 버전으로 바꿨습니다');
+            // (1.14.0: the new launcher runs at once, once - a repository it adds comes with this start, not the next)
+            if (!process.env.MGU_DEMO_RELAUNCHED) {
+                spawnSync(process.execPath, [__filename], { stdio: 'inherit', windowsHide: true, env: Object.assign({}, process.env, { MGU_DEMO_RELAUNCHED: '1' }) });
+                return;
+            }
+        }
     } catch (e) { /* as it is */ }
     // Python 3 builds myapp-id7's apps (kit/tools/build.py), as the MGU Store does
     const py = (process.platform === 'win32' ? [['py', '-3'], ['python'], ['python3']] : [['python3']]).some(([c, ...a]) => {

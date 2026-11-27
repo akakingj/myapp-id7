@@ -44,6 +44,23 @@ if (SHM) {
     ['cluster-info', 'cluster-layouts', 'mgu-hud', 'run'].forEach((d) => { try { fs.mkdirSync(path.join(SHM, d), { recursive: true }); } catch (e) { /* there */ } });
 }
 
+/* ---------------- a tool's socket under /run/ (the Comfort tool's ctl.sock): the demo's stand-in (demo/runsock.js) ---------------- */
+if (process.env.DEMO_PID) {
+    const net = require('net'), runSocket = require('./runsock');
+    const conn = net.Socket.prototype.connect;
+    net.Socket.prototype.connect = function (...a) {
+        // (net.connect(path) hands the socket its normalized arguments: an array, the options first)
+        const arr = Array.isArray(a[0]), o = arr ? a[0][0] : a[0];
+        const p = typeof o === 'string' ? o : o && typeof o === 'object' && typeof o.path === 'string' ? o.path : null;
+        if (p && p.replace(/\\/g, '/').indexOf('/run/') === 0) {
+            const to = runSocket(p.replace(/\\/g, '/'), process.env.DEMO_PID);
+            const n = typeof o === 'string' ? to : Object.assign({}, o, { path: to });
+            if (arr) a[0][0] = n; else a[0] = n;
+        }
+        return conn.apply(this, a);
+    };
+}
+
 /* ---------------- Windows: the renderer's named pipe counts as a socket ---------------- */
 if (process.platform === 'win32') {
     const st = fs.statSync;
@@ -118,6 +135,17 @@ function slowSignals(feed, v) {
     // the engine's kind (kit/runtime/engine.js reads it for its Auto: petrol or diesel; a plug-in hybrid's: HYBRIDMOTOR)
     if (v.typeEngine) feed('de.bmw.infotainment.vehicle.Vehicle2', 'statusVehiclePartType', { typeEngine: v.typeEngine });
     if (mode) feed('de.bmw.infotainment.drivingexcitement.FES', 'statusFESVehicleDynamicSwitchHMI', { actualValueModeDrivingExperience: mode });
+    // the speed limit and the cruise control as the head-up display gets them (DisplayDataServer.functionalLibraryData:
+    // AK Cluster Layouts' and AK Cluster ID8's speed limit sign, Layouts' cruise set speed). The car fills
+    // vSLISpeedValue (km/h / 5) only for a limit Speed Limit Assist has taken (ldmAdditionalSign TAKEOVER_SET) while the
+    // limiter or the cruise control is on: the panel's sign is given as taken, by the limiter (on while a sign is set)
+    const lim = num(v.limit) && v.limit >= 5 && v.limit <= 150 ? Math.round(v.limit / 5) : 0, set = num(v.assist) && v.assist > 0 ? Math.round(v.assist) : 0;
+    feed('de.bmw.infotainment.displaydataserver.DisplayDataServer', 'functionalLibraryData', {
+        xSpeedLimitAssist: { vSLISpeedValue: lim, ldmAdditionalSign: lim ? 'TAKEOVER_SET' : 'TAKEOVER_NOT_SET', vSLISymbol: lim ? 'SLI_SYMBOL_SPEED_LIMIT' : 'SLI_NO_SYMBOL', vSLIAdditionalSign: 'NO_ADDITIONAL_SIGN' },
+        activeCruiseControl: { symbolACC: set ? 'ACC_ACTIVE' : 'ACC_OFF' },
+        statusLimiter: lim ? 'STATUS_ACTIVE' : 'STATUS_INACTIVE',
+        cruiseCtrlSpeedHUD: set,
+    });
     if (num(v.soc)) feed('de.bmw.infotainment.drivingexcitement.Efficiencytainment2', 'statusChargeOfBatteryHybrid', { displayChargingConditionHighVoltageStorage: Math.max(0, Math.min(100, Math.round(v.soc))) });
 }
 const fresh = () => VEH && Date.now() - vehAt < 3000;
@@ -284,6 +312,10 @@ Module._load = function (request, parent, isMain) {
         const EE = load.apply(this, arguments);
         if (!own(EE, '__demoHu')) Object.defineProperty(EE, '__demoHu', { value: class extends EE { constructor(...a) { super(...a); if (emitters.length < 2) emitters.push(this); } } });
         return EE.__demoHu;
+    }
+    // an app's kit without qrlog.js (재민's runtime template): hu-stub.js's settings sheet takes this repository's (its QR log row)
+    if (typeof request === 'string' && /[/\\]kit[/\\]qrlog$/.test(request) && parent && /hu-stub\.js$/.test(parent.filename || '')) {
+        try { Module._resolveFilename(request, parent, isMain); } catch (e) { return load.call(this, path.join(__dirname, '..', 'kit', 'runtime', 'qrlog'), parent, isMain); }
     }
     const mod = load.apply(this, arguments);
     let file = '';
