@@ -36,7 +36,18 @@ Every setting starts at **Each app**: until it is set here, each app keeps its o
 of car itself and writes that for every app - a **plug-in hybrid** by its own drive modes (Hybrid, Electric, Battery
 Control...), an **M car** by its M engine modes, else **diesel** or **petrol** by the car's engine type. Its row shows
 what was found (*Auto (from the car) · Plug-in hybrid (petrol)*); until something is found the apps read the car
-themselves, as on Auto before. What was found is kept for the next start. Boost gauge up to, set here alone, starts at *Auto*, as the apps show it without the Car profile. A setting the profile sets shows the profile's value in the other app's Settings and can't be changed
+themselves, as on Auto before. What was found is kept for the next start.
+**Gauge goes up to**, **Engine's top rpm (redline)** and **Speedometer up to** start at *Auto* too (1.13.0; ones left on
+*Each app* as they came go to *Auto* once): on Auto they are what BMW's own cluster has for that kind of car (G20):
+
+| Kind of car (G20) | Rev gauge ends at | Red from (redline) | Speedometer |
+|---|---|---|---|
+| Diesel (320d) | 6000 | 5000 | 260 |
+| Petrol (320i, 330i; M340i, whose red starts at about 6500) | 7000 | 6000 | 260 |
+| Plug-in hybrid (330e: Power % on Electric and Hybrid, its petrol engine's revs on Sport) | 7000 | 6000 | 260 |
+| M car (M3) | 8000 | 7200 | 330 |
+
+Their rows show it (*Auto · 7000 rpm*); with no kind of car known yet, Auto is each app's own as before. Boost gauge up to, set here alone, starts at *Auto*, as the apps show it without the Car profile. A setting the profile sets shows the profile's value in the other app's Settings and can't be changed
 there (no arrow on its row); set it back to *Each app* here and the app's own value is back.
 
 ## One shift point, one rev limit

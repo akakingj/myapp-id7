@@ -122,10 +122,10 @@ const check = (name, fn) => fn().then(() => { n++; console.log('ok   ' + name); 
     await check('pressed: its values, on the one set; the knob and a press set the next and close', async () => {
         targets().find((q) => q.key === 'row_redline').run();
         assert(sheet && sheet.open && sheet.open.key === 'redline', 'the redline\'s values open');
-        assert.strictEqual(sheet.sub, 0, 'on Each app');
+        assert.strictEqual(sheet.sub, 1, 'on Auto (1.13.0: where it starts)');
         sheet.move(1); sheet.move(1);
         assert.strictEqual(await sheet.press(), 'close');
-        assert.strictEqual(settings.get('redline'), 4000, 'Auto, then 4000');
+        assert.strictEqual(settings.get('redline'), 4500, '4000, then 4500');
         sheet.draw(new Recorder(1600, 520), themes.theme('m_tricolour'));
     });
     await check('Back: the page again, nothing changed', async () => {
@@ -174,7 +174,7 @@ const check = (name, fn) => fn().then(() => { n++; console.log('ok   ' + name); 
         [s] = await start({ eFullKm: -1 });
         assert.strictEqual(s.get('eFullKm'), -1, 'set back to Each app later: left as it is');
     });
-    await check('Engine on Auto (1.12.0): its default; Each app left as it came goes to Auto once, chosen later it stays', async () => {
+    await check('Engine on Auto (1.12.0) and the gauges (1.13.0): their default; Each app left as it came goes to Auto once, chosen later it stays', async () => {
         const file = path.join(DD, 'settings.json');
         const start = async (saved) => {
             fs.writeFileSync(file, JSON.stringify(saved));
@@ -190,6 +190,11 @@ const check = (name, fn) => fn().then(() => { n++; console.log('ok   ' + name); 
         assert.strictEqual(s.get('engine'), 'app', 'Each app chosen after: stays');
         s = await start({ engine: 'diesel' });
         assert.strictEqual(s.get('engine'), 'diesel', 'a type chosen: stays');
+        // (1.13.0) the gauges left on Each app as they came: Auto, once; set otherwise, or Each app chosen after: kept
+        s = await start({ engineAuto: true, rpmScale: -1, redline: 6500, speedMax: 'app' });
+        assert.deepStrictEqual([s.get('rpmScale'), s.get('redline'), s.get('speedMax'), s.get('gaugesAuto')], [0, 6500, 'auto', true]);
+        s = await start({ engineAuto: true, gaugesAuto: true, rpmScale: -1, speedMax: 'app' });
+        assert.deepStrictEqual([s.get('rpmScale'), s.get('speedMax')], [-1, 'app']);
     });
     await check('Engine on Auto: the kind of car found, for the apps and on its row (a 530e\'s drive modes: a plug-in hybrid)', async () => {
         const dd = fs.mkdtempSync(path.join(os.tmpdir(), 'cp-car-'));
@@ -210,8 +215,21 @@ const check = (name, fn) => fn().then(() => { n++; console.log('ok   ' + name); 
         assert.strictEqual(JSON.parse(fs.readFileSync(path.join(dd, 'car.json'), 'utf8')).phev, true, 'kept for the next start');
         await app.start(c2);
         assert.strictEqual(s.display('engine'), 'Auto (from the car)  \u00b7  Plug-in hybrid (petrol)', 'its row says what was found');
+        // the gauges on Auto, as the G20's own cluster: a plug-in hybrid's petrol engine (a 330i's) 7000, red from 6000, 260
+        const all = () => JSON.parse(fs.readFileSync(process.env.MGU_CAR_PROFILE, 'utf8')).values;
+        s.set('rpmScale', 0); s.set('redline', 0); s.set('speedMax', 'auto');
+        assert.deepStrictEqual([all().rpmScale, all().redline, all().speedMax], [7000, 6000, '260']);
+        assert.strictEqual(s.display('speedMax'), 'Auto (from the car)  \u00b7  260 km/h (160 mph)');
+        assert.ok(/^Auto  \u00b7  7000 rpm/.test(s.display('rpmScale')), s.display('rpmScale'));
         s.set('engine', 'diesel');
         assert.strictEqual(prof(), 'diesel', 'a type chosen: that one');
+        assert.deepStrictEqual([all().rpmScale, all().redline, all().speedMax], [6000, 5000, '260'], 'a 320d\'s: 6000, red from 5000');
+        s.set('engine', 'm');
+        assert.deepStrictEqual([all().rpmScale, all().redline, all().speedMax], [8000, 7200, '330'], 'an M3\'s: 8000, red from 7200, 330');
+        s.set('redline', 6500); s.set('speedMax', '260');
+        assert.deepStrictEqual([all().rpmScale, all().redline, all().speedMax], [8000, 6500, '260'], 'set by hand: that one');
+        s.set('engine', 'app'); s.set('speedMax', 'auto');
+        assert.deepStrictEqual([all().rpmScale, all().speedMax], [0, undefined], 'no kind of car: Auto as each app has it, the speedometer each app\'s');
         // an M car by its M engine modes; a diesel by its engine type; a petrol car's modes (1 - 14) are no plug-in hybrid's
         const Detect = require(path.join(ROOT, 'apps', 'car_profile', 'detect.js'));
         assert.strictEqual(Detect.kindOf({ m: true, fuel: 'petrol' }), 'm');

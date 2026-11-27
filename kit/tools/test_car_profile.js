@@ -209,8 +209,10 @@ const cases = {
         assert(cp.settings.every((s) => !s.profile), 'the Car profile follows no profile itself');
         // (Boost gauge up to is set here alone and starts at Auto, what the apps show without the profile; the engine
         // starts at Auto (from the car), 1.12.0: the kind of car found goes to every app; engineAuto: that change, once)
-        assert(cp.settings.filter((s) => s.key !== 'engineAuto').every((s) => (s.type === 'choice' ? s.default === (s.key === 'engine' ? 'auto' : 'app') : s.default === (s.key === 'boostMax' ? 0 : -1))), 'everything starts at Each app, the engine at Auto');
-        assert(byKey.engineAuto.hidden === true, 'engineAuto is not shown');
+        // (1.13.0: the rev gauges' end, the redline and the speedometer on Auto too: the car's own cluster's for its kind)
+        const AUTO = { engine: 'auto', speedMax: 'auto', rpmScale: 0, redline: 0, boostMax: 0 };
+        assert(cp.settings.filter((s) => !s.hidden).every((s) => s.default === (AUTO[s.key] !== undefined ? AUTO[s.key] : s.type === 'choice' ? 'app' : -1)), 'everything starts at Each app, the engine and the gauges at Auto');
+        assert(byKey.engineAuto.hidden === true && byKey.gaugesAuto.hidden === true, 'engineAuto, gaugesAuto are not shown');
         assert.deepStrictEqual(byKey.boostMax.steps, [0, 15, 20, 30, 45], 'Boost gauge up to: Auto, or one of the car\'s own gauges');
         let followers = 0;
         fs.readdirSync(path.join(ROOT, 'apps')).forEach((app) => {

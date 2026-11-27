@@ -43,6 +43,16 @@ async function background(bg) {
         if (settings.get('engine') === 'app') { settings.set('engine', 'auto'); log.info('Engine: Auto (from the car), the new default'); }
         settings.set('engineAuto', true);
     }
+    // (1.13.0: the rev gauges' end, the redline and the speedometer start on Auto too - the car's own cluster's for the
+    // kind of car. Those left on Each app as they came go to Auto once)
+    if (!settings.get('gaugesAuto')) {
+        const was = [];
+        [['rpmScale', -1, 0], ['redline', -1, 0], ['speedMax', 'app', 'auto']].forEach(([k, each, auto]) => {
+            if (settings.get(k) === each) { settings.set(k, auto); was.push(k); }
+        });
+        if (was.length) log.info('Auto (from the car), the new default: ' + was.join(', '));
+        settings.set('gaugesAuto', true);
+    }
     if (bg.signals && bg.signals.watch) {
         car.handlers().forEach(([iface, handlers]) => {
             bg.signals.watch(iface, '1', handlers, log, { pollMs: 5000 })
@@ -75,11 +85,19 @@ mgu.run({
         const { state } = ctx.background || await background(ctx);
         // Engine on Auto: the kind of car found, by it ("Auto (from the car)  ·  Plug-in hybrid (petrol)")
         const display = settings.display.bind(settings);
+        // (and the gauges on Auto: what they are for that kind of car, "Auto  ·  7000 rpm")
         settings.display = (key) => {
-            const d = display(key), k = key === 'engine' && settings.get('engine') === 'auto' && state.car ? state.car.kind() : null;
-            const o = k ? ((settings.item && settings.item('engine')) || {}).options || [] : [];
-            const name = (o.find((x) => x[0] === k) || [])[1];
-            return name ? d + '  \u00b7  ' + name : d;
+            const d = display(key), found = state.car ? state.car.kind() : null;
+            const opt = (k, v) => (((settings.item && settings.item(k)) || {}).options || []).find((x) => x[0] === v);
+            if (key === 'engine') {
+                const o = settings.get('engine') === 'auto' && found ? opt('engine', found) : null;
+                return o ? d + '  \u00b7  ' + o[1] : d;
+            }
+            const g = P.gaugesOf(P.kindOf(settings, found)), v = settings.get(key);
+            if (!g || !((key === 'rpmScale' || key === 'redline') && v === 0) && !(key === 'speedMax' && v === 'auto')) return d;
+            const s = settings.item && settings.item(key);
+            const shown = key === 'speedMax' ? (opt('speedMax', g.speedMax) || [])[1] : s && settings.numberText ? settings.numberText(s, g[key]) : String(g[key]);
+            return shown ? d + '  \u00b7  ' + shown : d;
         };
         const items = (ctx.spec.settings || []).filter((s) => P.KEYS.indexOf(s.key) >= 0);
         // (a value kept in one unit and shown in another's, "unitBy": with that unit on Each app, in every unit the

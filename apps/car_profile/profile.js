@@ -79,8 +79,33 @@ function valuesOf(settings, carKind) {
     const o = {};
     KEYS.forEach((k) => { const v = settings.get(k); if (isSet(v)) o[k] = v; });
     if (o.engine === 'auto' && carKind) o.engine = carKind;
+    // the gauges on Auto: as the car's own cluster has them, for the kind of car (G20)
+    const g = gaugesOf(kindOf(settings, carKind));
+    if (o.rpmScale === 0 && g) o.rpmScale = g.rpmScale;
+    if (o.redline === 0 && g) o.redline = g.redline;
+    if (o.speedMax === 'auto') { if (g) o.speedMax = g.speedMax; else delete o.speedMax; }
     return o;
 }
+
+/*
+ * The rev and speed gauges as BMW's own cluster has them (iDrive 7, G20 3 Series; the owner's photos of Nov 27 2026):
+ * a 320d's ends at 6 with red from 5, a 320i's and 330i's at 7 with red from 6 (an M340i's from about 6.5, the same
+ * kind of car here), an M3's at 8 with red from 7.2 (yellow from 6.5) and its speedometer at 330; the others' at 260.
+ * A plug-in hybrid (330e) shows Power % on Electric and Hybrid, its petrol engine's revs (a 330i's) on Sport.
+ * redline: where the red begins, as the apps take it (the lights' red, the shift point 300 under it).
+ */
+const G20 = {
+    diesel: { rpmScale: 6000, redline: 5000, speedMax: '260' },
+    petrol: { rpmScale: 7000, redline: 6000, speedMax: '260' },
+    phev: { rpmScale: 7000, redline: 6000, speedMax: '260' },
+    m: { rpmScale: 8000, redline: 7200, speedMax: '330' },
+};
+/** The kind of car the gauges go by: the engine set here, or on Auto the one found (detect.js); null: not known. */
+function kindOf(settings, carKind) {
+    const e = settings.get('engine');
+    return G20[e] ? e : e === 'auto' && G20[carKind] ? carKind : null;
+}
+const gaugesOf = (kind) => G20[kind] || null;
 
 /** Write the profile from settings when it differs from the file (or there is none). Returns the values. */
 function publish(settings, version, log, carKind) {
@@ -95,4 +120,4 @@ function publish(settings, version, log, carKind) {
     return values;
 }
 
-module.exports = { KEYS, FOLLOW, file, isSet, valuesOf, publish };
+module.exports = { KEYS, FOLLOW, file, isSet, valuesOf, publish, G20, kindOf, gaugesOf };
