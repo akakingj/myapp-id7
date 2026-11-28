@@ -276,7 +276,7 @@ const checks = [
         drive({ rpm: 1500, torque: 50, oil: 45, coolant: 70, speed: 40 }, 5);
         await tab(1);
         let t = await render();
-        assert(t.indexOf('NOT YET') >= 0 && t.some((x) => /^The engine oil and coolant are still cold/.test(x)), 'cold: NOT YET and why: ' + t.join(' | '));
+        assert(t.indexOf('NOT YET') >= 0 && t.some((x) => /^Engine oil, coolant still cold/.test(x)), 'cold: NOT YET and why: ' + t.join(' | '));
         // six cards (their titles are drawn as panel headers): the two temperatures, and four the stub car does not send
         assert(t.filter((x) => x === 'COLD').length === 2 && t.filter((x) => x === 'NO DATA').length === 4, 'the cards: ' + t.join(' | '));
         assert(t.some((x) => /^READY IN ABOUT \d+ MIN$/.test(x)), 'ready in about: ' + t.join(' | '));

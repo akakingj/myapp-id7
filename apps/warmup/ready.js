@@ -17,6 +17,7 @@
  */
 const G = require('./kit/gauges');
 const { withAlpha } = require('./kit/canvas');
+const { t: tr } = require('./kit/i18n');
 
 const isNum = (v) => typeof v === 'number' && isFinite(v);
 const GO = '#2fd27a';
@@ -56,7 +57,7 @@ function checks(s, set) {
     out.push({ key: 'tyres', label: 'Tyre pressure', value: isNum(lo) ? Math.round(lo * 100) : null, unit: '%', scale: [70, 110],
         zones: [{ from: 70, to: 90, color: 'crit' }, { from: 90, to: 95, color: 'warn' }, { from: 95, to: 110, color: 'go' }],
         state: !isNum(lo) ? 'none' : lo < 0.95 ? 'check' : 'ok',
-        text: !isNum(lo) ? 'not sent by this car yet' : (lo < 0.9 ? 'low: ' : lo < 0.95 ? 'a little low: ' : 'at target, lowest: ') + (ty.which || '') });
+        text: !isNum(lo) ? 'not sent by this car yet' : (lo < 0.9 ? 'too low: ' : lo < 0.95 ? 'a little low: ' : 'at target, lowest: ') + (ty.which || '') });
     return out;
 }
 
@@ -64,11 +65,12 @@ function verdict(list) {
     const temps = list.filter((c) => c.temp), seen = temps.filter((c) => c.state !== 'none');
     const notes = list.filter((c) => !c.temp && c.state === 'check').map((c) => c.label + ': ' + c.text);
     const hot = temps.filter((c) => c.state === 'hot'), cold = temps.filter((c) => c.state === 'cold');
-    const names = (l) => l.map((c) => c.label.toLowerCase()).join(' and ');
-    const be = (l) => (l.length > 1 ? ' are' : ' is');
+    // (1.12.7: "Engine oil, coolant still cold. ..." - the names and the sentence each a whole translated phrase; before,
+    // "The ... is still cold" came out half in English in Korean, the owner's photo)
+    const names = (l) => l.map((c, i) => (i ? c.label.toLowerCase() : c.label)).join(', ');
     if (!seen.length) return { word: 'NO DATA', state: 'none', why: 'The car has not sent any temperature yet.', notes };
-    if (hot.length) return { word: 'TOO HOT', state: 'hot', why: 'The ' + names(hot) + be(hot) + ' too hot. Drive gently until it comes down.', notes };
-    if (cold.length) return { word: 'NOT YET', state: 'cold', why: 'The ' + names(cold) + be(cold) + ' still cold. Keep it gentle: no full throttle, no high revs.', notes };
+    if (hot.length) return { word: 'TOO HOT', state: 'hot', why: names(hot) + ' too hot. Drive gently until it comes down.', notes };
+    if (cold.length) return { word: 'NOT YET', state: 'cold', why: names(cold) + ' still cold. Keep it gentle: no full throttle, no high revs.', notes };
     return { word: 'READY', state: 'ok', why: 'Everything the car sends is warm. It is ready for harder driving.', notes };
 }
 
@@ -76,11 +78,11 @@ function verdict(list) {
 const zoneCol = (t, c) => (c === 'go' ? GO : c === 'cold' ? t.cold || '#4aa8ff' : c === 'warn' ? t.warn : t.crit);
 const stateCol = (t, st) => (st === 'ok' ? GO : st === 'cold' ? t.cold || '#4aa8ff' : st === 'check' ? t.warn : st === 'hot' ? t.crit : t.dim);
 
-/** Words wrapped into lines no wider than w. */
+/** Words wrapped into lines no wider than w - translated first: a sentence is one phrase, its lines are not. */
 function wrap(cv, text, size, w) {
     const out = [];
     let line = '';
-    String(text).split(' ').forEach((word) => {
+    String(tr(text)).split(' ').forEach((word) => {
         const next = line ? line + ' ' + word : word;
         if (line && cv.textWidth(next, size) > w) { out.push(line); line = word; } else line = next;
     });
