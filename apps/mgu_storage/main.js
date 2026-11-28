@@ -10,6 +10,8 @@
  *          in /var/opt; "Refresh" asks the helper to measure again. Without it: this app's own folder (every app
  *          runs as its own user and can't open the others'), and where to get the helper.
  *
+ * A list longer than its panel: its "+ N more" row tapped (or Next page pressed) shows the next rows, "Back" the first.
+ *
  * Read-only: the app deletes and changes nothing.
  */
 const mgu = require('./kit/mgu');
@@ -97,6 +99,28 @@ mgu.run({
         /* ---------- drawing ---------- */
         let page = Math.max(0, PAGES.indexOf(settings.get('page')));
         let lastDraw = 0;
+        /*
+         * (1.4.5) A list longer than its panel shows its rows a page at a time: its last row, "+ N more", is tapped (or
+         * Next page pressed with the controller) for the next rows, and on the last of them "Back" for the first again.
+         * Before, "+ N more" was only text (the owner: tapping it did nothing). off: each list's first row shown;
+         * pending: this frame's lists with more rows (or Back), for Next page.
+         */
+        const off = { disks: 0, stock: 0, custom: 0, plain: 0 };
+        let pending = [];
+        /** The rows of a list to show from off[key], n places: { show, more: rows left after them (null: none), back }. */
+        function rowsOf(key, list, n) {
+            if (off[key] >= list.length) off[key] = 0;
+            const from = off[key];
+            if (from === 0 && list.length <= n) return { show: list, more: null, back: false };
+            const show = list.slice(from, from + n - 1), rest = list.slice(from + show.length);
+            return { show, more: rest.length ? rest : null, back: !rest.length && from > 0, next: from + show.length };
+        }
+        /** The "more" / "Back" row of a list (drawn by the caller): a target the touchscreen and the controller press. */
+        function moreRow(cv, key, w, r) {
+            const go = w.more ? w.next : 0;
+            pending.push({ key, go });
+            if (cv.target) cv.target(r.x, r.y, r.w, r.h, () => { off[key] = go; return render(); }, 'more-' + key, 6);
+        }
 
         function bar(cv, t, x, y, w, h, frac, color) {
             cv.roundRect(x, y, w, h, Math.min(4, h / 2), t.track);
@@ -111,7 +135,7 @@ mgu.run({
             if (!list.length) {
                 cv.text(disks.t ? (disks.error || 'No file systems found') : 'Reading...', 48, top + 40, 24, disks.error ? t.warn : t.dim);
             }
-            const rows = list.length > fitRows ? list.slice(0, fitRows - 1) : list;
+            const win = rowsOf('disks', list, fitRows), rows = win.show;
             rows.forEach((r, i) => {
                 const y = top + i * rowH, p = pct(r.used, r.size), c = fullCol(t, p, r.ro);
                 let nx = 48;
@@ -126,9 +150,10 @@ mgu.run({
                 cv.text(fit(cv, extra, 18, 560, 'label'), 48, y + 52, 18, t.dim);
                 bar(cv, t, 48, y + 62, 1012, 6, p / 100, c);
             });
-            if (list.length > rows.length) {
-                const rest = list.slice(rows.length);
-                cv.text('+ ' + rest.length + ' more: ' + rest.map((r) => r.mount).join(', '), 48, top + rows.length * rowH + 28, 20, t.dim);
+            if (win.more || win.back) {
+                const ry = top + rows.length * rowH;
+                cv.text(win.more ? '+ ' + win.more.length + ' more: ' + win.more.map((r) => r.mount).join(', ') : 'Back', 48, ry + 28, 20, t.accent);
+                moreRow(cv, 'disks', win, { x: 24, y: ry, w: 1060, h: rowH });
             }
 
             // right: free for apps, memory
@@ -161,7 +186,7 @@ mgu.run({
         const ago = (ms) => (ms < 90000 ? 'just now' : ms < 5400000 ? Math.round(ms / 60000) + ' min ago' : Math.round(ms / 3600000) + ' h ago');
 
         /** One list panel: rows of name, uid, bar and size; what doesn't fit summed in a last row. */
-        function listPanel(cv, t, x, y, w, h, title, rows, extra) {
+        function listPanel(cv, t, x, y, w, h, title, rows, extra, key) {
             G.panel(cv, t, x, y, w, h, title);
             const total = rows.reduce((a, r) => a + r.kb, 0);
             cv.text(rows.length + (rows.length === 1 ? ' app' : ' apps') + '  ·  ' + sz(total * KB), x + w - 24, y + 36, 20, t.dim, { align: 'right', font: 'bold' });
@@ -171,7 +196,7 @@ mgu.run({
                 lines.push({ head: extra.title + '  ·  ' + sz(extra.rows.reduce((a, r) => a + r.kb, 0) * KB) });
                 extra.rows.forEach((r) => lines.push({ name: String(r.path).split('/').pop(), sub: '', kb: r.kb }));
             }
-            const shownLines = lines.length > n ? lines.slice(0, n - 1) : lines;
+            const win = rowsOf(key, lines, n), shownLines = win.show;
             const max = Math.max(1, rows.concat(extra ? extra.rows : []).reduce((a, r) => Math.max(a, r.kb), 0));
             shownLines.forEach((l, i) => {
                 const ly = top + i * rowH;
@@ -182,18 +207,20 @@ mgu.run({
                 bar(cv, t, x + w - 254, ly + 14, 100, 7, l.kb / max, t.accent);
                 cv.text(sz(l.kb * KB), x + w - 24, ly + 24, 20, t.text, { align: 'right', font: 'bold' });
             });
-            if (lines.length > shownLines.length) {
-                const rest = lines.slice(shownLines.length).filter((l) => !l.head);
-                cv.text('+ ' + rest.length + ' more  ·  ' + sz(rest.reduce((a, l) => a + l.kb, 0) * KB), x + 24, top + shownLines.length * rowH + 24, 20, t.dim);
+            if (win.more || win.back) {
+                const ry = top + shownLines.length * rowH;
+                const rest = win.more ? win.more.filter((l) => !l.head) : [];
+                cv.text(win.more ? '+ ' + rest.length + ' more  ·  ' + sz(rest.reduce((a, l) => a + l.kb, 0) * KB) : 'Back', x + 24, ry + 24, 20, t.accent);
+                moreRow(cv, key, win, { x, y: ry, w, h: rowH });
             }
         }
 
         function drawHelperApps(cv, t, d) {
             const bottom = G.BOTTOM - 26, h = bottom - G.TOP, gap = 16, w = (1552 - gap) / 2;
             const by = (k) => d.apps.filter((a) => k.indexOf(a.kind) >= 0).sort((a, b) => b.kb - a.kb);
-            listPanel(cv, t, 24, G.TOP, w, h, 'BMW apps', by(['stock', 'platform']));
+            listPanel(cv, t, 24, G.TOP, w, h, 'BMW apps', by(['stock', 'platform']), null, 'stock');
             listPanel(cv, t, 24 + w + gap, G.TOP, w, h, 'Custom apps', by(['custom']),
-                { title: 'TOOLS IN /var/opt', rows: (d.tools || []).slice().sort((a, b) => b.kb - a.kb) });
+                { title: 'TOOLS IN /var/opt', rows: (d.tools || []).slice().sort((a, b) => b.kb - a.kb) }, 'custom');
             const waiting = asked && d.t < asked;
             const line = waiting ? 'Measuring ...' : 'Measured ' + ago(Date.now() - d.t) + ' by the Storage helper  ·  Refresh measures again';
             cv.text(line, 1552, G.BOTTOM - 4, 18, waiting ? t.warn : t.dim, { align: 'right' });
@@ -214,7 +241,7 @@ mgu.run({
             if (!list.length) return;
             const rowH = 40, top = G.TOP + 66, per = Math.max(1, Math.floor((L.h - 80) / rowH)), cols = 2, colW = 740;
             const fitN = per * cols;
-            const rows = list.length > fitN ? list.slice(0, fitN - 1) : list;
+            const win = rowsOf('plain', list, fitN), rows = win.show;
             const max = Math.max(1, list.reduce((a, r) => Math.max(a, r.bytes), 0));
             rows.forEach((r, i) => {
                 const c = Math.floor(i / per), k = i % per;
@@ -230,9 +257,10 @@ mgu.run({
                 bar(cv, t, x + 490, y + 17, 110, 8, r.bytes / max, t.accent);
                 cv.text(sz(r.bytes) + (r.denied ? ' *' : ''), x + colW, y + 28, 22, r.denied ? t.dim : t.text, { align: 'right', font: 'bold' });
             });
-            if (list.length > rows.length) {
-                const rest = list.slice(rows.length), i = rows.length, c = Math.floor(i / per), k = i % per;
-                cv.text('+ ' + rest.length + ' more: ' + sz(rest.reduce((a, r) => a + r.bytes, 0)), 48 + c * (colW + 24), top + k * rowH + 28, 22, t.dim);
+            if (win.more || win.back) {
+                const i = rows.length, c = Math.floor(i / per), k = i % per, rx = 48 + c * (colW + 24), ry = top + k * rowH;
+                cv.text(win.more ? '+ ' + win.more.length + ' more: ' + sz(win.more.reduce((a, r) => a + r.bytes, 0)) : 'Back', rx, ry + 28, 22, t.accent);
+                moreRow(cv, 'plain', win, { x: rx - 8, y: ry, w: colW + 16, h: rowH });
             }
             // each app runs as a Linux user of its own, its folder 750: another app's folder can't be opened from here
             const note = closed ? 'No access: apps can\'t open each other\'s folders. Install the Storage helper from the MGU Store to measure every app'
@@ -247,6 +275,7 @@ mgu.run({
             if (PAGES[page] === 'apps' && !apps.t && !apps.scanning && !S.helper()) scanApps();
             lastDraw = now;
             const t = ctx.theme(), cv = ctx.canvas(W, H).clear(t.bg);
+            pending = [];
             (PAGES[page] === 'apps' ? drawApps : drawDisks)(cv, t);
             G.frame(cv, t, TABS, page, []);
             await ui.image('MAIN_GFX', cv);
@@ -260,8 +289,16 @@ mgu.run({
             }
             return render();
         });
-        ui.onClick('BTN_PAGE', () => { page = (page + 1) % PAGES.length; return render(); });
-        ctx.onTab((i) => { page = i; return render(); });
+        const firstRows = () => { Object.keys(off).forEach((k) => { off[k] = 0; }); };
+        // Next page (the controller): a list's next rows first, while it has more; then the next page, from its top
+        ui.onClick('BTN_PAGE', () => {
+            const ahead = pending.filter((p) => p.go > 0);
+            if (ahead.length) ahead.forEach((p) => { off[p.key] = p.go; });
+            else { firstRows(); page = (page + 1) % PAGES.length; }
+            return render();
+        });
+        ctx.onTab((i) => { if (i !== page) firstRows(); page = i; return render(); });
+
         settings.onChange((k) => { if (k === 'page') page = Math.max(0, PAGES.indexOf(settings.get('page'))); });
         ctx.loop('MAIN', 5, render);
         log.info('app root ' + ROOT + (OWN ? ', this app ' + OWN : ''));

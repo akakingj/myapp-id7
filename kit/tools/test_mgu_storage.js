@@ -119,6 +119,74 @@ const cases = {
         assert(S.memory().total > 0);
         assert(S.uptime() > 0);
     },
+    async 'the screen: a list longer than its panel - "+ N more" pressed for its next rows, "Back" on the last for the first (1.4.5)'() {
+        const Module = require('module');
+        const KIT = path.join(__dirname, '..', 'runtime');
+        const { Recorder: Canvas } = require(path.join(KIT, 'record'));
+        const themes = require(path.join(KIT, 'themes'));
+        const APP = path.join(__dirname, '..', '..', 'apps', 'mgu_storage');
+        const base = fs.mkdtempSync(path.join(os.tmpdir(), 'storage-screen-'));
+        // the helper's measurement: 40 custom apps and 3 BMW ones
+        const apps = [];
+        for (let i = 0; i < 40; i++) apps.push({ uid: 13000 + i, folder: 'oap_' + (13000 + i), id: 'app' + i, title: 'App ' + i, kind: 'custom', kb: 1000 + i });
+        for (let i = 0; i < 3; i++) apps.push({ uid: 12300 + i, folder: 'oap_' + (12300 + i), id: 'bmw' + i, title: 'BMW ' + i, kind: 'stock', kb: 500 + i });
+        process.env.STORAGE_HELPER_OUT = path.join(base, 'apps.json'); process.env.STORAGE_HELPER_REQUEST = path.join(base, 'req');
+        fs.writeFileSync(process.env.STORAGE_HELPER_OUT, JSON.stringify({ v: 1, t: Date.now(), apps, tools: [] }));
+        let app = null;
+        const load = Module._load;
+        Module._load = function (req, parent, isMain) {
+            if (req === './kit/mgu') return { run(a) { app = a; } };
+            if (req.startsWith('./kit/')) return load.call(this, path.join(KIT, req.slice(6)), parent, isMain);
+            return load.call(this, req, parent, isMain);
+        };
+        try {
+            [path.join(APP, 'main.js'), path.join(APP, 'sysinfo.js')].forEach((f) => { delete require.cache[require.resolve(f)]; });
+            require(path.join(APP, 'main.js'));
+            const texts = [], clicks = {};
+            let frame = null, last = null, tab = null;
+            const S = { page: 'apps', units: 'bin' };
+            await app.start({
+                ui: { onClick(k, fn) { clicks[k] = fn; }, text() {}, image: async () => {} },
+                settings: { get: (k) => S[k], onChange() {} }, log: { info() {}, warn() {}, error() {} },
+                dataDir: path.join(base, 'oap', 'oap_13000', 'data'),
+                onTab(fn) { tab = fn; }, loop(n, fps, fn) { frame = fn; }, theme: () => themes.theme('m_tricolour'),
+                canvas: (w, h) => { const cv = new Canvas(w, h), text = cv.text.bind(cv); cv.own = true; cv.text = (str, ...r) => { texts.push(String(str)); return text(str, ...r); }; last = cv; return cv; },
+            });
+            const draw = async () => { texts.length = 0; await frame(); return texts.slice(); };
+            const shown = (t) => t.filter((x) => /^App \d+/.test(x));
+            let t = await draw();
+            const first = shown(t);
+            assert(first.length > 3 && first.length < 40, 'the first rows: ' + first.length);
+            assert.strictEqual(first[0], 'App 39', 'the biggest first');
+            assert(t.some((x) => /^\+ \d+ more/.test(x)), 'a "+ N more" row: ' + t.join(' | '));
+            const tg = () => last.targets.find((x) => x.key === 'more-custom');
+            assert(tg(), 'it can be pressed: ' + last.targets.map((x) => x.key));
+            assert(!last.targets.some((x) => x.key === 'more-stock'), 'the BMW apps fit: no more row');
+            // pressed: the next rows, from where the first ended
+            await tg().run();
+            t = await draw();
+            const second = shown(t);
+            assert.strictEqual(second[0], 'App ' + (39 - first.length), 'the next rows: ' + second.join(', '));
+            // pressed till the last rows: Back, then the first again
+            let seen = first.length + second.length, n = 0;
+            while (!t.includes('Back') && n++ < 20) { await tg().run(); t = await draw(); seen += shown(t).length; }
+            assert(t.includes('Back'), 'the last rows end with Back');
+            assert.strictEqual(seen, 40, 'every app shown once');
+            await tg().run();
+            t = await draw();
+            assert.deepStrictEqual(shown(t), first, 'Back: the first rows again');
+            // the controller's Next page: the next rows first, then the next page (Disks) from its top
+            await clicks.BTN_PAGE(); t = await draw();
+            assert.strictEqual(shown(t)[0], 'App ' + (39 - first.length));
+            for (let i = 0; i < 20 && !texts.some((x) => / free$|of .* used|Reading/.test(x)); i++) { await clicks.BTN_PAGE(); await draw(); }
+            assert(texts.some((x) => / free$|of .* used|Reading/.test(x)), 'past the last rows: the next page (Disks): ' + texts.slice(0, 12).join(' | '));
+            await tab(1); t = await draw();
+            assert.deepStrictEqual(shown(t), first, 'back on Apps: from the top');
+        } finally {
+            Module._load = load;
+            fs.rmSync ? fs.rmSync(base, { recursive: true, force: true }) : null;
+        }
+    },
 };
 
 (async () => {
