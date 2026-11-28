@@ -7,6 +7,13 @@ setlocal
 cd /d "%~dp0"
 title MGU demo
 
+rem ---- where the code comes from: a GitHub repository, owner/name or its https://github.com/ address ----
+rem      APPS_REPO: the iDrive 7 apps and the demo itself, CLUSTER_REPO: the cluster apps,
+rem      STYLES_REPO: AK Cluster ID8 (optional: STYLES_REPO=none and the demo runs without it)
+set APPS_REPO=akakingj/myapp-id7
+set CLUSTER_REPO=akakingj/myapp-cluster
+set STYLES_REPO=akakingj/myapp-cluster-high
+
 rem ---- the branches the demo shows (the test branches: what is being made now; AK Cluster ID8: test) ----
 set APPS_BRANCH=test
 set CLUSTER_BRANCH=test

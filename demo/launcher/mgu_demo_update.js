@@ -4,7 +4,9 @@
  * (myapp-id7, myapp-cluster and, when it can be fetched, myapp-cluster-high) into src\ before the demo starts, so the demo always shows the apps as they are on GitHub now. Only Node is needed
  * (git when it is there; otherwise the branch's tarball from GitHub, unpacked with tar, which Windows 10 and later have).
  *
- *   node mgu_demo_update.js            (APPS_BRANCH / CLUSTER_BRANCH / STYLES_BRANCH: the branches; defaults below)
+ *   node mgu_demo_update.js            (APPS_BRANCH / CLUSTER_BRANCH / STYLES_BRANCH: the branches;
+ *                                       APPS_REPO / CLUSTER_REPO / STYLES_REPO: where from - owner/name or its
+ *                                       https://github.com/ address; STYLES_REPO=none: not fetched. Defaults below)
  *
  * A repository that is already the newest is left as it is; with no internet the code there is used as it is.
  */
@@ -15,14 +17,26 @@ const { spawnSync } = require('child_process');
 
 const HERE = __dirname;
 const SRC = path.join(HERE, 'src');
+const say = (s) => console.log(s);
+// (1.15.1) a repository's address from mgu_demo.bat (APPS_REPO, CLUSTER_REPO, STYLES_REPO): owner/name, or the
+// https://github.com/owner/name(.git) address; not set: the default; none: not fetched (the optional one only)
+function repoOf(env, def, optional) {
+    const v = process.env[env];
+    if (v === undefined) return def;
+    const s = String(v).trim().replace(/^https?:\/\/(www\.)?github\.com\//i, '').replace(/\.git$/i, '').replace(/\/+$/, '');
+    if ((!s || /^(none|off|-)$/i.test(s)) && optional) return '';            // (cmd's "set X=" unsets X: none is the word for it)
+    if (/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(s)) return s;
+    say('  ' + env + '=' + v + ' 은(는) GitHub 저장소 주소가 아닙니다 - ' + def + ' 를 받습니다');
+    return def;
+}
 const REPOS = [
-    { name: 'myapp-id7', repo: 'akakingj/myapp-id7', branch: process.env.APPS_BRANCH || 'test' },
-    { name: 'myapp-cluster', repo: 'akakingj/myapp-cluster', branch: process.env.CLUSTER_BRANCH || 'test' },
+    // (the folder names in src\ stay as they are, whichever repository they come from: the demo finds them by name)
+    { name: 'myapp-id7', repo: repoOf('APPS_REPO', 'akakingj/myapp-id7'), branch: process.env.APPS_BRANCH || 'test' },
+    { name: 'myapp-cluster', repo: repoOf('CLUSTER_REPO', 'akakingj/myapp-cluster'), branch: process.env.CLUSTER_BRANCH || 'test' },
     // MGU Styles: shown when it can be fetched; while the repository is private, a git clone in src\ (made with a GitHub login) is updated with git pull
     // (its work branch is test; an older mgu_demo.bat still says ak, the branch's former name)
-    { name: 'myapp-cluster-high', repo: 'akakingj/myapp-cluster-high', branch: process.env.STYLES_BRANCH && process.env.STYLES_BRANCH !== 'ak' ? process.env.STYLES_BRANCH : 'test', optional: true },
-];
-const say = (s) => console.log(s);
+    { name: 'myapp-cluster-high', repo: repoOf('STYLES_REPO', 'akakingj/myapp-cluster-high', true), branch: process.env.STYLES_BRANCH && process.env.STYLES_BRANCH !== 'ak' ? process.env.STYLES_BRANCH : 'test', optional: true },
+].filter((r) => r.repo);
 
 function get(url, asJson, hops) {
     return new Promise((res, rej) => {

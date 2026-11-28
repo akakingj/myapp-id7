@@ -47,6 +47,11 @@ PC에서 차처럼 돌려 보는 데모입니다. (1.14.x에 넣었던 myapp-com
 계기판 앱만 돕니다. 보는 브랜치는 `mgu_demo.bat` 위쪽의 `APPS_BRANCH` / `CLUSTER_BRANCH` / `STYLES_BRANCH`
 (기본: 세 저장소 모두 `test`. 예전 bat의 `ak`는 지워진 브랜치라 `test`로 받습니다).
 
+받는 **저장소 주소**도 `mgu_demo.bat` 위쪽에서 바꿀 수 있습니다 (1.15.1): `APPS_REPO`(iDrive 7 앱과 데모 자체),
+`CLUSTER_REPO`(계기판 앱), `STYLES_REPO`(AK Cluster ID8, 선택). `계정/저장소` 또는 `https://github.com/계정/저장소` 형식이고,
+`STYLES_REPO=none`이면 그 저장소 없이 돕니다. `src\` 안의 폴더 이름은 어느 저장소에서 받든 그대로입니다
+(데모가 이름으로 찾음). 이미 git clone으로 받아 둔 폴더는 런처가 받는 곳을 새 주소로 바꿉니다.
+
 직접 실행: `node demo/server.js --cluster ../myapp-cluster [--styles ../myapp-cluster-high] [--data 폴더] [--port 8077] [--no-open]`
 
 ## AK Cluster ID8 (akakingj/myapp-cluster-high)
