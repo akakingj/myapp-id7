@@ -211,7 +211,8 @@ const cases = {
         // starts at Auto (from the car), 1.12.0: the kind of car found goes to every app; engineAuto: that change, once)
         // (1.13.0: the rev gauges' end, the redline and the speedometer on Auto too: the car's own cluster's for its kind)
         // (1.14.0: the yellow, the red and the shift warning on Auto as well)
-        const AUTO = { engine: 'auto', speedMax: 'auto', rpmScale: 0, redline: 0, boostMax: 0, powerMax: 0, torqueMax: 0, lightStart: 0, lightRed: 0, shiftAt: 0 };
+        // (1.15.3: No stopping signs starts at Off, the owner's: read every half minute in town)
+        const AUTO = { engine: 'auto', speedMax: 'auto', rpmScale: 0, redline: 0, boostMax: 0, powerMax: 0, torqueMax: 0, lightStart: 0, lightRed: 0, shiftAt: 0, signNoStopping: 'off' };
         assert(cp.settings.filter((s) => !s.hidden).every((s) => s.default === (AUTO[s.key] !== undefined ? AUTO[s.key] : s.type === 'choice' ? 'app' : -1)), 'everything starts at Each app, the engine and the gauges at Auto');
         assert(byKey.engineAuto.hidden === true && byKey.gaugesAuto.hidden === true && byKey.lightsAuto.hidden === true, 'engineAuto, gaugesAuto, lightsAuto are not shown');
         assert.deepStrictEqual(byKey.boostMax.steps, [0, 15, 20, 30, 45], 'Boost gauge up to: Auto, or one of the car\'s own gauges');

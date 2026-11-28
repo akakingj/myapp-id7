@@ -15,7 +15,7 @@ const fs = require('fs');
 // what the profile sets, in Settings order; FOLLOW: the apps that follow each (their app.json "profile")
 const KEYS = ['engine', 'lightStart', 'lightRed', 'shiftAt', 'rpmScale', 'redline', 'coldLimit', 'coldGuard', 'warmOil',
     'warmCoolant', 'warmGearbox', 'hotOil', 'hotCoolant', 'hotGearbox', 'speedUnit', 'tempUnit', 'pressUnit', 'fuelUnit', 'torqueUnit', 'powerUnit',
-    'skin', 'theme', 'layout', 'renderer', 'demo', 'clusterStart', 'clock', 'eFullKm', 'gMax', 'speedMax', 'boostMax',
+    'skin', 'theme', 'layout', 'renderer', 'demo', 'clusterStart', 'signSpeedLimit', 'signNoStopping', 'clock', 'eFullKm', 'gMax', 'speedMax', 'boostMax',
     'powerMax', 'torqueMax'];
 const FOLLOW = {
     // (the AK clusters' Car > Engine, Layouts, Centre and ID8 alike, has the same five; the other apps take a plug-in hybrid
@@ -54,6 +54,10 @@ const FOLLOW = {
     demo: ['All apps with demo data, AK Cluster Layouts, Centre and Info too'],
     // which AK cluster comes up at every start (its Show on the cluster on, ahead of the other)
     clusterStart: ['AK Cluster Layouts and ID8'],
+    // the AK clusters' speed limit sign (with the camera's signs beside it), and whether no stopping signs are among those
+    // (Nov 28 2026, the owner: read every half minute in town, off by default)
+    signSpeedLimit: ['AK Cluster Layouts and ID8'],
+    signNoStopping: ['AK Cluster Layouts and ID8'],
     // the AK clusters' clock, and a plug-in hybrid's electric range when full (1.15.0: the tank's size and Fuel % from
     // gone - the fuel gauges are the engine unit's own tank level)
     clock: ['AK Cluster Layouts, Centre and ID8'],
